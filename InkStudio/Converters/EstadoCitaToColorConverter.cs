@@ -20,7 +20,7 @@ namespace InkStudio.Converters;
 /// - Cancelada: Rojo (#ef5350)
 /// - NoShow: Morado (#ab47bc)
 /// </remarks>
-public class EstadoCitaToColorConverter : IMultiValueConverter
+public class EstadoCitaToColorConverter : IValueConverter
 {
     /// <summary>
     /// Instancia estática para uso en XAML.
@@ -30,14 +30,14 @@ public class EstadoCitaToColorConverter : IMultiValueConverter
     /// <summary>
     /// Convierte un estado de cita a su color correspondiente.
     /// </summary>
-    /// <param name="values">Lista de valores (el primero debe ser EstadoCita).</param>
+    /// <param name="value">Estado de la cita.</param>
     /// <param name="targetType">Tipo de destino (Brush).</param>
     /// <param name="parameter">Parámetro adicional (no usado).</param>
     /// <param name="culture">Cultura actual.</param>
     /// <returns>SolidColorBrush con el color correspondiente al estado.</returns>
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (values.Count > 0 && values[0] is EstadoCita estado)
+        if (value is EstadoCita estado)
         {
             return estado switch
             {
@@ -51,5 +51,13 @@ public class EstadoCitaToColorConverter : IMultiValueConverter
             };
         }
         return new SolidColorBrush(Color.Parse("#9e9e9e"));
+    }
+
+    /// <summary>
+    /// No implementado (no necesario para este uso).
+    /// </summary>
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -27,8 +27,12 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public LogsViewModel LogsVM { get; } = new();
 
+    /// <summary>
+    /// ViewModel de la agenda y citas.
+    /// </summary>
+    public AgendaViewModel AgendaVM { get; } = new();
+
     // TODO: Añadir estos ViewModels cuando se creen las vistas
-    // public AgendaViewModel AgendaVM { get; } = new();
     // public TrabajosViewModel TrabajosVM { get; } = new();
     // public ConfiguracionViewModel ConfiguracionVM { get; } = new();
 

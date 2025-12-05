@@ -133,14 +133,11 @@
                 <views:LogsView DataContext="{Binding LogsVM}"
                                 IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Logs}"/>
                 
+                <!-- Agenda -->
+                <views:AgendaView DataContext="{Binding AgendaVM}"
+                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Agenda}"/>
+                
                 <!-- Placeholder para vistas no implementadas -->
-                <StackPanel IsVisible="{Binding VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Agenda}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="📅" FontSize="64" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Agenda" FontSize="24" FontWeight="Bold" Margin="0,10,0,5"/>
-                    <TextBlock Text="Próximamente..." Opacity="0.6"/>
-                </StackPanel>
                 
                 <StackPanel IsVisible="{Binding VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Trabajos}"
                             HorizontalAlignment="Center"

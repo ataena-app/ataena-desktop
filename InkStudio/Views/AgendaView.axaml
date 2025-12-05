@@ -1,0 +1,304 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:InkStudio.ViewModels"
+             xmlns:models="using:InkStudio.Models"
+             xmlns:converters="using:InkStudio.Converters"
+             x:Class="InkStudio.Views.AgendaView"
+             x:DataType="vm:AgendaViewModel"
+             Loaded="OnLoaded">
+
+    <UserControl.Styles>
+        <!-- Tarjeta de cita -->
+        <Style Selector="Border.cita-card">
+            <Setter Property="Background" Value="#1e1e2e"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style Selector="Border.cita-card:pointerover">
+            <Setter Property="Background" Value="#2a2a3e"/>
+        </Style>
+        
+        <!-- Formulario -->
+        <Style Selector="Border.form-container">
+            <Setter Property="Background" Value="#1e1e2e"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="25"/>
+        </Style>
+        
+        <!-- Botón primario -->
+        <Style Selector="Button.btn-primary">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        
+        <!-- Botón secundario -->
+        <Style Selector="Button.btn-secondary">
+            <Setter Property="Background" Value="#3a3a4e"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        
+        <!-- Botón peligro -->
+        <Style Selector="Button.btn-danger">
+            <Setter Property="Background" Value="#f44336"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="*,Auto">
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 0: LISTA DE CITAS                                      -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="30">
+            
+            <!-- Cabecera -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="📅 Agenda" FontSize="28" FontWeight="Bold"/>
+                <TextBlock Opacity="0.6" Margin="0,5,0,0">
+                    <Run Text="Total: "/>
+                    <Run Text="{Binding TotalCitas}"/>
+                    <Run Text=" citas"/>
+                </TextBlock>
+            </StackPanel>
+            
+            <!-- Navegación de fechas y vista -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,0,0,15">
+                <Button Grid.Column="0" Content="◀" Command="{Binding DiaAnteriorCommand}" Margin="0,0,10,0"/>
+                <DatePicker Grid.Column="1" SelectedDate="{Binding FechaSeleccionada}" Margin="0,0,10,0"/>
+                <Button Grid.Column="2" Content="▶" Command="{Binding DiaSiguienteCommand}" Margin="0,0,10,0"/>
+                <Button Grid.Column="3" Content="Hoy" Command="{Binding IrAHoyCommand}" Margin="0,0,10,0"/>
+                <Button Grid.Column="4" Content="➕ Nueva Cita" Classes="btn-primary" Command="{Binding NuevaCitaCommand}"/>
+            </Grid>
+            
+            <!-- Selector de vista y filtros -->
+            <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,Auto,*,Auto" Margin="0,0,0,15">
+                <Button Grid.Column="0" Content="Día" Command="{Binding CambiarVistaCommand}" CommandParameter="Dia" Margin="0,0,5,0"/>
+                <Button Grid.Column="1" Content="Semana" Command="{Binding CambiarVistaCommand}" CommandParameter="Semana" Margin="0,0,5,0"/>
+                <Button Grid.Column="2" Content="Mes" Command="{Binding CambiarVistaCommand}" CommandParameter="Mes" Margin="0,0,10,0"/>
+                <TextBlock Grid.Column="3" 
+                          Text="Filtro: Próximamente"
+                          Opacity="0.6"
+                          VerticalAlignment="Center"
+                          Margin="0,0,10,0"/>
+                <Button Grid.Column="4" Content="🔄 Actualizar" Command="{Binding CargarCitasCommand}"/>
+            </Grid>
+            
+            <!-- Lista de citas -->
+            <ScrollViewer Grid.Row="3">
+                <ItemsControl ItemsSource="{Binding Citas}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Cita">
+                            <Border Classes="cita-card"
+                                    PointerPressed="OnCitaClick"
+                                    Tag="{Binding}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    
+                                    <!-- Icono y hora -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="{Binding IconoTipo}" FontSize="32" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding HoraInicioFormateada}" 
+                                                   FontSize="18" 
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,5,0,0"/>
+                                        <TextBlock Text="{Binding DuracionFormateada}" 
+                                                   FontSize="12" 
+                                                   Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Info de la cita -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Cliente.NombreCompleto}" 
+                                                   FontSize="16" 
+                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding TipoCita}" 
+                                                   Opacity="0.7" 
+                                                   Margin="0,3,0,0"/>
+                                        <TextBlock Text="{Binding Descripcion}" 
+                                                   Opacity="0.6" 
+                                                   Margin="0,3,0,0"
+                                                   TextWrapping="Wrap"
+                                                   IsVisible="{Binding Descripcion, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Estado -->
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                        <Border Background="{Binding Estado, Converter={StaticResource EstadoCitaToColorConverter}}"
+                                                Padding="8,4"
+                                                CornerRadius="4">
+                                            <TextBlock Text="{Binding Estado}" 
+                                                       FontSize="12" 
+                                                       FontWeight="Bold"
+                                                       Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
+                                    
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            
+            <!-- Mensaje de error -->
+            <Border Grid.Row="4"
+                    IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#3d2a2a"
+                    CornerRadius="6"
+                    Padding="15"
+                    Margin="0,10,0,0">
+                <TextBlock Text="{Binding MensajeError}" Foreground="#ef5350"/>
+            </Border>
+            
+        </Grid>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 1: PANEL DE EDICIÓN                                     -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="1"
+                IsVisible="{Binding MostrarFormulario}"
+                Width="400"
+                Background="#16161e"
+                Padding="0">
+            
+            <Border Classes="form-container" Margin="20">
+                <ScrollViewer>
+                    <StackPanel>
+                        
+                        <!-- Título del formulario -->
+                        <TextBlock Text="{Binding TituloFormulario}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,25"/>
+                        
+                        <!-- Cliente -->
+                        <TextBlock Text="Cliente *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <ComboBox ItemsSource="{Binding Clientes}"
+                                  SelectedItem="{Binding ClienteSeleccionado}"
+                                  DisplayMemberBinding="{Binding NombreCompleto}"
+                                  Margin="0,0,0,15">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding NombreCompleto}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        
+                        <!-- Fecha -->
+                        <TextBlock Text="Fecha *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <DatePicker SelectedDate="{Binding FechaCita}" Margin="0,0,0,15"/>
+                        
+                        <!-- Hora inicio -->
+                        <TextBlock Text="Hora de inicio * (HH:mm)" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding HoraInicioString}"
+                                 Watermark="10:00"
+                                 Margin="0,0,0,15"/>
+                        
+                        <!-- Duración -->
+                        <TextBlock Text="Duración (minutos) *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <NumericUpDown Value="{Binding DuracionMinutos}"
+                                       Minimum="15"
+                                       Maximum="480"
+                                       Increment="15"
+                                       Margin="0,0,0,15"/>
+                        
+                        <!-- Tipo -->
+                        <TextBlock Text="Tipo *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <ComboBox SelectedItem="{Binding TipoCita}"
+                                  Margin="0,0,0,15">
+                            <ComboBox.Items>
+                                <x:Static Member="models:TipoCita.Tatuaje"/>
+                                <x:Static Member="models:TipoCita.Piercing"/>
+                                <x:Static Member="models:TipoCita.Consulta"/>
+                                <x:Static Member="models:TipoCita.Retoque"/>
+                            </ComboBox.Items>
+                        </ComboBox>
+                        
+                        <!-- Estado -->
+                        <TextBlock Text="Estado *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <ComboBox SelectedItem="{Binding EstadoCita}"
+                                  Margin="0,0,0,15">
+                            <ComboBox.Items>
+                                <x:Static Member="models:EstadoCita.Pendiente"/>
+                                <x:Static Member="models:EstadoCita.Confirmada"/>
+                                <x:Static Member="models:EstadoCita.EnProceso"/>
+                                <x:Static Member="models:EstadoCita.Completada"/>
+                                <x:Static Member="models:EstadoCita.Cancelada"/>
+                                <x:Static Member="models:EstadoCita.NoShow"/>
+                            </ComboBox.Items>
+                        </ComboBox>
+                        
+                        <!-- Descripción -->
+                        <TextBlock Text="Descripción" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding Descripcion}"
+                                 Watermark="Descripción del trabajo..."
+                                 AcceptsReturn="True"
+                                 Height="60"
+                                 TextWrapping="Wrap"
+                                 Margin="0,0,0,15"/>
+                        
+                        <!-- Notas -->
+                        <TextBlock Text="Notas" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding Notas}"
+                                 Watermark="Notas adicionales..."
+                                 AcceptsReturn="True"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 Margin="0,0,0,15"/>
+                        
+                        <!-- Mensaje de error -->
+                        <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Background="#3d2a2a"
+                                CornerRadius="6"
+                                Padding="10"
+                                Margin="0,0,0,15">
+                            <TextBlock Text="{Binding MensajeError}" 
+                                       Foreground="#ef5350"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                        
+                        <!-- Botones -->
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="💾 Guardar"
+                                    Classes="btn-primary"
+                                    Command="{Binding GuardarCitaCommand}"/>
+                            <Button Content="Cancelar"
+                                    Classes="btn-secondary"
+                                    Command="{Binding CancelarEdicionCommand}"/>
+                        </StackPanel>
+                        
+                        <!-- Botón eliminar (solo en edición) -->
+                        <Button Content="🗑️ Eliminar cita"
+                                Classes="btn-danger"
+                                Command="{Binding EliminarCitaCommand}"
+                                IsVisible="{Binding EsEdicion}"
+                                Margin="0,20,0,0"
+                                HorizontalAlignment="Left"/>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            
+        </Border>
+        
+        <!-- Overlay de carga -->
+        <Border Grid.ColumnSpan="2"
+                IsVisible="{Binding Cargando}"
+                Background="#80000000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="⏳" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="Cargando..." Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+        
+    </Grid>
+
+</UserControl>

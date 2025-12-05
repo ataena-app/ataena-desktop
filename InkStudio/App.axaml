@@ -8,6 +8,8 @@
     <!-- Recursos globales (conversores, etc.) -->
     <Application.Resources>
         <converters:EqualConverter x:Key="EqualConverter"/>
+        <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
+        <converters:EstadoCitaToColorConverter x:Key="EstadoCitaToColorConverter"/>
     </Application.Resources>
 
     <Application.DataTemplates>
