@@ -79,7 +79,7 @@ public partial class AgendaViewModel : ViewModelBase
     private Cliente? _clienteSeleccionado;
 
     [ObservableProperty]
-    private DateTime _fechaCita = DateTime.Today;
+    private DateTime? _fechaCita = DateTime.Today;
 
     [ObservableProperty]
     private TimeSpan _horaInicio = new TimeSpan(10, 0, 0); // 10:00 por defecto
@@ -359,7 +359,13 @@ public partial class AgendaViewModel : ViewModelBase
                 return;
             }
 
-            if (FechaCita < DateTime.Today && !EsEdicion)
+            if (!FechaCita.HasValue)
+            {
+                MensajeError = "Debes seleccionar una fecha";
+                return;
+            }
+
+            if (FechaCita.Value < DateTime.Today && !EsEdicion)
             {
                 MensajeError = "No se pueden crear citas en el pasado";
                 return;
@@ -390,7 +396,7 @@ public partial class AgendaViewModel : ViewModelBase
             {
                 // Actualizar cita existente
                 CitaSeleccionada.ClienteId = ClienteSeleccionado.Id;
-                CitaSeleccionada.Fecha = FechaCita;
+                CitaSeleccionada.Fecha = FechaCita.Value;
                 CitaSeleccionada.HoraInicio = horaParsed;
                 CitaSeleccionada.DuracionMinutos = DuracionMinutos;
                 CitaSeleccionada.TipoCita = TipoCita;
@@ -406,7 +412,7 @@ public partial class AgendaViewModel : ViewModelBase
                 var nuevaCita = new Cita
                 {
                     ClienteId = ClienteSeleccionado.Id,
-                    Fecha = FechaCita,
+                    Fecha = FechaCita.Value,
                     HoraInicio = horaParsed,
                     DuracionMinutos = DuracionMinutos,
                     TipoCita = TipoCita,
