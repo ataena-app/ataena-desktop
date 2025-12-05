@@ -183,7 +183,6 @@
                         <TextBlock Text="Cliente *" Opacity="0.7" Margin="0,0,0,5"/>
                         <ComboBox ItemsSource="{Binding Clientes}"
                                   SelectedItem="{Binding ClienteSeleccionado}"
-                                  DisplayMemberBinding="{Binding NombreCompleto}"
                                   Margin="0,0,0,15">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
