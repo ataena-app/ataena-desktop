@@ -1,0 +1,284 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:InkStudio.ViewModels"
+             xmlns:models="using:InkStudio.Models"
+             x:Class="InkStudio.Views.ClientesView"
+             x:DataType="vm:ClientesViewModel"
+             Loaded="OnLoaded">
+
+    <UserControl.Styles>
+        <!-- Tarjeta de cliente -->
+        <Style Selector="Border.cliente-card">
+            <Setter Property="Background" Value="#1e1e2e"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style Selector="Border.cliente-card:pointerover">
+            <Setter Property="Background" Value="#2a2a3e"/>
+        </Style>
+        
+        <!-- Formulario -->
+        <Style Selector="Border.form-container">
+            <Setter Property="Background" Value="#1e1e2e"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="25"/>
+        </Style>
+        
+        <!-- Campo de formulario -->
+        <Style Selector="TextBox.form-field">
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+        
+        <!-- Botón primario -->
+        <Style Selector="Button.btn-primary">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        
+        <!-- Botón secundario -->
+        <Style Selector="Button.btn-secondary">
+            <Setter Property="Background" Value="#3a3a4e"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        
+        <!-- Botón peligro -->
+        <Style Selector="Button.btn-danger">
+            <Setter Property="Background" Value="#f44336"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="*,Auto">
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 0: LISTA DE CLIENTES                                    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*,Auto" Margin="30">
+            
+            <!-- Cabecera -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="👥 Clientes" FontSize="28" FontWeight="Bold"/>
+                <TextBlock Opacity="0.6" Margin="0,5,0,0">
+                    <Run Text="Total: "/>
+                    <Run Text="{Binding TotalClientes}"/>
+                    <Run Text=" clientes"/>
+                </TextBlock>
+            </StackPanel>
+            
+            <!-- Barra de búsqueda y acciones -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,20">
+                <TextBox Grid.Column="0"
+                         Text="{Binding TextoBusqueda}"
+                         Watermark="🔍 Buscar por nombre, teléfono o email..."
+                         Margin="0,0,10,0"/>
+                <Button Grid.Column="1"
+                        Content="Buscar"
+                        Command="{Binding BuscarCommand}"
+                        Margin="0,0,10,0"/>
+                <Button Grid.Column="2"
+                        Content="➕ Nuevo Cliente"
+                        Classes="btn-primary"
+                        Command="{Binding NuevoClienteCommand}"/>
+            </Grid>
+            
+            <!-- Lista de clientes -->
+            <ScrollViewer Grid.Row="2">
+                <ItemsControl ItemsSource="{Binding Clientes}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Cliente">
+                            <Border Classes="cliente-card"
+                                    PointerPressed="OnClienteClick"
+                                    Tag="{Binding}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    
+                                    <!-- Avatar -->
+                                    <Border Grid.Column="0"
+                                            Width="50" Height="50"
+                                            CornerRadius="25"
+                                            Background="#3a3a4e"
+                                            Margin="0,0,15,0">
+                                        <TextBlock Text="👤"
+                                                   FontSize="24"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    
+                                    <!-- Info -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="{Binding NombreCompleto}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"/>
+                                            <Border IsVisible="{Binding EsVip}"
+                                                    Background="#FFD700"
+                                                    Padding="6,2"
+                                                    CornerRadius="4">
+                                                <TextBlock Text="VIP" 
+                                                           FontSize="10" 
+                                                           Foreground="Black"
+                                                           FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="15" Opacity="0.7">
+                                            <TextBlock Text="{Binding Telefono}"/>
+                                            <TextBlock Text="{Binding Email}" 
+                                                       IsVisible="{Binding Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    
+                                    <!-- Fecha registro -->
+                                    <StackPanel Grid.Column="2" 
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding FechaRegistro, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                                   FontSize="12"
+                                                   Opacity="0.5"/>
+                                    </StackPanel>
+                                    
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            
+            <!-- Mensaje de error -->
+            <Border Grid.Row="3"
+                    IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#3d2a2a"
+                    CornerRadius="6"
+                    Padding="15"
+                    Margin="0,10,0,0">
+                <TextBlock Text="{Binding MensajeError}" Foreground="#ef5350"/>
+            </Border>
+            
+        </Grid>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 1: PANEL DE EDICIÓN (se muestra/oculta)                 -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="1"
+                IsVisible="{Binding MostrarFormulario}"
+                Width="400"
+                Background="#16161e"
+                Padding="0">
+            
+            <Border Classes="form-container" Margin="20">
+                <ScrollViewer>
+                    <StackPanel>
+                        
+                        <!-- Título del formulario -->
+                        <TextBlock Text="{Binding TituloFormulario}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,25"/>
+                        
+                        <!-- Nombre -->
+                        <TextBlock Text="Nombre *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Nombre}"
+                                 Watermark="Nombre"/>
+                        
+                        <!-- Apellidos -->
+                        <TextBlock Text="Apellidos" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Apellidos}"
+                                 Watermark="Apellidos"/>
+                        
+                        <!-- Teléfono -->
+                        <TextBlock Text="Teléfono *" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Telefono}"
+                                 Watermark="612 345 678"/>
+                        
+                        <!-- Email -->
+                        <TextBlock Text="Email" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Email}"
+                                 Watermark="cliente@email.com"/>
+                        
+                        <!-- Fecha nacimiento -->
+                        <TextBlock Text="Fecha de nacimiento" Opacity="0.7" Margin="0,0,0,5"/>
+                        <DatePicker SelectedDate="{Binding FechaNacimiento}"
+                                    Margin="0,0,0,15"
+                                    HorizontalAlignment="Stretch"/>
+                        
+                        <!-- Alergias -->
+                        <TextBlock Text="Alergias (importante para tintas)" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Alergias}"
+                                 Watermark="Ninguna conocida"
+                                 AcceptsReturn="True"
+                                 Height="60"
+                                 TextWrapping="Wrap"/>
+                        
+                        <!-- Notas -->
+                        <TextBlock Text="Notas" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Notas}"
+                                 Watermark="Notas adicionales..."
+                                 AcceptsReturn="True"
+                                 Height="80"
+                                 TextWrapping="Wrap"/>
+                        
+                        <!-- VIP -->
+                        <CheckBox Content="Cliente VIP ⭐"
+                                  IsChecked="{Binding EsVip}"
+                                  Margin="0,0,0,20"/>
+                        
+                        <!-- Mensaje de error -->
+                        <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Background="#3d2a2a"
+                                CornerRadius="6"
+                                Padding="10"
+                                Margin="0,0,0,15">
+                            <TextBlock Text="{Binding MensajeError}" 
+                                       Foreground="#ef5350"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                        
+                        <!-- Botones -->
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="💾 Guardar"
+                                    Classes="btn-primary"
+                                    Command="{Binding GuardarClienteCommand}"/>
+                            <Button Content="Cancelar"
+                                    Classes="btn-secondary"
+                                    Command="{Binding CancelarEdicionCommand}"/>
+                        </StackPanel>
+                        
+                        <!-- Botón eliminar (solo en edición) -->
+                        <Button Content="🗑️ Eliminar cliente"
+                                Classes="btn-danger"
+                                Command="{Binding EliminarClienteCommand}"
+                                IsVisible="{Binding EsEdicion}"
+                                Margin="0,20,0,0"
+                                HorizontalAlignment="Left"/>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            
+        </Border>
+        
+        <!-- Overlay de carga -->
+        <Border Grid.ColumnSpan="2"
+                IsVisible="{Binding Cargando}"
+                Background="#80000000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="⏳" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="Cargando..." Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+        
+    </Grid>
+
+</UserControl>
+

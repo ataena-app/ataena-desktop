@@ -29,13 +29,6 @@
         <Style Selector="Button.nav-btn:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#2a2a3e"/>
         </Style>
-        <Style Selector="Button.nav-btn.active">
-            <Setter Property="Background" Value="#2a2a3e"/>
-            <Setter Property="Foreground" Value="White"/>
-        </Style>
-        <Style Selector="Button.nav-btn.active /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2a2a3e"/>
-        </Style>
     </Window.Styles>
 
     <Grid ColumnDefinitions="220,*">
@@ -62,7 +55,7 @@
                 <!-- Menú de navegación -->
                 <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
                     
-                    <Button Classes="nav-btn active" Command="{Binding IrADashboardCommand}">
+                    <Button Classes="nav-btn" Command="{Binding IrADashboardCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="🏠" FontSize="18"/>
                             <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
@@ -116,11 +109,43 @@
         </Border>
         
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- COLUMNA 1: CONTENIDO PRINCIPAL                                  -->
+        <!-- COLUMNA 1: CONTENIDO PRINCIPAL (cambia según navegación)        -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <Border Grid.Column="1" Background="#12121a">
-            <!-- Por ahora mostramos directamente el Dashboard -->
-            <views:DashboardView DataContext="{Binding DashboardVM}"/>
+            <Panel>
+                <!-- Dashboard -->
+                <views:DashboardView DataContext="{Binding DashboardVM}"
+                                     IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Dashboard}"/>
+                
+                <!-- Clientes -->
+                <views:ClientesView DataContext="{Binding ClientesVM}"
+                                    IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Clientes}"/>
+                
+                <!-- Placeholder para vistas no implementadas -->
+                <StackPanel IsVisible="{Binding VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Agenda}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="📅" FontSize="64" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Agenda" FontSize="24" FontWeight="Bold" Margin="0,10,0,5"/>
+                    <TextBlock Text="Próximamente..." Opacity="0.6"/>
+                </StackPanel>
+                
+                <StackPanel IsVisible="{Binding VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Trabajos}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="💼" FontSize="64" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Trabajos" FontSize="24" FontWeight="Bold" Margin="0,10,0,5"/>
+                    <TextBlock Text="Próximamente..." Opacity="0.6"/>
+                </StackPanel>
+                
+                <StackPanel IsVisible="{Binding VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Configuracion}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="⚙️" FontSize="64" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Configuración" FontSize="24" FontWeight="Bold" Margin="0,10,0,5"/>
+                    <TextBlock Text="Próximamente..." Opacity="0.6"/>
+                </StackPanel>
+            </Panel>
         </Border>
         
     </Grid>

@@ -3,58 +3,87 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace InkStudio.ViewModels;
 
+/// <summary>
+/// ViewModel principal de la aplicación.
+/// Gestiona la navegación entre las diferentes vistas.
+/// </summary>
 public partial class MainWindowViewModel : ViewModelBase
 {
-    // ══════════════════════════════════════════════════════════════
-    // VIEWMODELS DE CADA SECCIÓN
-    // ══════════════════════════════════════════════════════════════
-    
+    #region ViewModels de cada sección
+
+    /// <summary>
+    /// ViewModel del Dashboard (pantalla principal).
+    /// </summary>
     public DashboardViewModel DashboardVM { get; } = new();
-    
+
+    /// <summary>
+    /// ViewModel de gestión de clientes.
+    /// </summary>
+    public ClientesViewModel ClientesVM { get; } = new();
+
     // TODO: Añadir estos ViewModels cuando se creen las vistas
-    // public ClientesViewModel ClientesVM { get; } = new();
     // public AgendaViewModel AgendaVM { get; } = new();
     // public TrabajosViewModel TrabajosVM { get; } = new();
     // public ConfiguracionViewModel ConfiguracionVM { get; } = new();
 
-    // ══════════════════════════════════════════════════════════════
-    // NAVEGACIÓN
-    // ══════════════════════════════════════════════════════════════
-    
+    #endregion
+
+    #region Navegación
+
+    /// <summary>
+    /// Vista actualmente mostrada.
+    /// Valores: "Dashboard", "Clientes", "Agenda", "Trabajos", "Configuracion"
+    /// </summary>
     [ObservableProperty]
     private string _vistaActual = "Dashboard";
 
+    /// <summary>
+    /// Navega al Dashboard.
+    /// </summary>
     [RelayCommand]
     private void IrADashboard()
     {
         VistaActual = "Dashboard";
     }
 
+    /// <summary>
+    /// Navega a la gestión de Clientes.
+    /// </summary>
     [RelayCommand]
     private void IrAClientes()
     {
         VistaActual = "Clientes";
-        // TODO: Implementar navegación real
     }
 
+    /// <summary>
+    /// Navega a la Agenda.
+    /// </summary>
     [RelayCommand]
     private void IrAAgenda()
     {
         VistaActual = "Agenda";
-        // TODO: Implementar navegación real
+        // TODO: Implementar vista de Agenda
     }
 
+    /// <summary>
+    /// Navega a Trabajos.
+    /// </summary>
     [RelayCommand]
     private void IrATrabajos()
     {
         VistaActual = "Trabajos";
-        // TODO: Implementar navegación real
+        // TODO: Implementar vista de Trabajos
     }
 
+    /// <summary>
+    /// Navega a Configuración.
+    /// </summary>
     [RelayCommand]
     private void IrAConfiguracion()
     {
         VistaActual = "Configuracion";
-        // TODO: Implementar navegación real
+        // TODO: Implementar vista de Configuración
     }
+
+    #endregion
 }
