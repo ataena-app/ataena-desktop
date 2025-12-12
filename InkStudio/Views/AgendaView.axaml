@@ -93,11 +93,15 @@
             
             <!-- Contenido según vista -->
             <Panel Grid.Row="3">
-                <!-- Calendario (solo en vista Mes) -->
+                <!-- Calendario semanal (solo en vista Semana) -->
                 <views:CalendarView DataContext="{Binding CalendarVM}"
-                                    IsVisible="{Binding $parent[UserControl].((vm:AgendaViewModel)DataContext).MostrarCalendario}"/>
+                                    IsVisible="{Binding $parent[UserControl].((vm:AgendaViewModel)DataContext).MostrarCalendarioSemana}"/>
                 
-                <!-- Lista de citas (Día y Semana) -->
+                <!-- Calendario mensual (solo en vista Mes) -->
+                <views:CalendarMonthView DataContext="{Binding CalendarVM}"
+                                         IsVisible="{Binding $parent[UserControl].((vm:AgendaViewModel)DataContext).MostrarCalendarioMes}"/>
+                
+                <!-- Lista de citas (solo en vista Día) -->
                 <ScrollViewer IsVisible="{Binding MostrarLista}">
                     <ItemsControl ItemsSource="{Binding Citas}">
                     <ItemsControl.ItemTemplate>

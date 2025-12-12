@@ -130,16 +130,13 @@
                                             <TextBlock Text="{Binding Telefono}"/>
                                             <TextBlock Text="{Binding Email}" 
                                                        IsVisible="{Binding Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                            <TextBlock Text="{Binding Dni}" 
+                                                       IsVisible="{Binding Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                         </StackPanel>
-                                    </StackPanel>
-                                    
-                                    <!-- Fecha registro -->
-                                    <StackPanel Grid.Column="2" 
-                                                VerticalAlignment="Center"
-                                                HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding FechaRegistro, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                        <TextBlock Text="{Binding FechaNacimientoConEdad}"
                                                    FontSize="12"
-                                                   Opacity="0.5"/>
+                                                   Opacity="0.6"
+                                                   Margin="0,5,0,0"/>
                                     </StackPanel>
                                     
                                 </Grid>
@@ -204,9 +201,16 @@
                                  Text="{Binding Email}"
                                  Watermark="cliente@email.com"/>
                         
+                        <!-- DNI -->
+                        <TextBlock Text="DNI" Opacity="0.7" Margin="0,0,0,5"/>
+                        <TextBox Classes="form-field"
+                                 Text="{Binding Dni}"
+                                 Watermark="12345678A"/>
+                        
                         <!-- Fecha nacimiento -->
                         <TextBlock Text="Fecha de nacimiento" Opacity="0.7" Margin="0,0,0,5"/>
                         <DatePicker SelectedDate="{Binding FechaNacimiento}"
+                                    Classes= "form-field"
                                     Margin="0,0,0,15"
                                     HorizontalAlignment="Stretch"/>
                         

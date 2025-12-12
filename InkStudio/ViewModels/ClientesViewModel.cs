@@ -75,7 +75,10 @@ public partial class ClientesViewModel : ViewModelBase
     private string _email = string.Empty;
 
     [ObservableProperty]
-    private DateTime? _fechaNacimiento;
+    private string _dni = string.Empty;
+
+    [ObservableProperty]
+    private DateTimeOffset? _fechaNacimiento;
 
     [ObservableProperty]
     private string _alergias = string.Empty;
@@ -245,13 +248,14 @@ public partial class ClientesViewModel : ViewModelBase
             if (EsEdicion && ClienteSeleccionado != null)
             {
                 // Actualizar cliente existente
-                Log.Information("Actualizando cliente ID: {ClienteId}, Nombre: {Nombre}", 
-                    ClienteSeleccionado.Id, Nombre);
+                Log.Information("Actualizando cliente ID: {ClienteId}, Nombre: {Nombre}, FechaNacimiento: {FechaNacimiento}", 
+                    ClienteSeleccionado.Id, Nombre, FechaNacimiento);
                 ClienteSeleccionado.Nombre = Nombre.Trim();
                 ClienteSeleccionado.Apellidos = Apellidos.Trim();
                 ClienteSeleccionado.Telefono = Telefono.Trim();
                 ClienteSeleccionado.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
-                ClienteSeleccionado.FechaNacimiento = FechaNacimiento;
+                ClienteSeleccionado.Dni = string.IsNullOrWhiteSpace(Dni) ? null : Dni.Trim();
+                ClienteSeleccionado.FechaNacimiento = FechaNacimiento?.DateTime;
                 ClienteSeleccionado.Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim();
                 ClienteSeleccionado.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
                 ClienteSeleccionado.EsVip = EsVip;
@@ -267,7 +271,8 @@ public partial class ClientesViewModel : ViewModelBase
                     Apellidos = Apellidos.Trim(),
                     Telefono = Telefono.Trim(),
                     Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
-                    FechaNacimiento = FechaNacimiento,
+                    Dni = string.IsNullOrWhiteSpace(Dni) ? null : Dni.Trim(),
+                    FechaNacimiento = FechaNacimiento?.DateTime,
                     Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim(),
                     Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim(),
                     EsVip = EsVip,
@@ -355,7 +360,8 @@ public partial class ClientesViewModel : ViewModelBase
         Apellidos = string.Empty;
         Telefono = string.Empty;
         Email = string.Empty;
-        FechaNacimiento = null;
+        Dni = string.Empty;
+        FechaNacimiento = DateTimeOffset.Now.Date;
         Alergias = string.Empty;
         Notas = string.Empty;
         EsVip = false;
@@ -372,7 +378,10 @@ public partial class ClientesViewModel : ViewModelBase
         Apellidos = cliente.Apellidos;
         Telefono = cliente.Telefono;
         Email = cliente.Email ?? string.Empty;
-        FechaNacimiento = cliente.FechaNacimiento;
+        Dni = cliente.Dni ?? string.Empty;
+        FechaNacimiento = cliente.FechaNacimiento.HasValue 
+            ? new DateTimeOffset(cliente.FechaNacimiento.Value) 
+            : DateTimeOffset.Now.Date;
         Alergias = cliente.Alergias ?? string.Empty;
         Notas = cliente.Notas ?? string.Empty;
         EsVip = cliente.EsVip;

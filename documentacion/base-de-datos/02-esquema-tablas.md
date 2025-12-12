@@ -44,6 +44,7 @@
                               │ Apellidos         │
                               │ Telefono          │
                               │ Email             │
+                              │ Dni               │
                               │ FechaNacimiento   │
                               │ Alergias          │
                               │ Notas             │
@@ -105,6 +106,7 @@ Almacena los datos personales de cada cliente del estudio.
 | `Apellidos` | `string` | TEXT | ✅ | Apellidos del cliente |
 | `Telefono` | `string` | TEXT | ✅ | Teléfono principal (único) |
 | `Email` | `string?` | TEXT | ❌ | Correo electrónico |
+| `Dni` | `string?` | TEXT | ❌ | Documento Nacional de Identidad |
 | `FechaNacimiento` | `DateTime?` | TEXT | ❌ | Fecha de nacimiento |
 | `Alergias` | `string?` | TEXT | ❌ | Alergias conocidas (importante para tintas) |
 | `Notas` | `string?` | TEXT | ❌ | Notas generales sobre el cliente |
@@ -141,6 +143,7 @@ public class Cliente
     public string Apellidos { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
     public string? Email { get; set; }
+    public string? Dni { get; set; }
     public DateTime? FechaNacimiento { get; set; }
     public string? Alergias { get; set; }
     public string? Notas { get; set; }
@@ -155,9 +158,14 @@ public class Cliente
     
     // Propiedades calculadas
     public string NombreCompleto => $"{Nombre} {Apellidos}";
-    public int Edad => FechaNacimiento.HasValue 
-        ? DateTime.Today.Year - FechaNacimiento.Value.Year 
-        : 0;
+    public int? Edad => FechaNacimiento.HasValue
+        ? (int)((DateTime.Today - FechaNacimiento.Value).TotalDays / 365.25)
+        : null;
+    public string FechaNacimientoConEdad => FechaNacimiento.HasValue
+        ? Edad.HasValue
+            ? $"{FechaNacimiento.Value:dd/MM/yyyy} ({Edad} años)"
+            : FechaNacimiento.Value.ToString("dd/MM/yyyy")
+        : "No especificada";
 }
 ```
 

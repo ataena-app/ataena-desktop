@@ -9,7 +9,7 @@ using InkStudio.Models;
 namespace InkStudio.ViewModels;
 
 /// <summary>
-/// ViewModel para el control de calendario visual.
+/// ViewModel para el control de calendario visual usando el control Calendar nativo de Avalonia.
 /// Muestra un mes completo con los días y las citas marcadas.
 /// </summary>
 public partial class CalendarViewModel : ViewModelBase
@@ -17,16 +17,16 @@ public partial class CalendarViewModel : ViewModelBase
     #region Propiedades
 
     /// <summary>
-    /// Fecha del mes actual mostrado.
+    /// Fecha del mes actual mostrado (DateTime para el control Calendar nativo).
     /// </summary>
     [ObservableProperty]
-    private DateTimeOffset _mesActual = DateTimeOffset.Now.Date;
+    private DateTime _mesActual = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
     /// <summary>
-    /// Días del mes para mostrar en el calendario.
+    /// Fecha seleccionada en el calendario.
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<DiaCalendario> _dias = new();
+    private DateTime? _fechaSeleccionada;
 
     /// <summary>
     /// Lista de citas para el mes actual.
@@ -35,10 +35,9 @@ public partial class CalendarViewModel : ViewModelBase
     private ObservableCollection<Cita> _citas = new();
 
     /// <summary>
-    /// Día seleccionado en el calendario.
+    /// Diccionario de fechas con número de citas para personalización visual.
     /// </summary>
-    [ObservableProperty]
-    private DiaCalendario? _diaSeleccionado;
+    public Dictionary<DateTime, int> CitasPorFecha { get; private set; } = new();
 
     #endregion
 
@@ -51,7 +50,7 @@ public partial class CalendarViewModel : ViewModelBase
     private void MesAnterior()
     {
         MesActual = MesActual.AddMonths(-1);
-        GenerarDiasDelMes();
+        ActualizarCitasPorFecha();
     }
 
     /// <summary>
@@ -61,7 +60,7 @@ public partial class CalendarViewModel : ViewModelBase
     private void MesSiguiente()
     {
         MesActual = MesActual.AddMonths(1);
-        GenerarDiasDelMes();
+        ActualizarCitasPorFecha();
     }
 
     /// <summary>
@@ -70,10 +69,8 @@ public partial class CalendarViewModel : ViewModelBase
     [RelayCommand]
     private void IrAMesActual()
     {
-        MesActual = DateTimeOffset.Now.Date;
-        var primerDia = new DateTimeOffset(MesActual.Year, MesActual.Month, 1, 0, 0, 0, MesActual.Offset);
-        MesActual = primerDia;
-        GenerarDiasDelMes();
+        MesActual = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        ActualizarCitasPorFecha();
     }
 
     #endregion
@@ -87,10 +84,25 @@ public partial class CalendarViewModel : ViewModelBase
     /// <param name="citas">Lista de citas para el mes.</param>
     public void CargarMes(DateTimeOffset mes, IEnumerable<Cita> citas)
     {
-        MesActual = new DateTimeOffset(mes.Year, mes.Month, 1, 0, 0, 0, mes.Offset);
+        MesActual = new DateTime(mes.Year, mes.Month, 1);
         Citas = new ObservableCollection<Cita>(citas);
+        ActualizarCitasPorFecha();
+    }
 
-        GenerarDiasDelMes();
+    /// <summary>
+    /// Obtiene el número de citas para una fecha específica.
+    /// </summary>
+    public int ObtenerNumeroCitas(DateTime fecha)
+    {
+        return CitasPorFecha.TryGetValue(fecha.Date, out var count) ? count : 0;
+    }
+
+    /// <summary>
+    /// Indica si una fecha tiene citas.
+    /// </summary>
+    public bool TieneCitas(DateTime fecha)
+    {
+        return CitasPorFecha.ContainsKey(fecha.Date);
     }
 
     #endregion
@@ -98,133 +110,34 @@ public partial class CalendarViewModel : ViewModelBase
     #region Métodos Privados
 
     /// <summary>
-    /// Genera los días del mes para mostrar en el calendario.
+    /// Actualiza el diccionario de citas por fecha.
     /// </summary>
-    private void GenerarDiasDelMes()
+    private void ActualizarCitasPorFecha()
     {
-        Dias.Clear();
-
-        var primerDia = new DateTime(MesActual.Year, MesActual.Month, 1);
-        var ultimoDia = primerDia.AddMonths(1).AddDays(-1);
-
-        // Días de la semana (L, M, X, J, V, S, D)
-        var diasSemana = new[] { "L", "M", "X", "J", "V", "S", "D" };
-
-        // Añadir encabezados de días de la semana
-        for (int i = 0; i < 7; i++)
+        CitasPorFecha.Clear();
+        foreach (var cita in Citas)
         {
-            Dias.Add(new DiaCalendario
+            var fecha = cita.Fecha.Date;
+            if (CitasPorFecha.ContainsKey(fecha))
             {
-                EsEncabezado = true,
-                Texto = diasSemana[i],
-                EsDomingo = i == 6
-            });
-        }
-
-        // Calcular el primer día de la semana del mes (0 = Domingo, 1 = Lunes, etc.)
-        // Convertir a Lunes = 0
-        var primerDiaSemana = ((int)primerDia.DayOfWeek + 6) % 7;
-
-        // Añadir días vacíos antes del primer día del mes
-        for (int i = 0; i < primerDiaSemana; i++)
-        {
-            Dias.Add(new DiaCalendario { EsVacio = true });
-        }
-
-        // Añadir todos los días del mes
-        for (int dia = 1; dia <= ultimoDia.Day; dia++)
-        {
-            var fecha = new DateTime(MesActual.Year, MesActual.Month, dia);
-            var fechaOffset = new DateTimeOffset(fecha, MesActual.Offset);
-            var esHoy = fecha.Date == DateTime.Today;
-            var esDomingo = fecha.DayOfWeek == DayOfWeek.Sunday;
-
-            // Contar citas del día
-            var citasDelDia = Citas.Where(c => c.Fecha.Date == fecha.Date).ToList();
-            var tieneCitas = citasDelDia.Any();
-
-            Dias.Add(new DiaCalendario
+                CitasPorFecha[fecha]++;
+            }
+            else
             {
-                Fecha = fechaOffset,
-                NumeroDia = dia,
-                EsHoy = esHoy,
-                EsDomingo = esDomingo,
-                TieneCitas = tieneCitas,
-                NumeroCitas = citasDelDia.Count,
-                Citas = citasDelDia
-            });
+                CitasPorFecha[fecha] = 1;
+            }
         }
+        OnPropertyChanged(nameof(CitasPorFecha));
+    }
 
-        // Añadir días vacíos al final para completar la cuadrícula (6 filas = 42 días)
-        var diasTotales = Dias.Count(d => !d.EsEncabezado && !d.EsVacio);
-        var diasVaciosNecesarios = 42 - (primerDiaSemana + diasTotales);
-        for (int i = 0; i < diasVaciosNecesarios; i++)
-        {
-            Dias.Add(new DiaCalendario { EsVacio = true });
-        }
+    /// <summary>
+    /// Se ejecuta cuando cambian las citas.
+    /// </summary>
+    partial void OnCitasChanged(ObservableCollection<Cita> value)
+    {
+        ActualizarCitasPorFecha();
     }
 
     #endregion
-}
-
-/// <summary>
-/// Representa un día en el calendario.
-/// </summary>
-public class DiaCalendario
-{
-    /// <summary>
-    /// Indica si es un encabezado de día de la semana.
-    /// </summary>
-    public bool EsEncabezado { get; set; }
-
-    /// <summary>
-    /// Indica si es un día vacío (fuera del mes).
-    /// </summary>
-    public bool EsVacio { get; set; }
-
-    /// <summary>
-    /// Indica si es un día del mes (no encabezado ni vacío).
-    /// </summary>
-    public bool EsDiaDelMes => !EsEncabezado && !EsVacio;
-
-    /// <summary>
-    /// Texto del encabezado (L, M, X, etc.).
-    /// </summary>
-    public string? Texto { get; set; }
-
-    /// <summary>
-    /// Fecha del día.
-    /// </summary>
-    public DateTimeOffset? Fecha { get; set; }
-
-    /// <summary>
-    /// Número del día.
-    /// </summary>
-    public int NumeroDia { get; set; }
-
-    /// <summary>
-    /// Indica si es el día de hoy.
-    /// </summary>
-    public bool EsHoy { get; set; }
-
-    /// <summary>
-    /// Indica si es domingo.
-    /// </summary>
-    public bool EsDomingo { get; set; }
-
-    /// <summary>
-    /// Indica si tiene citas.
-    /// </summary>
-    public bool TieneCitas { get; set; }
-
-    /// <summary>
-    /// Número de citas del día.
-    /// </summary>
-    public int NumeroCitas { get; set; }
-
-    /// <summary>
-    /// Lista de citas del día.
-    /// </summary>
-    public List<Cita> Citas { get; set; } = new();
 }
 

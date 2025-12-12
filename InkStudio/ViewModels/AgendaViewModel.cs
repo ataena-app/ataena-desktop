@@ -38,14 +38,15 @@ public partial class AgendaViewModel : ViewModelBase
     /// Modo de vista: Día, Semana o Mes.
     /// </summary>
     [ObservableProperty]
-    private VistaAgenda _vistaActual = VistaAgenda.Dia;
+    private VistaAgenda _vistaActual = VistaAgenda.Semana;
 
     /// <summary>
     /// Se ejecuta cuando cambia VistaActual.
     /// </summary>
     partial void OnVistaActualChanged(VistaAgenda value)
     {
-        OnPropertyChanged(nameof(MostrarCalendario));
+        OnPropertyChanged(nameof(MostrarCalendarioMes));
+        OnPropertyChanged(nameof(MostrarCalendarioSemana));
         OnPropertyChanged(nameof(MostrarLista));
     }
 
@@ -55,14 +56,19 @@ public partial class AgendaViewModel : ViewModelBase
     public CalendarViewModel CalendarVM { get; } = new();
 
     /// <summary>
-    /// Indica si mostrar el calendario (vista Mes).
+    /// Indica si mostrar el calendario mensual (vista Mes).
     /// </summary>
-    public bool MostrarCalendario => VistaActual == VistaAgenda.Mes;
+    public bool MostrarCalendarioMes => VistaActual == VistaAgenda.Mes;
 
     /// <summary>
-    /// Indica si mostrar la lista de citas (vista Día o Semana).
+    /// Indica si mostrar el calendario semanal (vista Semana).
     /// </summary>
-    public bool MostrarLista => VistaActual == VistaAgenda.Dia || VistaActual == VistaAgenda.Semana;
+    public bool MostrarCalendarioSemana => VistaActual == VistaAgenda.Semana;
+
+    /// <summary>
+    /// Indica si mostrar la lista de citas (vista Día).
+    /// </summary>
+    public bool MostrarLista => VistaActual == VistaAgenda.Dia;
 
     /// <summary>
     /// Lista de citas para el período seleccionado.
@@ -182,8 +188,9 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     public AgendaViewModel()
     {
-        // Cargar clientes al inicializar
+        // Cargar clientes y citas al inicializar
         _ = CargarClientes();
+        _ = CargarCitas();
     }
 
     #endregion
@@ -318,11 +325,17 @@ public partial class AgendaViewModel : ViewModelBase
             Citas = new ObservableCollection<Cita>(listaOrdenada);
             TotalCitas = listaOrdenada.Count;
 
-            // Actualizar calendario visual si estamos en vista Mes
-            if (VistaActual == VistaAgenda.Mes)
+            // Actualizar calendario visual si estamos en vista Mes o Semana
+            if (VistaActual == VistaAgenda.Mes || VistaActual == VistaAgenda.Semana)
             {
                 var fechaCalendario = FechaSeleccionada ?? DateTimeOffset.Now.Date;
                 CalendarVM.CargarMes(fechaCalendario, listaOrdenada);
+                
+                // Sincronizar la fecha seleccionada con el calendario
+                if (FechaSeleccionada.HasValue)
+                {
+                    CalendarVM.FechaSeleccionada = FechaSeleccionada.Value.DateTime;
+                }
             }
 
             var fechaLog = FechaSeleccionada ?? DateTimeOffset.Now.Date;

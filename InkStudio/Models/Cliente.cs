@@ -46,6 +46,11 @@ public class Cliente
     public string? Email { get; set; }
 
     /// <summary>
+    /// Documento Nacional de Identidad (opcional).
+    /// </summary>
+    public string? Dni { get; set; }
+
+    /// <summary>
     /// Fecha de nacimiento (opcional).
     /// Importante para verificar mayoría de edad.
     /// </summary>
@@ -121,6 +126,16 @@ public class Cliente
     public int? Edad => FechaNacimiento.HasValue
         ? (int)((DateTime.Today - FechaNacimiento.Value).TotalDays / 365.25)
         : null;
+
+    /// <summary>
+    /// Fecha de nacimiento formateada con edad entre paréntesis.
+    /// Ejemplo: "15/03/1990 (34 años)" o "15/03/1990" si no hay edad.
+    /// </summary>
+    public string FechaNacimientoConEdad => FechaNacimiento.HasValue
+        ? Edad.HasValue
+            ? $"{FechaNacimiento.Value:dd/MM/yyyy} ({Edad} años)"
+            : FechaNacimiento.Value.ToString("dd/MM/yyyy")
+        : "No especificada";
 
     #endregion
 }

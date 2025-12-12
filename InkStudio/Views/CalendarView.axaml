@@ -1,128 +1,42 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:InkStudio.ViewModels"
+             xmlns:models="using:InkStudio.Models"
+             xmlns:si="clr-namespace:SatialInterfaces.Controls.Calendar;assembly=CalendarControl"
              x:Class="InkStudio.Views.CalendarView"
              x:DataType="vm:CalendarViewModel">
 
-    <UserControl.Styles>
-        <!-- Día del calendario -->
-        <Style Selector="Border.dia-calendario">
-            <Setter Property="Background" Value="#1e1e2e"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="8"/>
-            <Setter Property="Margin" Value="2"/>
-            <Setter Property="MinHeight" Value="80"/>
-        </Style>
-        
-        <Style Selector="Border.dia-calendario:pointerover">
-            <Setter Property="Background" Value="#2a2a3e"/>
-        </Style>
-        
-        <Style Selector="Border.dia-hoy">
-            <Setter Property="Background" Value="#3a3a5e"/>
-            <Setter Property="BorderBrush" Value="#4CAF50"/>
-            <Setter Property="BorderThickness" Value="2"/>
-        </Style>
-        
-        <Style Selector="Border.dia-vacio">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        
-        <Style Selector="Border.dia-encabezado">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="8"/>
-        </Style>
-        
-        <!-- Badge de citas -->
-        <Style Selector="Border.badge-citas">
-            <Setter Property="Background" Value="#4CAF50"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="MinWidth" Value="20"/>
-        </Style>
-    </UserControl.Styles>
-
-    <Grid RowDefinitions="Auto,*">
-        
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- CABECERA: Navegación del mes                                    -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,20">
+    <Grid RowDefinitions="Auto,*" Margin="10">
+        <!-- Controles de navegación -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
             <Button Grid.Column="0" 
-                    Content="◀" 
+                    Content="◀ Mes Anterior" 
                     Command="{Binding MesAnteriorCommand}"
-                    Width="40"
-                    Margin="0,0,10,0"/>
+                    HorizontalAlignment="Left"/>
             
-            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                <TextBlock Text="{Binding MesActual, StringFormat='{}{0:MMMM yyyy}'}"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
+            <Button Grid.Column="1" 
+                    Content="Hoy" 
+                    Command="{Binding IrAMesActualCommand}"
+                    HorizontalAlignment="Center"
+                    Margin="10,0"/>
             
             <Button Grid.Column="2" 
-                    Content="▶" 
+                    Content="Mes Siguiente ▶" 
                     Command="{Binding MesSiguienteCommand}"
-                    Width="40"
-                    Margin="10,0,0,0"/>
+                    HorizontalAlignment="Right"/>
         </Grid>
-        
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- CALENDARIO: Grid de 7x6 días                                    -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <ItemsControl Grid.Row="1" ItemsSource="{Binding Dias}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Rows="6" Columns="7"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Panel>
-                        <!-- Encabezado de día de la semana -->
-                        <Border Classes="dia-encabezado"
-                                IsVisible="{Binding EsEncabezado}">
-                            <TextBlock Text="{Binding Texto}"
-                                       FontWeight="Bold"
-                                       Opacity="0.7"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
-                        </Border>
-                        
-                        <!-- Día vacío -->
-                        <Border Classes="dia-vacio"
-                                IsVisible="{Binding EsVacio}"/>
-                        
-                        <!-- Día del mes -->
-                        <Border Classes="dia-calendario"
-                                IsVisible="{Binding EsDiaDelMes}">
-                            <StackPanel>
-                                <!-- Número del día -->
-                                <TextBlock Text="{Binding NumeroDia}"
-                                           FontSize="16"
-                                           FontWeight="Bold"
-                                           Foreground="#e0e0e0"/>
-                                
-                                <!-- Badge de citas -->
-                                <Border Classes="badge-citas"
-                                        IsVisible="{Binding TieneCitas}"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,5,0,0">
-                                    <TextBlock Text="{Binding NumeroCitas}"
-                                               FontSize="10"
-                                               FontWeight="Bold"
-                                               Foreground="White"
-                                               HorizontalAlignment="Center"/>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-                    </Panel>
+
+        <!-- CalendarControl con ItemTemplate para mostrar las citas -->
+        <si:CalendarControl Grid.Row="1"
+                           Items="{Binding Citas}">
+            <si:CalendarControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Cita">
+                    <si:AppointmentControl Begin="{Binding FechaHoraInicio}" 
+                                          End="{Binding FechaHoraFin}" 
+                                          Text="{Binding Descripcion, TargetNullValue='Sin descripción'}" />
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        
+            </si:CalendarControl.ItemTemplate>
+        </si:CalendarControl>
     </Grid>
 
 </UserControl>

@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:InkStudio.ViewModels"
+             x:Class="InkStudio.Views.CalendarMonthView"
+             x:DataType="vm:CalendarViewModel">
+
+    <Grid RowDefinitions="Auto,*" Margin="10">
+        <!-- Controles de navegación -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
+            <Button Grid.Column="0" 
+                    Content="◀ Mes Anterior" 
+                    Command="{Binding MesAnteriorCommand}"
+                    HorizontalAlignment="Left"/>
+            
+            <TextBlock Grid.Column="1" 
+                       Text="{Binding MesActual, StringFormat='{}{0:MMMM yyyy}'}"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+            
+            <Button Grid.Column="2" 
+                    Content="Mes Siguiente ▶" 
+                    Command="{Binding MesSiguienteCommand}"
+                    HorizontalAlignment="Right"/>
+        </Grid>
+
+        <!-- Calendar nativo de Avalonia para vista mensual -->
+        <Calendar Grid.Row="1"
+                  DisplayDate="{Binding MesActual}"
+                  SelectedDate="{Binding FechaSeleccionada}"
+                  SelectionMode="SingleDate"/>
+    </Grid>
+
+</UserControl>
+
