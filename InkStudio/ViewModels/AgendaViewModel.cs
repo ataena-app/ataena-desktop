@@ -113,13 +113,45 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     partial void OnClienteSeleccionadoChanged(Cliente? value)
     {
+        OnPropertyChanged(nameof(TieneClienteSeleccionado));
+        
         if (value != null)
         {
-            _ = VerificarConsentimientos(value.Id);
+            _ = CargarTrabajosDelCliente(value.Id);
         }
         else
         {
-            TieneConsentimientoRGPD = false;
+            TrabajosDelCliente.Clear();
+            TrabajoSeleccionado = null;
+            TieneConsentimientoTrabajo = false;
+            MensajeConsentimiento = string.Empty;
+        }
+        OnPropertyChanged(nameof(ColorFondoConsentimiento));
+    }
+
+    /// <summary>
+    /// Trabajo seleccionado para la cita.
+    /// </summary>
+    [ObservableProperty]
+    private Trabajo? _trabajoSeleccionado;
+
+    /// <summary>
+    /// Indica si hay un cliente seleccionado (para mostrar el selector de trabajo).
+    /// </summary>
+    public bool TieneClienteSeleccionado => ClienteSeleccionado != null;
+
+    /// <summary>
+    /// Se ejecuta cuando cambia TrabajoSeleccionado.
+    /// </summary>
+    partial void OnTrabajoSeleccionadoChanged(Trabajo? value)
+    {
+        if (value != null)
+        {
+            _ = VerificarConsentimientoTrabajo(value.Id);
+        }
+        else
+        {
+            TieneConsentimientoTrabajo = false;
             MensajeConsentimiento = string.Empty;
         }
         OnPropertyChanged(nameof(ColorFondoConsentimiento));
@@ -180,22 +212,23 @@ public partial class AgendaViewModel : ViewModelBase
     #region Propiedades - Consentimientos
 
     /// <summary>
-    /// Indica si el cliente seleccionado tiene consentimiento RGPD firmado.
+    /// Indica si el cliente seleccionado tiene consentimiento de Trabajo firmado.
+    /// Este consentimiento es necesario para crear citas/trabajos.
     /// </summary>
     [ObservableProperty]
-    private bool _tieneConsentimientoRGPD = false;
+    private bool _tieneConsentimientoTrabajo = false;
 
     /// <summary>
-    /// Mensaje sobre el estado de los consentimientos del cliente.
+    /// Mensaje sobre el estado del consentimiento de trabajo del cliente.
     /// </summary>
     [ObservableProperty]
     private string _mensajeConsentimiento = string.Empty;
 
     /// <summary>
     /// Color de fondo para el indicador de consentimiento.
-    /// Verde si tiene RGPD, rojo si no.
+    /// Verde si tiene consentimiento de trabajo, rojo si no.
     /// </summary>
-    public Avalonia.Media.SolidColorBrush ColorFondoConsentimiento => TieneConsentimientoRGPD 
+    public Avalonia.Media.SolidColorBrush ColorFondoConsentimiento => TieneConsentimientoTrabajo 
         ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#2d5a2d"))
         : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#5a2d2d"));
 
@@ -208,6 +241,12 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<Cliente> _clientes = new();
+
+    /// <summary>
+    /// Lista de trabajos del cliente seleccionado.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<Trabajo> _trabajosDelCliente = new();
 
     /// <summary>
     /// Texto de búsqueda para filtrar clientes.
@@ -367,6 +406,7 @@ public partial class AgendaViewModel : ViewModelBase
 
             var query = _db.Citas
                 .Include(c => c.Cliente)
+                .Include(c => c.Trabajo)
                 .Where(c => c.Fecha >= inicio && c.Fecha < fin);
 
             // Aplicar filtro de estado si existe
@@ -493,6 +533,12 @@ public partial class AgendaViewModel : ViewModelBase
                 return;
             }
 
+            if (TrabajoSeleccionado == null)
+            {
+                MensajeError = "Debes seleccionar un trabajo";
+                return;
+            }
+
             if (!FechaCita.HasValue)
             {
                 MensajeError = "Debes seleccionar una fecha";
@@ -590,7 +636,14 @@ public partial class AgendaViewModel : ViewModelBase
                 CitaSeleccionada.Descripcion = string.IsNullOrWhiteSpace(Descripcion) ? null : Descripcion.Trim();
                 CitaSeleccionada.Estado = EstadoCita;
                 CitaSeleccionada.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
+                
+                // Actualizar vinculación del trabajo
+                if (TrabajoSeleccionado != null)
+                {
+                    TrabajoSeleccionado.CitaId = CitaSeleccionada.Id;
+                }
 
+                await _db.SaveChangesAsync();
                 Log.Information("Cita {CitaId} actualizada", CitaSeleccionada.Id);
             }
             else
@@ -610,10 +663,18 @@ public partial class AgendaViewModel : ViewModelBase
                 };
 
                 _db.Citas.Add(nuevaCita);
-                Log.Information("Nueva cita creada para cliente {ClienteId}", ClienteSeleccionado.Id);
+                await _db.SaveChangesAsync(); // Guardar primero para obtener el ID de la cita
+                
+                // Vincular el trabajo a la cita
+                if (TrabajoSeleccionado != null)
+                {
+                    TrabajoSeleccionado.CitaId = nuevaCita.Id;
+                    await _db.SaveChangesAsync();
+                }
+                
+                Log.Information("Nueva cita creada para cliente {ClienteId} vinculada a trabajo {TrabajoId}", 
+                    ClienteSeleccionado.Id, TrabajoSeleccionado?.Id);
             }
-
-            await _db.SaveChangesAsync();
             
             MostrarFormulario = false;
             await CargarCitas();
@@ -694,6 +755,23 @@ public partial class AgendaViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Comando para crear un nuevo trabajo.
+    /// </summary>
+    [RelayCommand]
+    private void CrearTrabajoNuevo()
+    {
+        if (ClienteSeleccionado == null)
+        {
+            MensajeError = "Primero debes seleccionar un cliente";
+            return;
+        }
+        
+        // TODO: Abrir modal para crear trabajo nuevo
+        // Por ahora, mostrar mensaje informativo
+        MensajeError = "Funcionalidad de crear trabajo nuevo próximamente. Por favor, crea el trabajo desde la sección de Trabajos.";
+    }
+
     #endregion
 
     #region Métodos Privados
@@ -704,6 +782,8 @@ public partial class AgendaViewModel : ViewModelBase
     private void LimpiarFormulario()
     {
         ClienteSeleccionado = null;
+        TrabajoSeleccionado = null;
+        TrabajosDelCliente.Clear();
         FechaCita = DateTimeOffset.Now.Date;
         HoraInicio = new TimeSpan(10, 0, 0);
         HoraInicioString = "10:00";
@@ -714,7 +794,7 @@ public partial class AgendaViewModel : ViewModelBase
         EstadoCita = EstadoCita.Pendiente;
         Notas = string.Empty;
         MensajeError = string.Empty;
-        TieneConsentimientoRGPD = false;
+        TieneConsentimientoTrabajo = false;
         MensajeConsentimiento = string.Empty;
     }
 
@@ -722,9 +802,22 @@ public partial class AgendaViewModel : ViewModelBase
     /// Carga los datos de una cita en el formulario.
     /// </summary>
     /// <param name="cita">Cita a cargar.</param>
-    private void CargarCitaEnFormulario(Cita cita)
+    private async void CargarCitaEnFormulario(Cita cita)
     {
         ClienteSeleccionado = cita.Cliente;
+        
+        // Cargar trabajos del cliente
+        if (cita.Cliente != null)
+        {
+            await CargarTrabajosDelCliente(cita.Cliente.Id);
+        }
+        
+        // Cargar trabajo asociado a la cita (si existe)
+        if (cita.Trabajo != null)
+        {
+            TrabajoSeleccionado = cita.Trabajo;
+        }
+        
         FechaCita = new DateTimeOffset(cita.Fecha);
         HoraInicio = cita.HoraInicio;
         HoraInicioString = cita.HoraInicio.ToString(@"hh\:mm");
@@ -763,37 +856,63 @@ public partial class AgendaViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Verifica los consentimientos del cliente seleccionado.
+    /// Carga los trabajos del cliente seleccionado.
     /// </summary>
-    /// <param name="clienteId">ID del cliente a verificar.</param>
-    private async Task VerificarConsentimientos(int clienteId)
+    private async Task CargarTrabajosDelCliente(int clienteId)
     {
         try
         {
-            var consentimientos = await _db.Consentimientos
-                .Where(c => c.ClienteId == clienteId && c.Firmado)
+            var trabajos = await _db.Trabajos
+                .Where(t => t.ClienteId == clienteId)
+                .OrderByDescending(t => t.Fecha)
                 .ToListAsync();
-
-            TieneConsentimientoRGPD = consentimientos
-                .Any(c => c.Tipo == TipoConsentimiento.RGPD);
-
-            if (!TieneConsentimientoRGPD)
+            
+            TrabajosDelCliente.Clear();
+            foreach (var trabajo in trabajos)
             {
-                MensajeConsentimiento = "⚠️ Cliente sin consentimiento RGPD firmado";
+                TrabajosDelCliente.Add(trabajo);
             }
-            else
-            {
-                MensajeConsentimiento = "✅ Consentimiento RGPD verificado";
-            }
-
-            OnPropertyChanged(nameof(ColorFondoConsentimiento));
-            Log.Debug("Consentimientos verificados para cliente {ClienteId}: RGPD={TieneRGPD}",
-                clienteId, TieneConsentimientoRGPD);
+            
+            Log.Debug("Trabajos cargados para cliente {ClienteId}: {Count}", clienteId, trabajos.Count);
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error al verificar consentimientos para cliente {ClienteId}", clienteId);
-            MensajeConsentimiento = "⚠️ Error al verificar consentimientos";
+            Log.Error(ex, "Error al cargar trabajos para cliente {ClienteId}", clienteId);
+        }
+    }
+
+    /// <summary>
+    /// Verifica el consentimiento del trabajo seleccionado.
+    /// </summary>
+    /// <param name="trabajoId">ID del trabajo a verificar.</param>
+    private async Task VerificarConsentimientoTrabajo(int trabajoId)
+    {
+        try
+        {
+            var consentimiento = await _db.Consentimientos
+                .FirstOrDefaultAsync(c => c.TrabajoId == trabajoId && 
+                                         c.Tipo == TipoConsentimiento.Trabajo && 
+                                         c.Firmado);
+
+            TieneConsentimientoTrabajo = consentimiento != null;
+            
+            if (!TieneConsentimientoTrabajo)
+            {
+                MensajeConsentimiento = "⚠️ Este trabajo no tiene consentimiento firmado";
+            }
+            else
+            {
+                MensajeConsentimiento = "✅ Consentimiento de Trabajo verificado";
+            }
+            
+            OnPropertyChanged(nameof(ColorFondoConsentimiento));
+            Log.Debug("Consentimiento de trabajo verificado para trabajo {TrabajoId}: TieneConsentimiento={TieneConsentimiento}",
+                trabajoId, TieneConsentimientoTrabajo);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al verificar consentimiento del trabajo {TrabajoId}", trabajoId);
+            MensajeConsentimiento = "⚠️ Error al verificar consentimiento";
         }
     }
 

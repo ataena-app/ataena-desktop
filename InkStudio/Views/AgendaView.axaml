@@ -289,6 +289,40 @@
                                 </ComboBox>
                             </StackPanel>
                             
+                            <!-- Trabajo -->
+                            <StackPanel Spacing="8" IsVisible="{Binding TieneClienteSeleccionado}">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <TextBlock Grid.Column="0"
+                                               Text="Trabajo *" 
+                                               Opacity="0.8" 
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="#d0d0d0"/>
+                                    <Button Grid.Column="1"
+                                            Content="➕ Nuevo Trabajo"
+                                            Classes="btn-primary"
+                                            FontSize="11"
+                                            Padding="10,6"
+                                            Height="28"
+                                            Command="{Binding CrearTrabajoNuevoCommand}"/>
+                                </Grid>
+                                <ComboBox ItemsSource="{Binding TrabajosDelCliente}"
+                                          SelectedItem="{Binding TrabajoSeleccionado}"
+                                          Height="40">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <Run Text="{Binding IconoTipo}"/>
+                                                <Run Text=" "/>
+                                                <Run Text="{Binding Descripcion, TargetNullValue='Sin descripción'}"/>
+                                                <Run Text=" - "/>
+                                                <Run Text="{Binding ZonaCuerpo, TargetNullValue='Sin zona'}"/>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            
                             <!-- Indicador de consentimiento -->
                             <Border IsVisible="{Binding MensajeConsentimiento, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                     Background="{Binding ColorFondoConsentimiento}"
