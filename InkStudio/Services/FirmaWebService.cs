@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -32,6 +33,7 @@ public class FirmaWebService : IDisposable
 
     private const int PuertoPorDefecto = 8080;
     private const int TimeoutTokenMinutos = 10; // Los tokens expiran después de 10 minutos
+    private static bool _firewallConfigurado = false; // Flag para evitar configurar múltiples veces
 
     /// <summary>
     /// Evento que se dispara cuando se recibe una firma.
@@ -119,6 +121,104 @@ public class FirmaWebService : IDisposable
     }
 
     /// <summary>
+    /// Configura automáticamente el firewall de Windows para permitir conexiones en el puerto especificado.
+    /// </summary>
+    /// <param name="puerto">Puerto a abrir en el firewall.</param>
+    private static void ConfigurarFirewall(int puerto)
+    {
+        try
+        {
+            // Verificar si la regla ya existe
+            var nombreRegla = $"InkStudio_HTTP_Puerto_{puerto}";
+            var procesoVerificar = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = $"advfirewall firewall show rule name=\"{nombreRegla}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            procesoVerificar.Start();
+            var salida = procesoVerificar.StandardOutput.ReadToEnd();
+            procesoVerificar.WaitForExit();
+
+            // Si la regla ya existe, no hacer nada
+            if (salida.Contains(nombreRegla) && salida.Contains("Enabled:                              Yes"))
+            {
+                Log.Information("Regla de firewall ya existe y está habilitada para el puerto {Puerto}", puerto);
+                return;
+            }
+
+            // Crear la regla del firewall
+            Log.Information("Configurando firewall de Windows para permitir conexiones en el puerto {Puerto}...", puerto);
+            
+            var proceso = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = $"advfirewall firewall add rule name=\"{nombreRegla}\" dir=in action=allow protocol=TCP localport={puerto}",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    Verb = "runas" // Ejecutar como administrador si es posible
+                }
+            };
+
+            try
+            {
+                proceso.Start();
+                var output = proceso.StandardOutput.ReadToEnd();
+                var error = proceso.StandardError.ReadToEnd();
+                proceso.WaitForExit();
+
+                if (proceso.ExitCode == 0)
+                {
+                    Log.Information("✅ Regla de firewall creada exitosamente para el puerto {Puerto}", puerto);
+                }
+                else
+                {
+                    // Si falla por permisos, intentar sin runas (puede que ya tenga permisos)
+                    Log.Warning("No se pudo crear la regla de firewall con permisos elevados. Intentando sin elevación...");
+                    
+                    proceso.StartInfo.Verb = null;
+                    proceso.Start();
+                    output = proceso.StandardOutput.ReadToEnd();
+                    error = proceso.StandardError.ReadToEnd();
+                    proceso.WaitForExit();
+
+                    if (proceso.ExitCode == 0)
+                    {
+                        Log.Information("✅ Regla de firewall creada exitosamente para el puerto {Puerto}", puerto);
+                    }
+                    else
+                    {
+                        Log.Warning("⚠️ No se pudo crear la regla de firewall automáticamente. Código: {Codigo}, Error: {Error}. " +
+                                   "El usuario puede necesitar ejecutar la aplicación como administrador o configurar el firewall manualmente.",
+                                   proceso.ExitCode, error);
+                    }
+                }
+            }
+            catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                // Usuario canceló el UAC
+                Log.Warning("⚠️ Se canceló la elevación de permisos. El firewall puede necesitar configuración manual.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "⚠️ Error al configurar el firewall automáticamente. " +
+                          "El usuario puede necesitar configurar el firewall manualmente para permitir conexiones en el puerto {Puerto}.", puerto);
+        }
+    }
+
+    /// <summary>
     /// Inicia el servidor HTTP local.
     /// </summary>
     /// <param name="puerto">Puerto en el que escuchar (por defecto 8080).</param>
@@ -145,6 +245,13 @@ public class FirmaWebService : IDisposable
 
                 Puerto = puerto;
                 UrlBase = $"http://{IpLocal}:{Puerto}";
+
+                // Configurar firewall automáticamente si es necesario
+                if (!_firewallConfigurado)
+                {
+                    ConfigurarFirewall(puerto);
+                    _firewallConfigurado = true;
+                }
 
                 // Crear listener
                 _listener = new HttpListener();
