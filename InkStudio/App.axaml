@@ -5,11 +5,52 @@
              x:Class="InkStudio.App"
              RequestedThemeVariant="Dark">
 
-    <!-- Recursos globales (conversores, etc.) -->
+    <!-- Recursos globales (conversores, colores) -->
     <Application.Resources>
+        <!-- Conversores -->
         <converters:EqualConverter x:Key="EqualConverter"/>
         <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
         <converters:EstadoCitaToColorConverter x:Key="EstadoCitaToColorConverter"/>
+
+        <!-- Paleta base oscura moderna (morado / naranja) -->
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#020617"/>
+        <SolidColorBrush x:Key="AppSurfaceBrush" Color="#020617"/>
+        <SolidColorBrush x:Key="AppSurfaceAltBrush" Color="#020617"/>
+        <SolidColorBrush x:Key="AppBorderBrush" Color="#1f2937"/>
+
+        <!-- Acentos morado/naranja -->
+        <SolidColorBrush x:Key="AppAccentBrush" Color="#a855f7"/> <!-- morado -->
+        <SolidColorBrush x:Key="AppAccentSoftBrush" Color="#f97316"/> <!-- naranja -->
+        <SolidColorBrush x:Key="AppTextPrimaryBrush" Color="#e5e7eb"/>
+        <SolidColorBrush x:Key="AppTextSecondaryBrush" Color="#9ca3af"/>
+        <SolidColorBrush x:Key="AppErrorBrush" Color="#ef4444"/>
+
+        <!-- Degradado principal morado/naranja -->
+        <LinearGradientBrush x:Key="AppAccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#a855f7" Offset="0.0"/>
+            <GradientStop Color="#f97316" Offset="1.0"/>
+        </LinearGradientBrush>
+
+        <!-- Glow amplio y difuminado para modales (radial con degradado morado→naranja) -->
+        <RadialGradientBrush x:Key="AppModalGlowBrush"
+                             Center="0.5,0.5"
+                             GradientOrigin="0.5,0.5"
+                             Radius="1.2">
+            <!-- Centro transparente (donde va el modal) -->
+            <GradientStop Color="#00000000" Offset="0.0"/>
+            <!-- Empieza transparente pero cerca del borde -->
+            <GradientStop Color="#00000000" Offset="0.6"/>
+            <!-- Empieza morado visible -->
+            <GradientStop Color="#50a855f7" Offset="0.75"/>
+            <!-- Morado más intenso -->
+            <GradientStop Color="#80a855f7" Offset="0.85"/>
+            <!-- Transición a naranja -->
+            <GradientStop Color="#70f97316" Offset="0.92"/>
+            <!-- Naranja en los bordes -->
+            <GradientStop Color="#50f97316" Offset="0.97"/>
+            <!-- Exterior transparente para difuminar -->
+            <GradientStop Color="#00000000" Offset="1.0"/>
+        </RadialGradientBrush>
     </Application.Resources>
 
     <Application.DataTemplates>
@@ -19,6 +60,42 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://CalendarControl/Themes/Default.axaml" />
+
+        <!-- Estilos globales de controles básicos -->
+        <Style Selector="ComboBox">
+            <Setter Property="MinHeight" Value="44"/>
+            <Setter Property="MinWidth" Value="220"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceAltBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
+        </Style>
+
+        <Style Selector="ComboBox:pointerover">
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+
+        <Style Selector="ComboBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+
+        <!-- Scrollbars modernos y discretos -->
+        <Style Selector="ScrollBar">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="6"/>
+        </Style>
+
+        <Style Selector="ScrollBar /template/ Thumb">
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="Background" Value="#64748b"/>
+        </Style>
+
+        <Style Selector="ScrollBar:pointerover /template/ Thumb">
+            <Setter Property="Background" Value="#94a3b8"/>
+        </Style>
     </Application.Styles>
     
 </Application>
