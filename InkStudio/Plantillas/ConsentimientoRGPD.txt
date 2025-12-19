@@ -1,0 +1,55 @@
+CONSENTIMIENTO PARA EL TRATAMIENTO DE DATOS PERSONALES
+(Reglamento General de Protección de Datos - RGPD)
+
+Yo, {NOMBRE_CLIENTE}, con DNI/NIE {DNI_CLIENTE}, en calidad de interesado, doy mi consentimiento expreso para que {NOMBRE_ESTUDIO} (en adelante, "el Estudio"), con domicilio en {DIRECCION_ESTUDIO}, pueda tratar mis datos personales de acuerdo con lo establecido en el Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo de 27 de abril de 2016 (RGPD).
+
+1. DATOS QUE SERÁN TRATADOS:
+   - Datos de identificación: nombre, apellidos, DNI/NIE, fecha de nacimiento
+   - Datos de contacto: teléfono, email, dirección postal
+   - Datos de salud: historial de tratamientos, alergias, condiciones médicas relevantes
+   - Datos económicos: facturación, pagos realizados
+   - Datos de imagen: fotografías del antes/después de los tratamientos (si aplica)
+
+2. FINALIDAD DEL TRATAMIENTO:
+   - Gestión de la relación comercial y prestación de servicios
+   - Gestión de citas y agenda
+   - Facturación y gestión económica
+   - Cumplimiento de obligaciones legales
+   - Comunicación sobre servicios y promociones (si se ha dado consentimiento específico)
+
+3. LEGITIMACIÓN:
+   El tratamiento de los datos se basa en:
+   - La ejecución de un contrato o medidas precontractuales
+   - El consentimiento del interesado
+   - El cumplimiento de obligaciones legales aplicables
+
+4. CONSERVACIÓN DE DATOS:
+   Los datos personales se conservarán durante el tiempo necesario para cumplir con la finalidad para la que fueron recabados y, en todo caso, durante los plazos establecidos por la legislación aplicable.
+
+5. DERECHOS DEL INTERESADO:
+   Usted tiene derecho a:
+   - Acceder a sus datos personales
+   - Rectificar datos inexactos o incompletos
+   - Solicitar la supresión de sus datos cuando ya no sean necesarios
+   - Oponerse al tratamiento de sus datos
+   - Solicitar la limitación del tratamiento
+   - Portabilidad de los datos
+   - Presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD)
+
+6. COMUNICACIÓN DE DATOS:
+   Sus datos no serán comunicados a terceros, salvo obligación legal o cuando sea necesario para la prestación del servicio contratado.
+
+7. SEGURIDAD:
+   El Estudio se compromete a adoptar las medidas técnicas y organizativas necesarias para garantizar la seguridad de sus datos personales y evitar su alteración, pérdida, tratamiento o acceso no autorizado.
+
+He leído y comprendido la información anterior y doy mi consentimiento para el tratamiento de mis datos personales conforme a lo descrito.
+
+Fecha: {FECHA_FIRMA}
+Hora: {HORA_FIRMA}
+
+Firma del cliente:
+_________________________
+
+{NOMBRE_CLIENTE}
+DNI/NIE: {DNI_CLIENTE}
+

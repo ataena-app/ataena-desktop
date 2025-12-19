@@ -446,11 +446,17 @@ dotnet ef database update
 - [x] Modales con efectos visuales modernos
 - [x] Estilos globales de botones con degradados
 
+### En Desarrollo 🔨
+- [ ] **Módulo de Consentimientos** (planificado)
+  - Sistema de firma dual (móvil táctil / PC mouse)
+  - Generación de PDFs legalmente válidos
+  - Integración en flujos de Clientes y Trabajos
+  - Ver plan detallado: `documentacion/03-plan-consentimientos.md`
+
 ### Pendiente ⏳
 - [ ] Implementar módulo de Configuración
 - [ ] Subida de fotos para trabajos
 - [ ] Galería de fotos
-- [ ] Gestión de consentimientos
 - [ ] Implementar seguridad
 - [ ] Crear instalador
 

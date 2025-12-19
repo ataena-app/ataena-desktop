@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Firma de Consentimiento - InkStudio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Firma de Consentimiento</h1>
+            <p class="subtitle">Firma en el área de abajo con tu dedo</p>
+        </header>
+
+        <main>
+            <!-- Área de firma -->
+            <div class="signature-section">
+                <div class="canvas-container">
+                    <canvas id="signatureCanvas"></canvas>
+                    <div class="canvas-overlay" id="canvasOverlay">
+                        <p>Firma aquí</p>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="buttons">
+                    <button id="btnLimpiar" class="btn btn-secondary">
+                        🗑️ Limpiar
+                    </button>
+                    <button id="btnEnviar" class="btn btn-primary" disabled>
+                        ✓ Enviar Firma
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="instructions">
+                <h3>Instrucciones:</h3>
+                <ul>
+                    <li>Usa tu dedo para firmar en el área blanca</li>
+                    <li>Puedes limpiar y volver a firmar si es necesario</li>
+                    <li>Cuando estés satisfecho, presiona "Enviar Firma"</li>
+                </ul>
+            </div>
+
+            <!-- Estado de envío -->
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+        </main>
+    </div>
+
+    <script src="signature.js"></script>
+</body>
+</html>
+

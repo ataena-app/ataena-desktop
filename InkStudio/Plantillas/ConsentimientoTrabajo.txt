@@ -1,0 +1,63 @@
+CONSENTIMIENTO INFORMADO PARA TRATAMIENTO
+
+Yo, {NOMBRE_CLIENTE}, con DNI/NIE {DNI_CLIENTE}, en calidad de paciente, doy mi consentimiento informado para la realización del siguiente tratamiento:
+
+TIPO DE TRATAMIENTO: {TIPO_TRABAJO}
+DESCRIPCIÓN: {DESCRIPCION_TRABAJO}
+ZONA DEL CUERPO: {ZONA_CUERPO}
+DURACIÓN ESTIMADA: {DURACION_MINUTOS} minutos
+PRECIO: {PRECIO} €
+
+1. INFORMACIÓN RECIBIDA:
+   He sido informado/a sobre:
+   - La naturaleza del tratamiento a realizar
+   - Los resultados esperados
+   - Los posibles efectos secundarios o complicaciones
+   - Las contraindicaciones
+   - Los cuidados post-tratamiento necesarios
+   - El precio del tratamiento
+
+2. RIESGOS Y COMPLICACIONES:
+   He sido informado/a de los posibles riesgos asociados al tratamiento, incluyendo pero no limitándose a:
+   - Reacciones alérgicas
+   - Infecciones
+   - Cicatrices
+   - Cambios en la pigmentación
+   - Resultados no deseados
+   - Necesidad de tratamientos adicionales
+
+3. ALTERNATIVAS:
+   He sido informado/a de las alternativas disponibles y he elegido este tratamiento de forma libre y voluntaria.
+
+4. RESULTADOS:
+   Comprendo que los resultados pueden variar según las características individuales y que no se pueden garantizar resultados específicos.
+
+5. CUIDADOS POST-TRATAMIENTO:
+   Me comprometo a seguir las instrucciones de cuidados post-tratamiento proporcionadas por el profesional.
+
+6. PREGUNTAS:
+   He tenido la oportunidad de hacer todas las preguntas que he considerado necesarias y todas han sido respondidas de forma satisfactoria.
+
+7. CONSENTIMIENTO VOLUNTARIO:
+   Doy mi consentimiento de forma libre, voluntaria y sin coacción alguna, después de haber recibido toda la información necesaria.
+
+8. DERECHO DE REVOCACIÓN:
+   Comprendo que puedo revocar este consentimiento en cualquier momento antes de la realización del tratamiento.
+
+He leído y comprendido toda la información proporcionada. Todas mis preguntas han sido respondidas satisfactoriamente. Doy mi consentimiento informado para la realización del tratamiento descrito.
+
+Fecha: {FECHA_FIRMA}
+Hora: {HORA_FIRMA}
+
+Firma del cliente:
+_________________________
+
+{NOMBRE_CLIENTE}
+DNI/NIE: {DNI_CLIENTE}
+
+Firma del profesional:
+_________________________
+
+{NOMBRE_PROFESIONAL}
+Colegiado: {NUMERO_COLEGIADO}
+
