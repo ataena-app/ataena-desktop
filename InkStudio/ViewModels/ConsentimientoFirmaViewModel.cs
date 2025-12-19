@@ -20,6 +20,11 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     private string? _tokenActual;
     private Consentimiento? _consentimiento;
 
+    /// <summary>
+    /// Evento que se dispara cuando se completa la firma y se guarda el PDF.
+    /// </summary>
+    public event EventHandler<Cliente>? FirmaCompletada;
+
     #region Propiedades
 
     /// <summary>
@@ -222,6 +227,9 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
 
             EstadoConexion = "✅ Consentimiento firmado y guardado correctamente";
 
+            // Disparar evento de firma completada
+            FirmaCompletada?.Invoke(this, Cliente);
+            
             // Cerrar modal después de un breve delay
             await Task.Delay(1500);
             CerrarModal();

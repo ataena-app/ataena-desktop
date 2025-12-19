@@ -60,7 +60,7 @@
             </StackPanel>
             
             <!-- Barra de búsqueda y acciones -->
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,20">
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,20">
                 <TextBox Grid.Column="0"
                          Text="{Binding TextoBusqueda}"
                          Watermark="🔍 Buscar por nombre, teléfono o email..."
@@ -70,6 +70,12 @@
                         Command="{Binding BuscarCommand}"
                         Margin="0,0,10,0"/>
                 <Button Grid.Column="2"
+                        Content="⚠️ Sin RGPD"
+                        Classes="btn-secondary"
+                        Command="{Binding FiltrarSinConsentimientoCommand}"
+                        ToolTip.Tip="Mostrar solo clientes sin consentimiento RGPD firmado"
+                        Margin="0,0,10,0"/>
+                <Button Grid.Column="3"
                         Content="➕ Nuevo Cliente"
                         Classes="btn-primary"
                         Command="{Binding NuevoClienteCommand}"/>
@@ -237,11 +243,19 @@
                                      Height="80"
                                      TextWrapping="Wrap"/>
 
+                            <!-- Consentimiento RGPD (solo para nuevos clientes) -->
+                            <CheckBox IsVisible="{Binding !EsEdicion}"
+                                      IsChecked="{Binding FirmarConsentimientoRGPD}"
+                                      Content="📝 Firmar consentimiento RGPD (opcional)"
+                                      Margin="0,16,0,8"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"/>
+                            
                             <!-- Consentimiento de imágenes (solo para nuevos clientes) -->
                             <CheckBox IsVisible="{Binding !EsEdicion}"
                                       IsChecked="{Binding SolicitarConsentimientoImagenes}"
                                       Content="📸 Solicitar consentimiento de uso de imágenes (opcional)"
-                                      Margin="0,16,0,0"
+                                      Margin="0,8,0,0"
                                       FontSize="13"/>
 
                             <!-- Mensaje de error -->

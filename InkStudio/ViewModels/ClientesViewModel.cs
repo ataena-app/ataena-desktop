@@ -116,6 +116,12 @@ public partial class ClientesViewModel : ViewModelBase
     private bool _solicitarConsentimientoImagenes = false;
 
     /// <summary>
+    /// Indica si se desea firmar el consentimiento RGPD al crear el cliente.
+    /// </summary>
+    [ObservableProperty]
+    private bool _firmarConsentimientoRGPD = false;
+
+    /// <summary>
     /// ViewModel del modal de firma de consentimientos.
     /// </summary>
     [ObservableProperty]
@@ -138,6 +144,7 @@ public partial class ClientesViewModel : ViewModelBase
             MensajeError = string.Empty;
 
             var lista = await _db.Clientes
+                .Include(c => c.Consentimientos)
                 .OrderBy(c => c.Nombre)
                 .ThenBy(c => c.Apellidos)
                 .ToListAsync();
@@ -340,6 +347,7 @@ public partial class ClientesViewModel : ViewModelBase
                     if (ConsentimientoFirmaVM == null)
                     {
                         ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
+                        ConsentimientoFirmaVM.FirmaCompletada += async (s, cliente) => await CargarClientes();
                     }
                     await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.RGPD);
                     
@@ -496,6 +504,93 @@ public partial class ClientesViewModel : ViewModelBase
         MensajeError = string.Empty;
     }
 
+    /// <summary>
+    /// Abre el modal para firmar el consentimiento RGPD del cliente seleccionado.
+    /// </summary>
+    [RelayCommand]
+    private async Task FirmarConsentimientoCliente(Cliente? cliente = null)
+    {
+        var clienteAFirmar = cliente ?? ClienteSeleccionado;
+        if (clienteAFirmar == null) return;
+
+        try
+        {
+            // Recargar cliente con consentimientos para verificar estado actual
+            await _db.Entry(clienteAFirmar).ReloadAsync();
+            await _db.Entry(clienteAFirmar).Collection(c => c.Consentimientos).LoadAsync();
+            
+            // Verificar si ya tiene RGPD firmado
+            var tieneRGPD = clienteAFirmar.Consentimientos
+                .Any(c => c.Tipo == TipoConsentimiento.RGPD && c.Firmado);
+            
+            if (tieneRGPD)
+            {
+                MensajeError = "Este cliente ya tiene el consentimiento RGPD firmado";
+                await CargarClientes(); // Recargar para actualizar la vista
+                return;
+            }
+
+            // Cerrar formulario si está abierto
+            MostrarFormulario = false;
+            
+            // Abrir modal de firma RGPD
+            if (ConsentimientoFirmaVM == null)
+            {
+                ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
+                ConsentimientoFirmaVM.FirmaCompletada += async (s, clienteCompletado) => 
+                {
+                    await CargarClientes(); // Recargar lista después de firmar
+                };
+            }
+            await ConsentimientoFirmaVM.AbrirModal(clienteAFirmar, TipoConsentimiento.RGPD);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir modal de firma de consentimiento");
+            MensajeError = $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Filtra la lista para mostrar solo clientes sin consentimiento RGPD firmado.
+    /// </summary>
+    [RelayCommand]
+    private async Task FiltrarSinConsentimiento()
+    {
+        try
+        {
+            Log.Debug("Filtrando clientes sin consentimiento RGPD");
+            Cargando = true;
+            MensajeError = string.Empty;
+
+            // Cargar todos los clientes con sus consentimientos
+            var todosClientes = await _db.Clientes
+                .Include(c => c.Consentimientos)
+                .OrderBy(c => c.Nombre)
+                .ThenBy(c => c.Apellidos)
+                .ToListAsync();
+
+            // Filtrar solo los que no tienen RGPD firmado
+            var clientesSinRGPD = todosClientes
+                .Where(c => !c.Consentimientos.Any(cons => cons.Tipo == TipoConsentimiento.RGPD && cons.Firmado))
+                .ToList();
+
+            Clientes = new ObservableCollection<Cliente>(clientesSinRGPD);
+            TotalClientes = clientesSinRGPD.Count;
+            
+            Log.Information("Filtrado completado: {Count} clientes sin consentimiento RGPD", clientesSinRGPD.Count);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al filtrar clientes sin consentimiento");
+            MensajeError = $"Error en el filtrado: {ex.Message}";
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
     #endregion
 
     #region Métodos Privados
@@ -515,6 +610,7 @@ public partial class ClientesViewModel : ViewModelBase
         Notas = string.Empty;
         MensajeError = string.Empty;
         SolicitarConsentimientoImagenes = false;
+        FirmarConsentimientoRGPD = false;
     }
 
     /// <summary>

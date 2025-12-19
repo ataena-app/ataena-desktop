@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace InkStudio.Models;
 
@@ -136,6 +137,12 @@ public class Cliente
             ? $"{FechaNacimiento.Value:dd/MM/yyyy} ({Edad} años)"
             : FechaNacimiento.Value.ToString("dd/MM/yyyy")
         : "No especificada";
+
+    /// <summary>
+    /// Indica si el cliente tiene el consentimiento RGPD firmado.
+    /// </summary>
+    public bool TieneConsentimientoRGPD => Consentimientos
+        .Any(c => c.Tipo == TipoConsentimiento.RGPD && c.Firmado);
 
     #endregion
 }
