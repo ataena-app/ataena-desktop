@@ -86,9 +86,6 @@ public partial class ClientesViewModel : ViewModelBase
     [ObservableProperty]
     private string _notas = string.Empty;
 
-    [ObservableProperty]
-    private bool _esVip = false;
-
     #endregion
 
     #region Propiedades - Estado
@@ -258,7 +255,6 @@ public partial class ClientesViewModel : ViewModelBase
                 ClienteSeleccionado.FechaNacimiento = FechaNacimiento?.DateTime;
                 ClienteSeleccionado.Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim();
                 ClienteSeleccionado.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
-                ClienteSeleccionado.EsVip = EsVip;
             }
             else
             {
@@ -275,7 +271,6 @@ public partial class ClientesViewModel : ViewModelBase
                     FechaNacimiento = FechaNacimiento?.DateTime,
                     Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim(),
                     Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim(),
-                    EsVip = EsVip,
                     FechaRegistro = DateTime.Now,
                     Activo = true
                 };
@@ -364,7 +359,6 @@ public partial class ClientesViewModel : ViewModelBase
         FechaNacimiento = DateTimeOffset.Now.Date;
         Alergias = string.Empty;
         Notas = string.Empty;
-        EsVip = false;
         MensajeError = string.Empty;
     }
 
@@ -384,7 +378,6 @@ public partial class ClientesViewModel : ViewModelBase
             : DateTimeOffset.Now.Date;
         Alergias = cliente.Alergias ?? string.Empty;
         Notas = cliente.Notas ?? string.Empty;
-        EsVip = cliente.EsVip;
         MensajeError = string.Empty;
     }
 

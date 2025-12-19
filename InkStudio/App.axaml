@@ -35,7 +35,8 @@
         <RadialGradientBrush x:Key="AppModalGlowBrush"
                              Center="0.5,0.5"
                              GradientOrigin="0.5,0.5"
-                             Radius="1.2">
+                             RadiusX="120%"
+                             RadiusY="120%">
             <!-- Centro transparente (donde va el modal) -->
             <GradientStop Color="#00000000" Offset="0.0"/>
             <!-- Empieza transparente pero cerca del borde -->
