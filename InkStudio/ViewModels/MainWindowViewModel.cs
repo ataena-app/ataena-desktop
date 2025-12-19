@@ -32,8 +32,22 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public AgendaViewModel AgendaVM { get; } = new();
 
+    /// <summary>
+    /// ViewModel de gestión de trabajos.
+    /// </summary>
+    public TrabajosViewModel TrabajosVM { get; } = new();
+
+    /// <summary>
+    /// Constructor que inicializa las referencias entre ViewModels.
+    /// </summary>
+    public MainWindowViewModel()
+    {
+        // Establecer referencias cruzadas para comunicación entre ViewModels
+        AgendaVM.SetTrabajosViewModel(TrabajosVM);
+        AgendaVM.SetMainWindowViewModel(this);
+    }
+
     // TODO: Añadir estos ViewModels cuando se creen las vistas
-    // public TrabajosViewModel TrabajosVM { get; } = new();
     // public ConfiguracionViewModel ConfiguracionVM { get; } = new();
 
     #endregion

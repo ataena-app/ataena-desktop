@@ -24,6 +24,16 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     private readonly InkStudioDbContext _db = new();
 
+    /// <summary>
+    /// Referencia opcional al ViewModel de trabajos (para crear trabajos desde el modal de cita).
+    /// </summary>
+    private TrabajosViewModel? _trabajosVM;
+
+    /// <summary>
+    /// Referencia opcional al ViewModel principal (para navegación).
+    /// </summary>
+    private MainWindowViewModel? _mainWindowVM;
+
     #endregion
 
     #region Propiedades - Vista de Calendario
@@ -767,9 +777,41 @@ public partial class AgendaViewModel : ViewModelBase
             return;
         }
         
-        // TODO: Abrir modal para crear trabajo nuevo
-        // Por ahora, mostrar mensaje informativo
-        MensajeError = "Funcionalidad de crear trabajo nuevo próximamente. Por favor, crea el trabajo desde la sección de Trabajos.";
+        // Si tenemos referencia a TrabajosVM y MainWindowVM, navegar y abrir formulario
+        if (_trabajosVM != null && _mainWindowVM != null)
+        {
+            // Cerrar el modal de cita
+            MostrarFormulario = false;
+            
+            // Navegar a la vista de Trabajos
+            _mainWindowVM.IrATrabajosCommand.Execute(null);
+            
+            // Abrir el formulario de nuevo trabajo con el cliente pre-seleccionado
+            _trabajosVM.NuevoTrabajoParaCliente(ClienteSeleccionado);
+            
+            Log.Information("Navegando a Trabajos para crear trabajo para cliente {ClienteId}", ClienteSeleccionado.Id);
+        }
+        else
+        {
+            MensajeError = "No se puede crear trabajo desde aquí. Por favor, ve a la sección de Trabajos.";
+            Log.Warning("Intento de crear trabajo sin referencias a TrabajosVM o MainWindowVM");
+        }
+    }
+
+    /// <summary>
+    /// Establece la referencia al ViewModel de trabajos.
+    /// </summary>
+    public void SetTrabajosViewModel(TrabajosViewModel trabajosVM)
+    {
+        _trabajosVM = trabajosVM;
+    }
+
+    /// <summary>
+    /// Establece la referencia al ViewModel principal.
+    /// </summary>
+    public void SetMainWindowViewModel(MainWindowViewModel mainWindowVM)
+    {
+        _mainWindowVM = mainWindowVM;
     }
 
     #endregion
