@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -92,6 +93,11 @@ public partial class TrabajosViewModel : ViewModelBase
     [ObservableProperty]
     private Trabajo? _trabajoPendienteConsentimiento;
 
+    /// <summary>
+    /// Indica si se debe mostrar el aviso de que el trabajo no se puede modificar (solo en edición y con consentimiento).
+    /// </summary>
+    public bool MostrarAvisoNoModificable => EsEdicion && TrabajoSeleccionado != null && TrabajoSeleccionado.TieneConsentimiento;
+
     #endregion
 
     #region Propiedades - Formulario de Edición
@@ -107,6 +113,14 @@ public partial class TrabajosViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private bool _esEdicion = false;
+
+    /// <summary>
+    /// Se ejecuta cuando cambia EsEdicion.
+    /// </summary>
+    partial void OnEsEdicionChanged(bool value)
+    {
+        OnPropertyChanged(nameof(MostrarAvisoNoModificable));
+    }
 
     /// <summary>
     /// Título del formulario (cambia según modo edición/creación).
@@ -347,14 +361,18 @@ public partial class TrabajosViewModel : ViewModelBase
     /// Abre el formulario para editar el trabajo seleccionado.
     /// </summary>
     [RelayCommand]
-    private void EditarTrabajo()
+    private async Task EditarTrabajo()
     {
         if (TrabajoSeleccionado == null) return;
+
+        // Cargar consentimiento para verificar estado (pero permitir abrir el modal para ver datos)
+        await _db.Entry(TrabajoSeleccionado).Reference(t => t.Consentimiento).LoadAsync();
 
         CargarTrabajoEnFormulario(TrabajoSeleccionado);
         EsEdicion = true;
         TituloFormulario = "✏️ Editar Trabajo";
         MostrarFormulario = true;
+        OnPropertyChanged(nameof(MostrarAvisoNoModificable));
     }
 
     /// <summary>
@@ -592,6 +610,14 @@ public partial class TrabajosViewModel : ViewModelBase
                 ConsentimientoFirmaVM.FirmaCompletada += async (s, cliente) => 
                 {
                     await CargarTrabajos();
+                    // Si estamos editando un trabajo, recargar el trabajo para actualizar el consentimiento
+                    if (EsEdicion && TrabajoSeleccionado != null)
+                    {
+                        await _db.Entry(TrabajoSeleccionado).ReloadAsync();
+                        await _db.Entry(TrabajoSeleccionado).Reference(t => t.Consentimiento).LoadAsync();
+                        OnPropertyChanged(nameof(TrabajoSeleccionado));
+                        OnPropertyChanged(nameof(MostrarAvisoNoModificable));
+                    }
                 };
             }
             await ConsentimientoFirmaVM.AbrirModal(trabajoAFirmar.Cliente, TipoConsentimiento.Trabajo, trabajoAFirmar);
@@ -612,6 +638,158 @@ public partial class TrabajosViewModel : ViewModelBase
         MostrarAvisoConsentimiento = false;
         TrabajoPendienteConsentimiento = null;
         MensajeAvisoConsentimiento = string.Empty;
+    }
+
+    /// <summary>
+    /// Abre el PDF del consentimiento de trabajo.
+    /// </summary>
+    [RelayCommand]
+    private Task AbrirConsentimientoTrabajo(Trabajo? trabajo = null)
+    {
+        var trabajoAVer = trabajo ?? TrabajoSeleccionado;
+        if (trabajoAVer == null || trabajoAVer.Consentimiento == null) return Task.CompletedTask;
+
+        try
+        {
+            if (string.IsNullOrEmpty(trabajoAVer.Consentimiento.RutaDocumento))
+            {
+                MensajeError = "No se encontró el documento PDF para este consentimiento.";
+                return Task.CompletedTask;
+            }
+
+            if (!System.IO.File.Exists(trabajoAVer.Consentimiento.RutaDocumento))
+            {
+                MensajeError = $"El archivo PDF no existe en la ruta: {trabajoAVer.Consentimiento.RutaDocumento}";
+                Log.Warning("PDF no encontrado: {Ruta}", trabajoAVer.Consentimiento.RutaDocumento);
+                return Task.CompletedTask;
+            }
+
+            // Abrir el PDF con el visor predeterminado del sistema
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = trabajoAVer.Consentimiento.RutaDocumento,
+                UseShellExecute = true
+            });
+
+            Log.Information("PDF abierto: {Ruta}", trabajoAVer.Consentimiento.RutaDocumento);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir PDF del consentimiento");
+            MensajeError = $"Error al abrir el PDF: {ex.Message}";
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Exporta el PDF del consentimiento de trabajo a la carpeta de Descargas.
+    /// </summary>
+    [RelayCommand]
+    private Task ExportarConsentimientoTrabajo(Trabajo? trabajo = null)
+    {
+        var trabajoAVer = trabajo ?? TrabajoSeleccionado;
+        if (trabajoAVer == null || trabajoAVer.Consentimiento == null) return Task.CompletedTask;
+
+        try
+        {
+            if (string.IsNullOrEmpty(trabajoAVer.Consentimiento.RutaDocumento))
+            {
+                MensajeError = "No se encontró el documento PDF para este consentimiento.";
+                return Task.CompletedTask;
+            }
+
+            if (!System.IO.File.Exists(trabajoAVer.Consentimiento.RutaDocumento))
+            {
+                MensajeError = $"El archivo PDF no existe en la ruta: {trabajoAVer.Consentimiento.RutaDocumento}";
+                return Task.CompletedTask;
+            }
+
+            // Copiar a la carpeta de Descargas
+            var descargas = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            var nombreArchivo = Path.GetFileName(trabajoAVer.Consentimiento.RutaDocumento);
+            var rutaDestino = Path.Combine(descargas, nombreArchivo);
+
+            // Si ya existe, agregar un número
+            int contador = 1;
+            while (System.IO.File.Exists(rutaDestino))
+            {
+                var nombreSinExtension = Path.GetFileNameWithoutExtension(nombreArchivo);
+                var extension = Path.GetExtension(nombreArchivo);
+                nombreArchivo = $"{nombreSinExtension} ({contador}){extension}";
+                rutaDestino = Path.Combine(descargas, nombreArchivo);
+                contador++;
+            }
+
+            System.IO.File.Copy(trabajoAVer.Consentimiento.RutaDocumento, rutaDestino);
+            Log.Information("PDF exportado a: {Ruta}", rutaDestino);
+            MensajeError = string.Empty; // Limpiar mensajes anteriores
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al exportar PDF del consentimiento");
+            MensajeError = $"Error al exportar el PDF: {ex.Message}";
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Envía el PDF del consentimiento de trabajo por correo electrónico.
+    /// </summary>
+    [RelayCommand]
+    private Task EnviarConsentimientoTrabajoPorCorreo(Trabajo? trabajo = null)
+    {
+        var trabajoAVer = trabajo ?? TrabajoSeleccionado;
+        if (trabajoAVer == null || trabajoAVer.Consentimiento == null) return Task.CompletedTask;
+
+        try
+        {
+            if (string.IsNullOrEmpty(trabajoAVer.Consentimiento.RutaDocumento))
+            {
+                MensajeError = "No se encontró el documento PDF para este consentimiento.";
+                return Task.CompletedTask;
+            }
+
+            if (!System.IO.File.Exists(trabajoAVer.Consentimiento.RutaDocumento))
+            {
+                MensajeError = $"El archivo PDF no existe en la ruta: {trabajoAVer.Consentimiento.RutaDocumento}";
+                return Task.CompletedTask;
+            }
+
+            // Cargar cliente si no está cargado
+            if (trabajoAVer.Cliente == null)
+            {
+                _db.Entry(trabajoAVer).Reference(t => t.Cliente).Load();
+            }
+
+            if (string.IsNullOrEmpty(trabajoAVer.Cliente?.Email))
+            {
+                MensajeError = "El cliente no tiene un email registrado. Por favor, añade un email al cliente primero.";
+                return Task.CompletedTask;
+            }
+
+            // Crear mailto con el PDF adjunto (si el cliente de correo lo soporta)
+            var asunto = Uri.EscapeDataString($"Consentimiento de Trabajo - {trabajoAVer.Descripcion}");
+            var cuerpo = Uri.EscapeDataString($"Adjunto encontrarás el consentimiento de trabajo firmado.\n\nTrabajo: {trabajoAVer.Descripcion}\nFecha: {trabajoAVer.Fecha:dd/MM/yyyy}");
+            var mailto = $"mailto:{trabajoAVer.Cliente.Email}?subject={asunto}&body={cuerpo}";
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = mailto,
+                UseShellExecute = true
+            });
+
+            Log.Information("Correo abierto para enviar consentimiento a: {Email}", trabajoAVer.Cliente.Email);
+            MensajeError = string.Empty; // Limpiar mensajes anteriores
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir cliente de correo para consentimiento");
+            MensajeError = $"Error al abrir el cliente de correo: {ex.Message}";
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -692,8 +870,12 @@ public partial class TrabajosViewModel : ViewModelBase
     /// Carga los datos de un trabajo en el formulario.
     /// </summary>
     /// <param name="trabajo">Trabajo a cargar.</param>
-    private void CargarTrabajoEnFormulario(Trabajo trabajo)
+    private async void CargarTrabajoEnFormulario(Trabajo trabajo)
     {
+        // Cargar relaciones necesarias
+        await _db.Entry(trabajo).Reference(t => t.Cliente).LoadAsync();
+        await _db.Entry(trabajo).Reference(t => t.Consentimiento).LoadAsync();
+        
         ClienteSeleccionado = trabajo.Cliente;
         TipoTrabajo = trabajo.Tipo;
         Descripcion = trabajo.Descripcion;
@@ -706,6 +888,9 @@ public partial class TrabajosViewModel : ViewModelBase
         DuracionMinutos = trabajo.DuracionMinutos;
         Notas = trabajo.Notas;
         MensajeError = string.Empty;
+        
+        // Notificar cambios en las propiedades del trabajo para actualizar la UI
+        OnPropertyChanged(nameof(TrabajoSeleccionado));
     }
 
     #endregion

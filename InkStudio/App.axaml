@@ -11,6 +11,8 @@
         <converters:EqualConverter x:Key="EqualConverter"/>
         <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
         <converters:EstadoCitaToColorConverter x:Key="EstadoCitaToColorConverter"/>
+        <converters:BoolToTextConverter x:Key="BoolToTextConverter"/>
+        <converters:BoolToCursorConverter x:Key="BoolToCursorConverter"/>
 
         <!-- Paleta base oscura moderna (morado / naranja) -->
         <SolidColorBrush x:Key="AppBackgroundBrush" Color="#020617"/>
