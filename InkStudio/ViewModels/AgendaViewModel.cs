@@ -55,30 +55,17 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     partial void OnVistaActualChanged(VistaAgenda value)
     {
-        OnPropertyChanged(nameof(MostrarCalendarioMes));
-        OnPropertyChanged(nameof(MostrarCalendarioSemana));
         OnPropertyChanged(nameof(MostrarLista));
     }
 
-    /// <summary>
-    /// ViewModel del calendario visual.
-    /// </summary>
-    public CalendarViewModel CalendarVM { get; } = new();
+    // En este momento eliminamos el calendario visual de terceros (CalendarControl).
+    // Mantendremos solo la lista diaria y, más adelante, implementaremos
+    // nuestro propio calendario semanal personalizado.
 
     /// <summary>
-    /// Indica si mostrar el calendario mensual (vista Mes).
+    /// Indica si mostrar la lista de citas (usamos la misma vista para todos los modos por ahora).
     /// </summary>
-    public bool MostrarCalendarioMes => VistaActual == VistaAgenda.Mes;
-
-    /// <summary>
-    /// Indica si mostrar el calendario semanal (vista Semana).
-    /// </summary>
-    public bool MostrarCalendarioSemana => VistaActual == VistaAgenda.Semana;
-
-    /// <summary>
-    /// Indica si mostrar la lista de citas (vista Día).
-    /// </summary>
-    public bool MostrarLista => VistaActual == VistaAgenda.Dia;
+    public bool MostrarLista => true;
 
     /// <summary>
     /// Lista de citas para el período seleccionado.
@@ -438,26 +425,6 @@ public partial class AgendaViewModel : ViewModelBase
 
             Citas = new ObservableCollection<Cita>(listaOrdenada);
             TotalCitas = listaOrdenada.Count;
-
-            // Actualizar calendario visual si estamos en vista Mes o Semana
-            if (VistaActual == VistaAgenda.Mes || VistaActual == VistaAgenda.Semana)
-            {
-                var fechaCalendario = FechaSeleccionada ?? DateTimeOffset.Now.Date;
-                if (VistaActual == VistaAgenda.Semana)
-                {
-                    CalendarVM.CargarSemana(fechaCalendario, listaOrdenada);
-                }
-                else
-                {
-                    CalendarVM.CargarMes(fechaCalendario, listaOrdenada);
-                }
-                
-                // Sincronizar la fecha seleccionada con el calendario
-                if (FechaSeleccionada.HasValue)
-                {
-                    CalendarVM.FechaSeleccionada = FechaSeleccionada.Value.DateTime;
-                }
-            }
 
             var fechaLog = FechaSeleccionada ?? DateTimeOffset.Now.Date;
             Log.Debug("Citas cargadas: {Count} citas para {Vista} del {Fecha}", 

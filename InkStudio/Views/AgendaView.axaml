@@ -70,30 +70,23 @@
                 <Button Grid.Column="4" Content="➕ Nueva Cita" Classes="btn-primary" Command="{Binding NuevaCitaCommand}"/>
             </Grid>
             
-            <!-- Selector de vista y filtros -->
-            <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,Auto,*,Auto" Margin="0,0,0,15">
-                <Button Grid.Column="0" Content="Día" Command="{Binding CambiarVistaCommand}" CommandParameter="Dia" Margin="0,0,5,0"/>
-                <Button Grid.Column="1" Content="Semana" Command="{Binding CambiarVistaCommand}" CommandParameter="Semana" Margin="0,0,5,0"/>
-                <Button Grid.Column="2" Content="Mes" Command="{Binding CambiarVistaCommand}" CommandParameter="Mes" Margin="0,0,10,0"/>
-                <TextBlock Grid.Column="3" 
-                          Text="Filtro: Próximamente"
-                          Opacity="0.6"
+            <!-- Selector de vista y filtros (por ahora solo lista, prepararemos vista semanal propia más adelante) -->
+            <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,15">
+                <Button Grid.Column="0"
+                        Content="Lista"
+                        IsEnabled="False"
+                        Classes="btn-secondary"
+                        Margin="0,0,10,0"/>
+                <TextBlock Grid.Column="1" 
+                          Text="Vista semanal personalizada en desarrollo"
+                          Opacity="0.5"
                           VerticalAlignment="Center"
                           Margin="0,0,10,0"/>
-                <Button Grid.Column="4" Content="🔄 Actualizar" Command="{Binding CargarCitasCommand}"/>
+                <Button Grid.Column="2" Content="🔄 Actualizar" Command="{Binding CargarCitasCommand}"/>
             </Grid>
             
-            <!-- Contenido según vista -->
+            <!-- Contenido: de momento solo lista de citas; más adelante añadiremos nuestra vista semanal propia -->
             <Panel Grid.Row="3">
-                <!-- Calendario semanal (solo en vista Semana) -->
-                <views:CalendarView DataContext="{Binding CalendarVM}"
-                                    IsVisible="{Binding $parent[UserControl].((vm:AgendaViewModel)DataContext).MostrarCalendarioSemana}"/>
-                
-                <!-- Calendario mensual (solo en vista Mes) -->
-                <views:CalendarMonthView DataContext="{Binding CalendarVM}"
-                                         IsVisible="{Binding $parent[UserControl].((vm:AgendaViewModel)DataContext).MostrarCalendarioMes}"/>
-                
-                <!-- Lista de citas (solo en vista Día) -->
                 <ScrollViewer IsVisible="{Binding MostrarLista}">
                     <ItemsControl ItemsSource="{Binding Citas}">
                     <ItemsControl.ItemTemplate>

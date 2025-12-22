@@ -85,7 +85,6 @@
   
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://CalendarControl/Themes/Default.axaml" />
 
         <!-- Estilos globales de controles básicos -->
         <Style Selector="ComboBox">
