@@ -130,9 +130,9 @@ public class Cita
     public bool EsHoy => Fecha.Date == DateTime.Today;
 
     /// <summary>
-    /// Hora de inicio formateada (HH:mm).
+    /// Hora de inicio formateada (HH:mm en formato 24 horas).
     /// </summary>
-    public string HoraInicioFormateada => HoraInicio.ToString(@"hh\:mm");
+    public string HoraInicioFormateada => $"{HoraInicio.Hours:D2}:{HoraInicio.Minutes:D2}";
 
     /// <summary>
     /// Duración formateada legible (ej: "2h 30m").

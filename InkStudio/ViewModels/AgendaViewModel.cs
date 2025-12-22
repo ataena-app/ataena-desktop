@@ -522,6 +522,8 @@ public partial class AgendaViewModel : ViewModelBase
             if (VistaActual == VistaAgenda.Semana)
             {
                 ActualizarSemana();
+                // Forzar notificación de cambio para que el Canvas recalcule posiciones
+                OnPropertyChanged(nameof(CitasSemana));
             }
 
             var fechaLog = FechaSeleccionada ?? DateTimeOffset.Now.Date;
@@ -595,6 +597,9 @@ public partial class AgendaViewModel : ViewModelBase
 
         // Recalcular posiciones de citas después de actualizar la semana
         CalcularPosicionesCitas();
+        
+        // Forzar notificación de cambio para que el Canvas recalcule posiciones
+        OnPropertyChanged(nameof(CitasSemana));
     }
 
     /// <summary>
@@ -607,8 +612,12 @@ public partial class AgendaViewModel : ViewModelBase
         // Si no estamos en vista semanal o no hay días/horas calculados, salir
         if (VistaActual != VistaAgenda.Semana || DiasSemana.Count == 0 || HorasSemana.Count == 0)
         {
+            Log.Debug("CalcularPosicionesCitas: No se puede calcular - VistaActual={Vista}, DiasSemana={Dias}, HorasSemana={Horas}", 
+                VistaActual, DiasSemana.Count, HorasSemana.Count);
             return;
         }
+
+        Log.Information("🔍 CalcularPosicionesCitas: Iniciando cálculo. Citas totales: {Count}", Citas.Count);
 
         // Obtener el lunes de la semana actual
         var referenciaOffset = FechaSeleccionada ?? DateTimeOffset.Now.Date;
@@ -616,11 +625,14 @@ public partial class AgendaViewModel : ViewModelBase
         var diasDesdeLunes = ((int)referencia.DayOfWeek + 6) % 7;
         var inicioSemana = referencia.AddDays(-diasDesdeLunes);
 
+        Log.Debug("🔍 Semana de referencia: {InicioSemana} (Lunes)", inicioSemana);
+
         // Crear diccionario de fecha -> índice de columna (0-6)
         var fechaAColumna = new Dictionary<DateTime, int>();
         for (int i = 0; i < DiasSemana.Count; i++)
         {
             fechaAColumna[DiasSemana[i].Fecha.Date] = i;
+            Log.Debug("🔍 Día {Index}: {Fecha} -> Columna {Columna}", i, DiasSemana[i].Fecha.Date, i);
         }
 
         // Crear diccionario de hora -> índice de fila
@@ -633,14 +645,21 @@ public partial class AgendaViewModel : ViewModelBase
             }
         }
 
+        Log.Debug("🔍 Slots de hora disponibles: {Count}", horaAFila.Count);
+
         // Procesar cada cita
         foreach (var cita in Citas)
         {
+            Log.Debug("🔍 Procesando cita {CitaId}: Fecha={Fecha}, Hora={Hora}", cita.Id, cita.Fecha.Date, cita.HoraInicio);
+            
             // Calcular columna (día de la semana)
             if (!fechaAColumna.TryGetValue(cita.Fecha.Date, out var columna))
             {
+                Log.Debug("🔍 Cita {CitaId} no está en esta semana (Fecha: {Fecha})", cita.Id, cita.Fecha.Date);
                 continue; // La cita no está en esta semana
             }
+            
+            Log.Debug("🔍 Cita {CitaId} está en columna {Columna} (día {Fecha})", cita.Id, columna, cita.Fecha.Date);
 
             // Calcular fila (hora de inicio)
             // Redondear hacia abajo al slot de 30 minutos más cercano
@@ -667,10 +686,12 @@ public partial class AgendaViewModel : ViewModelBase
             // Si no encontramos fila válida, saltar esta cita
             if (fila < 0 || fila >= HorasSemana.Count)
             {
-                Log.Debug("Cita {CitaId} no se puede posicionar: hora {Hora} no coincide con ningún slot", 
-                    cita.Id, cita.HoraInicio);
+                Log.Warning("⚠️ Cita {CitaId} no se puede posicionar: hora {Hora} no coincide con ningún slot (slots disponibles: {Slots})", 
+                    cita.Id, cita.HoraInicio, HorasSemana.Count);
                 continue;
             }
+            
+            Log.Debug("🔍 Cita {CitaId} está en fila {Fila} (hora {Hora})", cita.Id, fila, cita.HoraInicio);
 
             // Calcular RowSpan (duración en slots de 30 minutos)
             var duracionMinutos = cita.DuracionMinutos;
@@ -695,16 +716,17 @@ public partial class AgendaViewModel : ViewModelBase
                 Fila = fila,
                 RowSpan = rowSpan,
                 Left = columna * anchoColumnaBase + 2, // Margen izquierdo
-                Top = fila * altoFila + 1, // Margen superior
+                Top = fila * altoFila, // Sin margen superior para alineación perfecta
                 Width = anchoColumnaBase - 6, // Ancho menos márgenes
-                Height = rowSpan * altoFila - 2 // Altura menos márgenes
+                Height = rowSpan * altoFila - 1 // Altura menos un pequeño margen
             });
             
             Log.Debug("Cita {CitaId} posicionada: Columna={Columna}, Fila={Fila}, RowSpan={RowSpan}, Hora={Hora}, Left={Left}, Top={Top}", 
                 cita.Id, columna, fila, rowSpan, cita.HoraInicio, columna * anchoColumnaBase, fila * altoFila);
         }
 
-        Log.Information("✅ Posiciones de citas calculadas: {Count} citas posicionadas en el calendario semanal", CitasSemana.Count);
+        Log.Information("✅ Posiciones de citas calculadas: {Count} citas posicionadas en el calendario semanal (de {TotalCitas} citas totales)", 
+            CitasSemana.Count, Citas.Count);
         if (CitasSemana.Count > 0)
         {
             foreach (var citaInfo in CitasSemana)
@@ -712,6 +734,14 @@ public partial class AgendaViewModel : ViewModelBase
                 Log.Information("  📍 Cita {Id}: Col={Col}, Fila={Fila}, RowSpan={Span}, Left={Left}, Top={Top}, Width={Width}, Height={Height}, Cliente={Cliente}",
                     citaInfo.Cita.Id, citaInfo.Columna, citaInfo.Fila, citaInfo.RowSpan, 
                     citaInfo.Left, citaInfo.Top, citaInfo.Width, citaInfo.Height, citaInfo.Cita.Cliente.NombreCompleto);
+            }
+        }
+        else if (Citas.Count > 0)
+        {
+            Log.Warning("⚠️ No se posicionaron citas aunque hay {Count} citas cargadas. Verificar que las citas estén en la semana actual y dentro del rango de horas (08:00-22:00)", Citas.Count);
+            foreach (var cita in Citas)
+            {
+                Log.Debug("  📅 Cita {CitaId}: Fecha={Fecha}, Hora={Hora}", cita.Id, cita.Fecha.Date, cita.HoraInicio);
             }
         }
         else
@@ -808,22 +838,37 @@ public partial class AgendaViewModel : ViewModelBase
                 return;
             }
 
-            // Parsear hora de inicio desde string
-            if (!TimeSpan.TryParse(HoraInicioString, out var horaInicioParsed))
+            // Parsear hora de inicio desde string (formato HH:mm en 24 horas)
+            Log.Information("🔍 Guardando cita - HoraInicioString recibida: '{HoraInicioString}'", HoraInicioString);
+            
+            TimeSpan horaInicioParsed;
+            var horaInicioStringTrimmed = HoraInicioString?.Trim() ?? string.Empty;
+            var parts = horaInicioStringTrimmed.Split(':');
+            if (parts.Length == 2 && 
+                int.TryParse(parts[0], out var hours) && 
+                int.TryParse(parts[1], out var minutes))
             {
-                // Intentar formato HH:mm
-                var parts = HoraInicioString.Split(':');
-                if (parts.Length == 2 && 
-                    int.TryParse(parts[0], out var hours) && 
-                    int.TryParse(parts[1], out var minutes))
+                // Validar rango de horas (0-23) y minutos (0-59)
+                if (hours < 0 || hours > 23)
                 {
-                    horaInicioParsed = new TimeSpan(hours, minutes, 0);
-                }
-                else
-                {
-                    MensajeError = "Formato de hora de inicio inválido. Usa HH:mm (ej: 10:30)";
+                    MensajeError = "La hora debe estar entre 00 y 23";
                     return;
                 }
+                if (minutes < 0 || minutes > 59)
+                {
+                    MensajeError = "Los minutos deben estar entre 00 y 59";
+                    return;
+                }
+                horaInicioParsed = new TimeSpan(hours, minutes, 0);
+                Log.Information("🔍 Hora parseada correctamente: {Hora} (Hours={Hours}, Minutes={Minutes})", 
+                    horaInicioParsed, hours, minutes);
+            }
+            else
+            {
+                Log.Warning("⚠️ Formato de hora inválido: '{HoraInicioString}' (parts.Length={Length})", 
+                    HoraInicioString, parts.Length);
+                MensajeError = "Formato de hora de inicio inválido. Usa HH:mm en formato 24 horas (ej: 11:00)";
+                return;
             }
 
             // Parsear hora de fin desde string (si fue editada manualmente)
@@ -884,6 +929,9 @@ public partial class AgendaViewModel : ViewModelBase
             if (EsEdicion && CitaSeleccionada != null)
             {
                 // Actualizar cita existente
+                Log.Information("🔍 Actualizando cita {CitaId} - HoraInicioString: '{HoraInicioString}', horaParsed: {HoraParsed}", 
+                    CitaSeleccionada.Id, HoraInicioString, horaParsed);
+                
                 CitaSeleccionada.ClienteId = ClienteSeleccionado.Id;
                 CitaSeleccionada.Fecha = fechaCitaDateTime;
                 CitaSeleccionada.HoraInicio = horaParsed;
@@ -900,7 +948,8 @@ public partial class AgendaViewModel : ViewModelBase
                 }
 
                 await _db.SaveChangesAsync();
-                Log.Information("Cita {CitaId} actualizada", CitaSeleccionada.Id);
+                Log.Information("✅ Cita {CitaId} actualizada - HoraInicio guardada: {HoraInicio}", 
+                    CitaSeleccionada.Id, CitaSeleccionada.HoraInicio);
             }
             else
             {
@@ -1074,7 +1123,7 @@ public partial class AgendaViewModel : ViewModelBase
         TrabajosDelCliente.Clear();
         FechaCita = DateTimeOffset.Now.Date;
         HoraInicio = new TimeSpan(10, 0, 0);
-        HoraInicioString = "10:00";
+        HoraInicioString = "10:00"; // Formato 24 horas
         DuracionMinutos = 60;
         CalcularHoraFin(); // Calcular hora fin inicial
         TipoCita = TipoCita.Tatuaje;
@@ -1108,7 +1157,7 @@ public partial class AgendaViewModel : ViewModelBase
         
         FechaCita = new DateTimeOffset(cita.Fecha);
         HoraInicio = cita.HoraInicio;
-        HoraInicioString = cita.HoraInicio.ToString(@"hh\:mm");
+        HoraInicioString = $"{cita.HoraInicio.Hours:D2}:{cita.HoraInicio.Minutes:D2}"; // Formato 24 horas
         DuracionMinutos = cita.DuracionMinutos;
         CalcularHoraFin(); // Calcular hora fin basada en inicio y duración
         TipoCita = cita.TipoCita;
@@ -1123,23 +1172,22 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     private void CalcularHoraFin()
     {
-        if (TimeSpan.TryParse(HoraInicioString, out var inicio))
+        // Parsear formato HH:mm manualmente (24 horas)
+        var parts = HoraInicioString?.Trim().Split(':');
+        if (parts != null && parts.Length == 2 &&
+            int.TryParse(parts[0], out var hours) &&
+            int.TryParse(parts[1], out var minutes))
         {
+            var inicio = new TimeSpan(hours, minutes, 0);
             var fin = inicio.Add(TimeSpan.FromMinutes(DuracionMinutos));
-            HoraFinString = fin.ToString(@"hh\:mm");
+            // Formatear manualmente en formato 24 horas (HH:mm)
+            // TimeSpan no soporta HH, así que lo hacemos manualmente
+            HoraFinString = $"{fin.Hours:D2}:{fin.Minutes:D2}";
         }
         else
         {
-            // Intentar parsear formato HH:mm manualmente
-            var parts = HoraInicioString.Split(':');
-            if (parts.Length == 2 &&
-                int.TryParse(parts[0], out var hours) &&
-                int.TryParse(parts[1], out var minutes))
-            {
-                var inicioManual = new TimeSpan(hours, minutes, 0);
-                var fin = inicioManual.Add(TimeSpan.FromMinutes(DuracionMinutos));
-                HoraFinString = fin.ToString(@"hh\:mm");
-            }
+            // Si no se puede parsear, dejar vacío o usar un valor por defecto
+            HoraFinString = string.Empty;
         }
     }
 

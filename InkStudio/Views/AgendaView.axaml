@@ -140,6 +140,11 @@
                     <ItemsControl Grid.Row="1"
                                   Grid.Column="0"
                                   ItemsSource="{Binding HorasSemana}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Height="32"
@@ -167,99 +172,53 @@
                         <Grid ColumnDefinitions="*,*,*,*,*,*,*"
                               RowDefinitions="32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32">
                             
-                            <!-- Líneas de la rejilla -->
-                            <ItemsControl ItemsSource="{Binding HorasSemana}" Grid.ColumnSpan="7">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Height="32">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
+                            <!-- Líneas de la rejilla - Dibujadas directamente en cada fila del Grid -->
+                            <!-- Líneas horizontales (una por cada fila) -->
+                            <Border Grid.Row="0" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="1" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="2" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="3" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="4" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="5" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="6" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="7" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="8" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="9" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="10" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="11" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="12" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="13" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="14" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="15" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="16" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="17" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="18" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="19" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="20" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="21" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="22" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="23" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="24" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="25" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="26" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="27" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            
+                            <!-- Líneas verticales (una por cada columna) -->
+                            <Border Grid.Column="1" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="2" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="3" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="4" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="5" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="6" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
 
-                                            <!-- Columnas de días con línea horizontal sutil -->
-                                            <Border Grid.Column="0"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="0,0.5,0,0"/>
-                                            <Border Grid.Column="1"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="1,0.5,0,0"/>
-                                            <Border Grid.Column="2"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="1,0.5,0,0"/>
-                                            <Border Grid.Column="3"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="1,0.5,0,0"/>
-                                            <Border Grid.Column="4"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="1,0.5,0,0"/>
-                                            <Border Grid.Column="5"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="1,0.5,0,0"/>
-                                            <Border Grid.Column="6"
-                                                    BorderBrush="#1f2933"
-                                                    BorderThickness="1,0.5,0,0"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- Bloques de citas superpuestos usando Canvas que ocupa todo el Grid -->
-                            <Canvas ZIndex="10"
+                            <!-- Bloques de citas superpuestos usando Canvas directo -->
+                            <Canvas Name="CanvasCitas"
                                     Grid.ColumnSpan="7"
                                     Grid.RowSpan="28"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Stretch"
-                                    Background="Transparent">
-                                <ItemsControl ItemsSource="{Binding CitasSemana}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <Canvas/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:AgendaViewModel+CitaSemanaInfo">
-                                            <Border Background="{Binding Cita.Estado, Converter={StaticResource EstadoCitaToColorConverter}}"
-                                                    CornerRadius="6"
-                                                    Padding="6,4"
-                                                    Margin="2,1"
-                                                    Opacity="0.85"
-                                                    Cursor="Hand"
-                                                    PointerPressed="OnCitaCalendarioClick"
-                                                    Tag="{Binding Cita}"
-                                                    Width="{Binding Width}"
-                                                    Height="{Binding Height}"
-                                                    Canvas.Left="{Binding Left}"
-                                                    Canvas.Top="{Binding Top}">
-                                                <StackPanel Spacing="2">
-                                                    <TextBlock Text="{Binding Cita.HoraInicioFormateada}"
-                                                               FontSize="10"
-                                                               FontWeight="Bold"
-                                                               Foreground="White"/>
-                                                    <TextBlock Text="{Binding Cita.Cliente.NombreCompleto}"
-                                                               FontSize="11"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="White"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Cita.IconoTipo}"
-                                                               FontSize="12"
-                                                               Opacity="0.9"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Canvas>
+                                    ZIndex="10"
+                                    Loaded="OnCanvasCitasLoaded"/>
                         </Grid>
                     </Border>
                 </Grid>
