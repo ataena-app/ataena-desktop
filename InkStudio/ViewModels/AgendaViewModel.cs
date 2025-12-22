@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,6 +38,46 @@ public partial class AgendaViewModel : ViewModelBase
     {
         public string Etiqueta { get; set; } = string.Empty; // "08:00"
         public bool EsHoraCompleta { get; set; }             // true si mm == 00
+    }
+
+    /// <summary>
+    /// Información de una cita posicionada en el calendario semanal.
+    /// Contiene la cita original y sus coordenadas en el grid (columna, fila, rowspan).
+    /// </summary>
+    public class CitaSemanaInfo : ObservableObject
+    {
+        public Cita Cita { get; set; } = null!;
+        public int Columna { get; set; }      // 0-6 (Lunes-Domingo)
+        public int Fila { get; set; }         // Índice en HorasSemana
+        public int RowSpan { get; set; }      // Número de slots de 30 minutos que ocupa
+        
+        private double _left;
+        public double Left 
+        { 
+            get => _left; 
+            set => SetProperty(ref _left, value); 
+        }
+        
+        private double _top;
+        public double Top 
+        { 
+            get => _top; 
+            set => SetProperty(ref _top, value); 
+        }
+        
+        private double _width;
+        public double Width 
+        { 
+            get => _width; 
+            set => SetProperty(ref _width, value); 
+        }
+        
+        private double _height;
+        public double Height 
+        { 
+            get => _height; 
+            set => SetProperty(ref _height, value); 
+        }
     }
 
     #endregion
@@ -116,6 +157,12 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<Cita> _citas = new();
+
+    /// <summary>
+    /// Lista de citas posicionadas para la vista semanal (con coordenadas en el grid).
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<CitaSemanaInfo> _citasSemana = new();
 
     /// <summary>
     /// Cita actualmente seleccionada.
@@ -471,6 +518,7 @@ public partial class AgendaViewModel : ViewModelBase
             TotalCitas = listaOrdenada.Count;
 
             // Si estamos en vista semanal, actualizar la estructura de semana
+            // (ActualizarSemana ya llama a CalcularPosicionesCitas internamente)
             if (VistaActual == VistaAgenda.Semana)
             {
                 ActualizarSemana();
@@ -543,6 +591,132 @@ public partial class AgendaViewModel : ViewModelBase
                 Etiqueta = hora.ToString(@"hh\:mm"),
                 EsHoraCompleta = hora.Minutes == 0
             });
+        }
+
+        // Recalcular posiciones de citas después de actualizar la semana
+        CalcularPosicionesCitas();
+    }
+
+    /// <summary>
+    /// Calcula las posiciones (columna, fila, rowspan) de las citas en el grid semanal.
+    /// </summary>
+    private void CalcularPosicionesCitas()
+    {
+        CitasSemana.Clear();
+
+        // Si no estamos en vista semanal o no hay días/horas calculados, salir
+        if (VistaActual != VistaAgenda.Semana || DiasSemana.Count == 0 || HorasSemana.Count == 0)
+        {
+            return;
+        }
+
+        // Obtener el lunes de la semana actual
+        var referenciaOffset = FechaSeleccionada ?? DateTimeOffset.Now.Date;
+        var referencia = referenciaOffset.Date;
+        var diasDesdeLunes = ((int)referencia.DayOfWeek + 6) % 7;
+        var inicioSemana = referencia.AddDays(-diasDesdeLunes);
+
+        // Crear diccionario de fecha -> índice de columna (0-6)
+        var fechaAColumna = new Dictionary<DateTime, int>();
+        for (int i = 0; i < DiasSemana.Count; i++)
+        {
+            fechaAColumna[DiasSemana[i].Fecha.Date] = i;
+        }
+
+        // Crear diccionario de hora -> índice de fila
+        var horaAFila = new Dictionary<TimeSpan, int>();
+        for (int i = 0; i < HorasSemana.Count; i++)
+        {
+            if (TimeSpan.TryParse(HorasSemana[i].Etiqueta, out var hora))
+            {
+                horaAFila[hora] = i;
+            }
+        }
+
+        // Procesar cada cita
+        foreach (var cita in Citas)
+        {
+            // Calcular columna (día de la semana)
+            if (!fechaAColumna.TryGetValue(cita.Fecha.Date, out var columna))
+            {
+                continue; // La cita no está en esta semana
+            }
+
+            // Calcular fila (hora de inicio)
+            // Redondear hacia abajo al slot de 30 minutos más cercano
+            var minutosInicio = (int)cita.HoraInicio.TotalMinutes;
+            var minutosRedondeados = (minutosInicio / 30) * 30;
+            var horaInicioRedondeada = TimeSpan.FromMinutes(minutosRedondeados);
+
+            // Buscar el slot exacto que coincida con la hora redondeada
+            int fila = -1;
+            for (int i = 0; i < HorasSemana.Count; i++)
+            {
+                if (TimeSpan.TryParse(HorasSemana[i].Etiqueta, out var horaSlot))
+                {
+                    // Comparar horas redondeadas (solo horas y minutos, ignorar segundos)
+                    if (horaSlot.Hours == horaInicioRedondeada.Hours && 
+                        horaSlot.Minutes == horaInicioRedondeada.Minutes)
+                    {
+                        fila = i;
+                        break;
+                    }
+                }
+            }
+
+            // Si no encontramos fila válida, saltar esta cita
+            if (fila < 0 || fila >= HorasSemana.Count)
+            {
+                Log.Debug("Cita {CitaId} no se puede posicionar: hora {Hora} no coincide con ningún slot", 
+                    cita.Id, cita.HoraInicio);
+                continue;
+            }
+
+            // Calcular RowSpan (duración en slots de 30 minutos)
+            var duracionMinutos = cita.DuracionMinutos;
+            var rowSpan = Math.Max(1, (int)Math.Ceiling(duracionMinutos / 30.0));
+
+            // Asegurar que no se salga del grid
+            if (fila + rowSpan > HorasSemana.Count)
+            {
+                rowSpan = HorasSemana.Count - fila;
+            }
+
+            // Calcular posiciones para Canvas (usando valores relativos que se ajustarán)
+            // Asumimos un ancho base por columna y altura de 32px por fila
+            // Estos valores se ajustarán cuando el Canvas tenga su tamaño real
+            const double anchoColumnaBase = 120.0; // Ancho estimado por columna
+            const double altoFila = 32.0;
+            
+            CitasSemana.Add(new CitaSemanaInfo
+            {
+                Cita = cita,
+                Columna = columna,
+                Fila = fila,
+                RowSpan = rowSpan,
+                Left = columna * anchoColumnaBase + 2, // Margen izquierdo
+                Top = fila * altoFila + 1, // Margen superior
+                Width = anchoColumnaBase - 6, // Ancho menos márgenes
+                Height = rowSpan * altoFila - 2 // Altura menos márgenes
+            });
+            
+            Log.Debug("Cita {CitaId} posicionada: Columna={Columna}, Fila={Fila}, RowSpan={RowSpan}, Hora={Hora}, Left={Left}, Top={Top}", 
+                cita.Id, columna, fila, rowSpan, cita.HoraInicio, columna * anchoColumnaBase, fila * altoFila);
+        }
+
+        Log.Information("✅ Posiciones de citas calculadas: {Count} citas posicionadas en el calendario semanal", CitasSemana.Count);
+        if (CitasSemana.Count > 0)
+        {
+            foreach (var citaInfo in CitasSemana)
+            {
+                Log.Information("  📍 Cita {Id}: Col={Col}, Fila={Fila}, RowSpan={Span}, Left={Left}, Top={Top}, Width={Width}, Height={Height}, Cliente={Cliente}",
+                    citaInfo.Cita.Id, citaInfo.Columna, citaInfo.Fila, citaInfo.RowSpan, 
+                    citaInfo.Left, citaInfo.Top, citaInfo.Width, citaInfo.Height, citaInfo.Cita.Cliente.NombreCompleto);
+            }
+        }
+        else
+        {
+            Log.Warning("⚠️ No se posicionaron citas. Total citas en período: {Count}", Citas.Count);
         }
     }
 

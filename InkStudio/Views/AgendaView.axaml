@@ -155,7 +155,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Rejilla de días/horas (de momento solo fondo y líneas suaves) -->
+                    <!-- Rejilla de días/horas con Grid fijo para posicionar citas -->
                     <Border Grid.Row="1"
                             Grid.Column="1"
                             Background="#020617"
@@ -163,53 +163,104 @@
                             BorderBrush="#111827"
                             BorderThickness="1"
                             Margin="2,0,0,0">
-                        <!-- Rejilla base: una fila por cada entrada de HorasSemana,
-                             con líneas horizontales y separadores verticales sutiles entre días -->
-                        <ItemsControl ItemsSource="{Binding HorasSemana}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Height="32">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                        <!-- Grid único con 28 filas (14 horas * 2 slots) y 7 columnas -->
+                        <Grid ColumnDefinitions="*,*,*,*,*,*,*"
+                              RowDefinitions="32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32">
+                            
+                            <!-- Líneas de la rejilla -->
+                            <ItemsControl ItemsSource="{Binding HorasSemana}" Grid.ColumnSpan="7">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Height="32">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <!-- Columnas de días con línea horizontal sutil -->
-                                        <Border Grid.Column="0"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="0,0.5,0,0"/>
-                                        <Border Grid.Column="1"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="1,0.5,0,0"/>
-                                        <Border Grid.Column="2"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="1,0.5,0,0"/>
-                                        <Border Grid.Column="3"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="1,0.5,0,0"/>
-                                        <Border Grid.Column="4"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="1,0.5,0,0"/>
-                                        <Border Grid.Column="5"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="1,0.5,0,0"/>
-                                        <Border Grid.Column="6"
-                                                BorderBrush="#1f2933"
-                                                BorderThickness="1,0.5,0,0"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                            <!-- Columnas de días con línea horizontal sutil -->
+                                            <Border Grid.Column="0"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="0,0.5,0,0"/>
+                                            <Border Grid.Column="1"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="1,0.5,0,0"/>
+                                            <Border Grid.Column="2"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="1,0.5,0,0"/>
+                                            <Border Grid.Column="3"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="1,0.5,0,0"/>
+                                            <Border Grid.Column="4"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="1,0.5,0,0"/>
+                                            <Border Grid.Column="5"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="1,0.5,0,0"/>
+                                            <Border Grid.Column="6"
+                                                    BorderBrush="#1f2933"
+                                                    BorderThickness="1,0.5,0,0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Bloques de citas superpuestos usando Canvas que ocupa todo el Grid -->
+                            <Canvas ZIndex="10"
+                                    Grid.ColumnSpan="7"
+                                    Grid.RowSpan="28"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    Background="Transparent">
+                                <ItemsControl ItemsSource="{Binding CitasSemana}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:AgendaViewModel+CitaSemanaInfo">
+                                            <Border Background="{Binding Cita.Estado, Converter={StaticResource EstadoCitaToColorConverter}}"
+                                                    CornerRadius="6"
+                                                    Padding="6,4"
+                                                    Margin="2,1"
+                                                    Opacity="0.85"
+                                                    Cursor="Hand"
+                                                    PointerPressed="OnCitaCalendarioClick"
+                                                    Tag="{Binding Cita}"
+                                                    Width="{Binding Width}"
+                                                    Height="{Binding Height}"
+                                                    Canvas.Left="{Binding Left}"
+                                                    Canvas.Top="{Binding Top}">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="{Binding Cita.HoraInicioFormateada}"
+                                                               FontSize="10"
+                                                               FontWeight="Bold"
+                                                               Foreground="White"/>
+                                                    <TextBlock Text="{Binding Cita.Cliente.NombreCompleto}"
+                                                               FontSize="11"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="White"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Cita.IconoTipo}"
+                                                               FontSize="12"
+                                                               Opacity="0.9"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Canvas>
+                        </Grid>
                     </Border>
                 </Grid>
 
