@@ -139,6 +139,9 @@ public partial class AgendaView : UserControl
                     citaInfo.Width = width;
                     citaInfo.Height = height;
 
+                    // Determinar si es una cita pequeña (media hora o menos)
+                    var esCitaPequena = height < 40; // Menos de ~40px de altura
+
                     // Obtener o crear el Border para esta cita
                     if (!_citaBorders.TryGetValue(citaInfo.Cita.Id, out var border))
                     {
@@ -147,11 +150,12 @@ public partial class AgendaView : UserControl
                         {
                             Background = GetColorFromEstado(citaInfo.Cita.Estado),
                             CornerRadius = new Avalonia.CornerRadius(6),
-                            Padding = new Avalonia.Thickness(6, 4),
+                            Padding = esCitaPequena ? new Avalonia.Thickness(4, 2) : new Avalonia.Thickness(6, 4),
                             Margin = new Avalonia.Thickness(2, 0),
                             Opacity = 0.85,
                             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
-                            Tag = citaInfo.Cita
+                            Tag = citaInfo.Cita,
+                            ClipToBounds = true // Asegurar que el contenido no se salga del Border
                         };
 
                         border.PointerPressed += (s, args) =>
@@ -168,29 +172,52 @@ public partial class AgendaView : UserControl
 
                         var stackPanel = new StackPanel 
                         { 
-                            Spacing = 2
+                            Spacing = esCitaPequena ? 1 : 2
                         };
+                        
+                        // Hora
                         stackPanel.Children.Add(new TextBlock
                         {
                             Text = citaInfo.Cita.HoraInicioFormateada,
-                            FontSize = 10,
+                            FontSize = esCitaPequena ? 9 : 10,
                             FontWeight = Avalonia.Media.FontWeight.Bold,
                             Foreground = Avalonia.Media.Brushes.White,
                             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
                         });
-                        stackPanel.Children.Add(new TextBlock
+                        
+                        // Nombre del cliente (solo si hay espacio suficiente)
+                        if (!esCitaPequena)
                         {
-                            Text = citaInfo.Cita.Cliente?.NombreCompleto ?? "Sin cliente",
-                            FontSize = 11,
-                            FontWeight = Avalonia.Media.FontWeight.SemiBold,
-                            Foreground = Avalonia.Media.Brushes.White,
-                            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
-                            TextWrapping = Avalonia.Media.TextWrapping.NoWrap
-                        });
+                            stackPanel.Children.Add(new TextBlock
+                            {
+                                Text = citaInfo.Cita.Cliente?.NombreCompleto ?? "Sin cliente",
+                                FontSize = 11,
+                                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                                Foreground = Avalonia.Media.Brushes.White,
+                                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+                                TextWrapping = Avalonia.Media.TextWrapping.NoWrap
+                            });
+                        }
+                        else
+                        {
+                            // Para citas pequeñas, mostrar solo el nombre corto o iniciales
+                            var nombreCorto = citaInfo.Cita.Cliente?.NombreCompleto?.Split(' ').FirstOrDefault() ?? "Sin cliente";
+                            stackPanel.Children.Add(new TextBlock
+                            {
+                                Text = nombreCorto,
+                                FontSize = 9,
+                                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                                Foreground = Avalonia.Media.Brushes.White,
+                                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+                                TextWrapping = Avalonia.Media.TextWrapping.NoWrap
+                            });
+                        }
+                        
+                        // Icono (más pequeño para citas pequeñas)
                         stackPanel.Children.Add(new TextBlock
                         {
                             Text = citaInfo.Cita.IconoTipo,
-                            FontSize = 12,
+                            FontSize = esCitaPequena ? 10 : 12,
                             Opacity = 0.9,
                             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
                             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
@@ -199,6 +226,44 @@ public partial class AgendaView : UserControl
                         border.Child = stackPanel;
                         canvas.Children.Add(border);
                         _citaBorders[citaInfo.Cita.Id] = border;
+                    }
+                    else
+                    {
+                        // Actualizar el contenido si la cita ya existe pero cambió de tamaño
+                        if (border.Child is StackPanel existingPanel)
+                        {
+                            // Actualizar padding del border
+                            border.Padding = esCitaPequena ? new Avalonia.Thickness(4, 2) : new Avalonia.Thickness(6, 4);
+                            
+                            // Actualizar spacing del panel
+                            existingPanel.Spacing = esCitaPequena ? 1 : 2;
+                            
+                            // Actualizar tamaños de fuente si es necesario
+                            if (existingPanel.Children.Count >= 3)
+                            {
+                                if (existingPanel.Children[0] is TextBlock horaBlock)
+                                {
+                                    horaBlock.FontSize = esCitaPequena ? 9 : 10;
+                                }
+                                if (existingPanel.Children[1] is TextBlock nombreBlock)
+                                {
+                                    nombreBlock.FontSize = esCitaPequena ? 9 : 11;
+                                    if (esCitaPequena)
+                                    {
+                                        var nombreCorto = citaInfo.Cita.Cliente?.NombreCompleto?.Split(' ').FirstOrDefault() ?? "Sin cliente";
+                                        nombreBlock.Text = nombreCorto;
+                                    }
+                                    else
+                                    {
+                                        nombreBlock.Text = citaInfo.Cita.Cliente?.NombreCompleto ?? "Sin cliente";
+                                    }
+                                }
+                                if (existingPanel.Children[2] is TextBlock iconoBlock)
+                                {
+                                    iconoBlock.FontSize = esCitaPequena ? 10 : 12;
+                                }
+                            }
+                        }
                     }
 
                     // Actualizar posiciones y tamaño
