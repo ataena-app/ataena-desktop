@@ -183,12 +183,11 @@
                 IsVisible="{Binding MostrarFormulario}"
                 Background="#B0000000"
                 Padding="40">
-            <!-- Modal centrado con glow suave -->
+            <!-- Modal centrado con glow suave (altura completa para permitir scroll interno) -->
             <Border HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
+                    VerticalAlignment="Stretch"
                     MinWidth="540"
                     MaxWidth="660"
-                    MaxHeight="800"
                     Background="#020617"
                     CornerRadius="18"
                     BoxShadow="0 0 80 0 #50d946ef, 0 0 120 0 #40ec4899">
@@ -220,9 +219,10 @@
                     <!-- Contenido scrollable -->
                     <ScrollViewer Grid.Row="1"
                                   Padding="28,24,40,24"
-                                  VerticalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Visible"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel>
+                        <!-- Margen inferior generoso para que el último campo no quede oculto tras el footer -->
+                        <StackPanel Margin="0,0,0,80">
 
                             <!-- Cliente -->
                             <TextBlock Text="Cliente *" Opacity="0.7" Margin="0,0,0,5"/>
@@ -318,8 +318,9 @@
                             <TextBox Text="{Binding Notas}"
                                      Watermark="Notas adicionales..."
                                      AcceptsReturn="True"
-                                     Height="80"
-                                     TextWrapping="Wrap"/>
+                                     Height="60"
+                                     TextWrapping="Wrap"
+                                     Margin="16,0,0,0"/>
 
                             <!-- Mensaje de error -->
                             <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -338,7 +339,7 @@
                     <!-- Footer botones -->
                     <Border Grid.Row="2"
                             Background="#111827"
-                            Padding="24,16"
+                            Padding="28,20"
                             CornerRadius="0,0,18,18">
                         <Grid ColumnDefinitions="Auto,*">
                             <Button Grid.Column="0"
@@ -347,22 +348,31 @@
                                     Command="{Binding EliminarTrabajoCommand}"
                                     IsVisible="{Binding EsEdicion}"
                                     MinWidth="150"
-                                    Height="40"
-                                    HorizontalAlignment="Left"/>
+                                    Height="42"
+                                    Padding="12,0"
+                                    HorizontalAlignment="Left"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"/>
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
                                         HorizontalAlignment="Right"
-                                        Spacing="10">
+                                        Spacing="12">
                                 <Button Content="Cancelar"
                                         Classes="btn-secondary"
                                         Command="{Binding CancelarEdicionCommand}"
-                                        MinWidth="120"
-                                        Height="40"/>
+                                        MinWidth="130"
+                                        Height="42"
+                                        Padding="12,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"/>
                                 <Button Content="💾 Guardar"
                                         Classes="btn-primary"
                                         Command="{Binding GuardarTrabajoCommand}"
-                                        MinWidth="120"
-                                        Height="40"/>
+                                        MinWidth="130"
+                                        Height="42"
+                                        Padding="12,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"/>
                             </StackPanel>
                         </Grid>
                     </Border>
