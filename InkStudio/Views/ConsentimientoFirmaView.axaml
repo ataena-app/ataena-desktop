@@ -27,7 +27,7 @@
                         CornerRadius="18,18,0,0">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
-                                   Text="📝 Firma de Consentimiento"
+                                   Text="{Binding TituloModal}"
                                    FontSize="22"
                                    FontWeight="Bold"
                                    VerticalAlignment="Center"/>

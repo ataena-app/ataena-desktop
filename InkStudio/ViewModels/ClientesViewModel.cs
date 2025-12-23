@@ -358,37 +358,20 @@ public partial class ClientesViewModel : ViewModelBase
                 MensajeError = "El nombre es obligatorio";
                 return;
             }
-            if (string.IsNullOrWhiteSpace(Telefono))
+
+            if (string.IsNullOrWhiteSpace(Apellidos))
             {
-                MensajeError = "El teléfono es obligatorio";
+                MensajeError = "Los apellidos son obligatorios";
                 return;
             }
 
-            // Validar teléfono único (solo para clientes activos)
-            var telefonoLimpio = Telefono.Trim();
-            if (!EsEdicion)
+            if (string.IsNullOrWhiteSpace(Dni))
             {
-                var existeTelefono = await _db.Clientes
-                    .AnyAsync(c => c.Telefono == telefonoLimpio && c.Activo);
-                
-                if (existeTelefono)
-                {
-                    MensajeError = "Ya existe un cliente activo con ese teléfono";
-                    return;
-                }
+                MensajeError = "El DNI es obligatorio";
+                return;
             }
-            else if (ClienteSeleccionado != null && ClienteSeleccionado.Telefono != telefonoLimpio)
-            {
-                // Si está editando y cambió el teléfono, verificar que el nuevo no exista
-                var existeTelefono = await _db.Clientes
-                    .AnyAsync(c => c.Telefono == telefonoLimpio && c.Activo && c.Id != ClienteSeleccionado.Id);
-                
-                if (existeTelefono)
-                {
-                    MensajeError = "Ya existe un cliente activo con ese teléfono";
-                    return;
-                }
-            }
+
+            // Teléfono y email son opcionales; no se valida unicidad de teléfono.
 
             Cargando = true;
             MensajeError = string.Empty;
@@ -536,6 +519,64 @@ public partial class ClientesViewModel : ViewModelBase
             Cargando = false;
         }
     }
+
+    #region Comandos - Firma desde ficha de cliente
+
+    /// <summary>
+    /// Abre el flujo de firma de RGPD desde la ficha del cliente.
+    /// </summary>
+    [RelayCommand]
+    private async Task FirmarConsentimientoRGPDDesdeFicha(Cliente cliente)
+    {
+        try
+        {
+            if (ConsentimientoFirmaVM == null)
+            {
+                ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
+                ConsentimientoFirmaVM.FirmaCompletada += async (s, c) =>
+                {
+                    await CargarClientes();
+                    await RefrescarFichaClientePorIdAsync(c.Id);
+                };
+            }
+
+            await ConsentimientoFirmaVM.AbrirModal(cliente, TipoConsentimiento.RGPD);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir firma de RGPD desde ficha de cliente {ClienteId}", cliente.Id);
+            MensajeError = $"Error al abrir el consentimiento RGPD: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Abre el flujo de firma de consentimiento de imágenes desde la ficha del cliente.
+    /// </summary>
+    [RelayCommand]
+    private async Task FirmarConsentimientoImagenesDesdeFicha(Cliente cliente)
+    {
+        try
+        {
+            if (ConsentimientoFirmaVM == null)
+            {
+                ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
+                ConsentimientoFirmaVM.FirmaCompletada += async (s, c) =>
+                {
+                    await CargarClientes();
+                    await RefrescarFichaClientePorIdAsync(c.Id);
+                };
+            }
+
+            await ConsentimientoFirmaVM.AbrirModal(cliente, TipoConsentimiento.Imagenes);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir firma de imágenes desde ficha de cliente {ClienteId}", cliente.Id);
+            MensajeError = $"Error al abrir el consentimiento de imágenes: {ex.Message}";
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// Elimina permanentemente el cliente seleccionado de la base de datos.

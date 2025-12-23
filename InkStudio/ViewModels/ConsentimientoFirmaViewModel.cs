@@ -40,6 +40,17 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     private TipoConsentimiento _tipoConsentimiento;
 
     /// <summary>
+    /// Título legible del modal según el tipo de consentimiento.
+    /// </summary>
+    public string TituloModal => TipoConsentimiento switch
+    {
+        TipoConsentimiento.RGPD => "📝 Consentimiento RGPD",
+        TipoConsentimiento.Imagenes => "📸 Consentimiento de uso de imágenes",
+        TipoConsentimiento.Trabajo => "📝 Consentimiento de trabajo",
+        _ => "📝 Consentimiento"
+    };
+
+    /// <summary>
     /// Cliente que va a firmar.
     /// </summary>
     [ObservableProperty]

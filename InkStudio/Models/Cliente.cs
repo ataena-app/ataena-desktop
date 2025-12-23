@@ -144,5 +144,11 @@ public class Cliente
     public bool TieneConsentimientoRGPD => Consentimientos
         .Any(c => c.Tipo == TipoConsentimiento.RGPD && c.Firmado);
 
+    /// <summary>
+    /// Indica si el cliente tiene un consentimiento de uso de imágenes firmado.
+    /// </summary>
+    public bool TieneConsentimientoImagenes => Consentimientos
+        .Any(c => c.Tipo == TipoConsentimiento.Imagenes && c.Firmado);
+
     #endregion
 }

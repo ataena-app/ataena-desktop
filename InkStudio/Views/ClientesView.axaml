@@ -451,10 +451,31 @@
                                     CornerRadius="12"
                                     Padding="20">
                                 <StackPanel Spacing="12">
-                                    <TextBlock Text="📝 Consentimientos"
-                                               FontSize="18"
-                                               FontWeight="Bold"
-                                               Margin="0,0,0,8"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                                        <TextBlock Text="📝 Consentimientos"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Margin="0,0,0,8"/>
+                                        <!-- Chips de estado RGPD / Imágenes -->
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Border Background="{Binding ClienteSeleccionado.TieneConsentimientoRGPD, Converter={StaticResource BoolToTextConverter}, ConverterParameter='#10b981|#ef5350'}"
+                                                    CornerRadius="12"
+                                                    Padding="8,2">
+                                                <TextBlock Text="{Binding ClienteSeleccionado.TieneConsentimientoRGPD, Converter={StaticResource BoolToTextConverter}, ConverterParameter='✅ RGPD|⚠️ Sin RGPD'}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                            <Border Background="{Binding ClienteSeleccionado.TieneConsentimientoImagenes, Converter={StaticResource BoolToTextConverter}, ConverterParameter='#10b981|#f97316'}"
+                                                    CornerRadius="12"
+                                                    Padding="8,2">
+                                                <TextBlock Text="{Binding ClienteSeleccionado.TieneConsentimientoImagenes, Converter={StaticResource BoolToTextConverter}, ConverterParameter='📸 Imágenes OK|📸 Sin imágenes'}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
                                     
                                     <ItemsControl ItemsSource="{Binding ConsentimientosCliente}">
                                         <ItemsControl.ItemTemplate>
@@ -517,6 +538,26 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                     
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                Spacing="8"
+                                                Margin="0,8,0,0">
+                                        <Button Content="📝 Firmar RGPD"
+                                                Classes="btn-secondary"
+                                                IsVisible="{Binding !ClienteSeleccionado.TieneConsentimientoRGPD}"
+                                                Command="{Binding FirmarConsentimientoRGPDDesdeFichaCommand}"
+                                                CommandParameter="{Binding ClienteSeleccionado}"
+                                                Height="32"
+                                                Padding="10,0"/>
+                                        <Button Content="📸 Firmar imágenes"
+                                                Classes="btn-secondary"
+                                                IsVisible="{Binding !ClienteSeleccionado.TieneConsentimientoImagenes}"
+                                                Command="{Binding FirmarConsentimientoImagenesDesdeFichaCommand}"
+                                                CommandParameter="{Binding ClienteSeleccionado}"
+                                                Height="32"
+                                                Padding="10,0"/>
+                                    </StackPanel>
+
                                     <TextBlock Text="No hay consentimientos firmados"
                                                IsVisible="{Binding !ConsentimientosCliente.Count}"
                                                Opacity="0.5"
