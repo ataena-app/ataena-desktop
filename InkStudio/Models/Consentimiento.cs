@@ -84,15 +84,55 @@ public class Consentimiento
     public bool TieneDocumento => !string.IsNullOrEmpty(RutaDocumento);
 
     /// <summary>
-    /// Nombre legible del tipo de consentimiento.
+    /// Nombre legible del consentimiento, con más contexto para los de trabajo.
     /// </summary>
-    public string NombreTipo => Tipo switch
+    public string NombreTipo
     {
-        TipoConsentimiento.RGPD => "RGPD - Protección de datos",
-        TipoConsentimiento.Imagenes => "Uso de imágenes",
-        TipoConsentimiento.Trabajo => "Consentimiento de trabajo",
-        _ => "Desconocido"
-    };
+        get
+        {
+            return Tipo switch
+            {
+                TipoConsentimiento.RGPD => "RGPD - Protección de datos",
+                TipoConsentimiento.Imagenes => "Consentimiento de uso de imágenes",
+                TipoConsentimiento.Trabajo => GetNombreConsentimientoTrabajo(),
+                _ => "Consentimiento desconocido"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Genera un nombre más descriptivo para los consentimientos de trabajo,
+    /// incluyendo información del tipo de trabajo y una breve descripción/zona.
+    /// </summary>
+    private string GetNombreConsentimientoTrabajo()
+    {
+        if (Trabajo == null)
+            return "Consentimiento de trabajo";
+
+        // Tipo de trabajo legible
+        var tipoTrabajo = Trabajo.Tipo switch
+        {
+            TipoTrabajo.Tatuaje => "Tatuaje",
+            TipoTrabajo.Piercing => "Piercing",
+            _ => "Trabajo"
+        };
+
+        // Usar descripción si existe, si no la zona del cuerpo
+        var detalle = !string.IsNullOrWhiteSpace(Trabajo.Descripcion)
+            ? Trabajo.Descripcion.Trim()
+            : Trabajo.ZonaCuerpo?.Trim() ?? string.Empty;
+
+        // Limitar longitud para que no rompa el layout de la ficha
+        const int maxLongitud = 40;
+        if (!string.IsNullOrEmpty(detalle) && detalle.Length > maxLongitud)
+        {
+            detalle = detalle.Substring(0, maxLongitud) + "…";
+        }
+
+        return string.IsNullOrEmpty(detalle)
+            ? $"Consentimiento de {tipoTrabajo}"
+            : $"Trabajo de {tipoTrabajo}: {detalle}";
+    }
 
     #endregion
 }

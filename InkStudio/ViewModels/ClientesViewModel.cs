@@ -283,7 +283,13 @@ public partial class ClientesViewModel : ViewModelBase
             // Recargar cliente con relaciones
             await _db.Entry(clienteAVer).ReloadAsync();
             await _db.Entry(clienteAVer).Collection(c => c.Trabajos).LoadAsync();
-            await _db.Entry(clienteAVer).Collection(c => c.Consentimientos).LoadAsync();
+
+            // Cargar consentimientos incluyendo el trabajo asociado (para mostrar nombres más descriptivos)
+            await _db.Entry(clienteAVer)
+                .Collection(c => c.Consentimientos)
+                .Query()
+                .Include(ct => ct.Trabajo)
+                .LoadAsync();
 
             // Cargar trabajos y consentimientos
             TrabajosCliente = new ObservableCollection<Trabajo>(
