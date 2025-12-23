@@ -22,6 +22,13 @@ public partial class ClientesViewModel : ViewModelBase
 {
     private readonly InkStudioDbContext _db = new();
 
+        /// <summary>
+        /// Si se marca RGPD + Imágenes al crear un cliente nuevo,
+        /// usamos este campo para recordar que, tras firmar RGPD,
+        /// hay que abrir automáticamente el consentimiento de imágenes.
+        /// </summary>
+        private int? _clientePendienteImagenesDespuesRgpdId;
+
     #region Propiedades - Lista y Selección
 
     /// <summary>
@@ -428,48 +435,69 @@ public partial class ClientesViewModel : ViewModelBase
             await _db.SaveChangesAsync();
             Log.Information("Cliente guardado exitosamente");
 
-            // Para nuevos clientes, verificar y solicitar consentimientos
+            // Para nuevos clientes, abrir flujos de consentimientos SOLO si el usuario lo ha marcado en el formulario.
+            // Si no marca nada, se crea el cliente sin consentimientos y el sistema avisará desde otros flujos (trabajos/citas).
             if (!EsEdicion)
             {
-                // Recargar cliente desde BD para obtener el ID correcto
-                await _db.Entry(clienteGuardado).ReloadAsync();
-                
-                // Verificar si ya tiene RGPD (no debería tenerlo si es nuevo)
-                var tieneRGPD = await ConsentimientoService.ValidarConsentimientosRequeridos(clienteGuardado.Id);
-                
-                if (!tieneRGPD)
+                // Cerrar formulario de cliente antes de abrir el modal de firma
+                MostrarFormulario = false;
+
+                // Asegurar instancia única del ViewModel de firma con manejador de refresco
+                if (ConsentimientoFirmaVM == null)
                 {
-                    // Cerrar formulario de cliente
-                    MostrarFormulario = false;
-                    
-                    // Abrir modal de firma RGPD
-                    if (ConsentimientoFirmaVM == null)
+                    ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
+                    ConsentimientoFirmaVM.FirmaCompletada += async (s, cliente) =>
                     {
-                        ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
-                        ConsentimientoFirmaVM.FirmaCompletada += async (s, cliente) =>
+                        await CargarClientes();
+                        await RefrescarFichaClientePorIdAsync(cliente.Id);
+
+                        // Si había pendiente abrir consentimiento de imágenes tras RGPD, hazlo ahora
+                        if (_clientePendienteImagenesDespuesRgpdId.HasValue &&
+                            _clientePendienteImagenesDespuesRgpdId.Value == cliente.Id)
                         {
-                            await CargarClientes();
-                            await RefrescarFichaClientePorIdAsync(cliente.Id);
-                        };
-                    }
-                    await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.RGPD);
-                    
-                    // El modal se cierra automáticamente cuando se confirma la firma
+                            var clienteId = _clientePendienteImagenesDespuesRgpdId.Value;
+                            _clientePendienteImagenesDespuesRgpdId = null; // limpiar antes para evitar bucles
+
+                            try
+                            {
+                                var clienteDb = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId);
+                                if (clienteDb != null)
+                                {
+                                    await ConsentimientoFirmaVM.AbrirModal(clienteDb, TipoConsentimiento.Imagenes);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error(ex, "Error al abrir consentimiento de imágenes encadenado tras RGPD para cliente {ClienteId}", clienteId);
+                                MensajeError = $"Error al abrir el consentimiento de imágenes: {ex.Message}";
+                            }
+                        }
+                    };
                 }
+
+                // IMPORTANTE: aquí SIEMPRE estamos en un cliente NUEVO (no edición).
+                // Si el usuario marca RGPD/Imágenes, abrimos en el orden elegido; si no marca nada, no se abre nada.
+
+                // Reset de cadena por defecto
+                _clientePendienteImagenesDespuesRgpdId = null;
+
+                // 1) RGPD: si el usuario ha marcado la casilla
+                if (FirmarConsentimientoRGPD)
+                {
+                    // Si también quiere imágenes, marcar que después de RGPD hay que abrir imágenes
+                    if (SolicitarConsentimientoImagenes)
+                    {
+                        _clientePendienteImagenesDespuesRgpdId = clienteGuardado.Id;
+                    }
+
+                    await _db.Entry(clienteGuardado).ReloadAsync();
+                    await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.RGPD);
+                }
+                // 2) Solo imágenes (sin RGPD marcado)
                 else if (SolicitarConsentimientoImagenes)
                 {
-                    // Si marcó el checkbox de imágenes, abrir modal de imágenes
-                    MostrarFormulario = false;
-                    if (ConsentimientoFirmaVM == null)
-                    {
-                        ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
-                    }
+                    await _db.Entry(clienteGuardado).ReloadAsync();
                     await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.Imagenes);
-                }
-                else
-                {
-                    // Si ya tiene RGPD y no quiere imágenes, solo cerrar
-                    MostrarFormulario = false;
                 }
             }
             else
