@@ -39,6 +39,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public TrabajosViewModel TrabajosVM { get; } = new();
 
     /// <summary>
+    /// ViewModel de vista global de consentimientos.
+    /// </summary>
+    public ConsentimientosViewModel ConsentimientosVM { get; } = new();
+
+    /// <summary>
     /// Constructor que inicializa las referencias entre ViewModels.
     /// </summary>
     public MainWindowViewModel()
@@ -114,6 +119,15 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         VistaActual = "Configuracion";
         // TODO: Implementar vista de Configuración
+    }
+
+    /// <summary>
+    /// Navega a la vista global de Consentimientos.
+    /// </summary>
+    [RelayCommand]
+    private void IrAConsentimientos()
+    {
+        VistaActual = "Consentimientos";
     }
 
     /// <summary>

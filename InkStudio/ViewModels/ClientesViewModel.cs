@@ -486,9 +486,17 @@ public partial class ClientesViewModel : ViewModelBase
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true || 
                                             ex.Message.Contains("UNIQUE") == true)
         {
-            Log.Warning("Intento de crear cliente con teléfono duplicado: {Telefono}. Error: {Error}", 
-                Telefono, ex.Message);
-            MensajeError = "Ya existe un cliente con ese teléfono.";
+            Log.Warning("Intento de crear cliente con clave única duplicada. Teléfono: {Telefono}, DNI: {Dni}. Error: {Error}", 
+                Telefono, Dni, ex.Message);
+
+            if (!string.IsNullOrWhiteSpace(Dni))
+            {
+                MensajeError = "Ya existe un cliente con ese DNI.";
+            }
+            else
+            {
+                MensajeError = "Ya existe un registro con alguno de los datos únicos introducidos.";
+            }
         }
         catch (Exception ex)
         {

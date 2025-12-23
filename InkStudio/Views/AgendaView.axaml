@@ -292,42 +292,42 @@
                             
                             <!-- Líneas de la rejilla - Dibujadas directamente en cada fila del Grid -->
                             <!-- Líneas horizontales (una por cada fila) -->
-                            <Border Grid.Row="0" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="1" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="2" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="3" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="4" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="5" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="6" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="7" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="8" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="9" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="10" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="11" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="12" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="13" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="14" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="15" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="16" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="17" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="18" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="19" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="20" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="21" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="22" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="23" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="24" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="25" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="26" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
-                            <Border Grid.Row="27" Grid.ColumnSpan="7" BorderBrush="#1f2933" BorderThickness="0,0.5,0,0"/>
+                            <Border Grid.Row="0" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="1" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="2" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="3" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="4" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="5" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="6" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="7" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="8" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="9" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="10" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="11" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="12" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="13" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="14" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="15" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="16" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="17" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="18" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="19" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="20" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="21" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="22" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="23" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="24" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="25" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="26" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
+                            <Border Grid.Row="27" Grid.ColumnSpan="7" BorderBrush="#334155" BorderThickness="0,1,0,0"/>
                             
                             <!-- Líneas verticales (una por cada columna) -->
-                            <Border Grid.Column="1" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
-                            <Border Grid.Column="2" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
-                            <Border Grid.Column="3" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
-                            <Border Grid.Column="4" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
-                            <Border Grid.Column="5" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
-                            <Border Grid.Column="6" Grid.RowSpan="28" BorderBrush="#1f2933" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="1" Grid.RowSpan="28" BorderBrush="#334155" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="2" Grid.RowSpan="28" BorderBrush="#334155" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="3" Grid.RowSpan="28" BorderBrush="#334155" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="4" Grid.RowSpan="28" BorderBrush="#334155" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="5" Grid.RowSpan="28" BorderBrush="#334155" BorderThickness="1,0,0,0"/>
+                            <Border Grid.Column="6" Grid.RowSpan="28" BorderBrush="#334155" BorderThickness="1,0,0,0"/>
 
                             <!-- Bloques de citas superpuestos usando Canvas directo -->
                             <Canvas Name="CanvasCitas"

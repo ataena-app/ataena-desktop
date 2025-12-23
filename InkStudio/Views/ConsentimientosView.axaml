@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:InkStudio.ViewModels"
+             xmlns:models="using:InkStudio.Models"
+             x:Class="InkStudio.Views.ConsentimientosView"
+             x:DataType="vm:ConsentimientosViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="30">
+
+    <!-- Cabecera -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch">
+      <StackPanel Orientation="Vertical">
+        <TextBlock Text="📝 Consentimientos"
+                   FontSize="24"
+                   FontWeight="Bold"/>
+        <TextBlock Text="Vista global de todos los consentimientos firmados"
+                   Opacity="0.6"
+                   Margin="0,4,0,0"/>
+      </StackPanel>
+    </StackPanel>
+
+    <!-- Contenido principal -->
+    <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,20,0,0">
+
+      <!-- Filtros -->
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+        <!-- Filtro por cliente -->
+        <StackPanel>
+          <TextBlock Text="Cliente" Opacity="0.7" FontSize="12" Margin="0,0,0,3"/>
+          <ComboBox ItemsSource="{Binding Clientes}"
+                    SelectedItem="{Binding ClienteFiltro}"
+                    Width="260">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="models:Cliente">
+                <TextBlock Text="{Binding NombreCompleto}"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+
+        <!-- Filtro por tipo -->
+        <StackPanel>
+          <TextBlock Text="Tipo" Opacity="0.7" FontSize="12" Margin="0,0,0,3"/>
+          <ComboBox SelectedItem="{Binding TipoFiltro}"
+                    Width="200">
+            <ComboBox.Items>
+              <x:Static Member="models:TipoConsentimiento.RGPD"/>
+              <x:Static Member="models:TipoConsentimiento.Imagenes"/>
+              <x:Static Member="models:TipoConsentimiento.Trabajo"/>
+            </ComboBox.Items>
+          </ComboBox>
+        </StackPanel>
+
+        <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal" Spacing="8">
+          <Button Content="Limpiar filtros"
+                  Classes="btn-secondary"
+                  Command="{Binding LimpiarFiltrosCommand}"/>
+        </StackPanel>
+      </StackPanel>
+
+      <!-- Lista de consentimientos -->
+      <Border Grid.Row="1"
+              Background="#111827"
+              CornerRadius="12"
+              Padding="16">
+        <ScrollViewer>
+          <ItemsControl ItemsSource="{Binding Consentimientos}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="models:Consentimiento">
+                <Border Background="#1f2937"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,0,0,10">
+                  <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+
+                    <!-- Info principal -->
+                    <StackPanel Grid.Column="0">
+                      <TextBlock Text="{Binding NombreTipo}"
+                                 FontSize="14"
+                                 FontWeight="SemiBold"/>
+                      <TextBlock>
+                        <Run Text="{Binding Cliente.NombreCompleto}"/>
+                        <Run Text=" · "/>
+                        <Run Text="{Binding FechaFirma, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"/>
+                      </TextBlock>
+                      <TextBlock IsVisible="{Binding Trabajo}">
+                        <Run Text="Trabajo: "/>
+                        <Run Text="{Binding Trabajo.Descripcion}"/>
+                      </TextBlock>
+                    </StackPanel>
+
+                    <!-- Estado -->
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Firmado, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Firmado|Pendiente'}"
+                               VerticalAlignment="Center"
+                               Opacity="0.7"/>
+
+                    <!-- Acciones -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="6"
+                                VerticalAlignment="Center">
+                      <Button Content="📄"
+                              Classes="btn-secondary"
+                              Width="32"
+                              Height="32"
+                              Command="{Binding $parent[UserControl].DataContext.AbrirConsentimientoCommand}"
+                              CommandParameter="{Binding}"/>
+                      <Button Content="💾"
+                              Classes="btn-secondary"
+                              Width="32"
+                              Height="32"
+                              Command="{Binding $parent[UserControl].DataContext.ExportarConsentimientoCommand}"
+                              CommandParameter="{Binding}"/>
+                      <Button Content="📧"
+                              Classes="btn-secondary"
+                              Width="32"
+                              Height="32"
+                              Command="{Binding $parent[UserControl].DataContext.EnviarConsentimientoPorCorreoCommand}"
+                              CommandParameter="{Binding}"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <!-- Mensaje de error -->
+    <Border Grid.Row="2"
+            IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            Background="#3d2a2a"
+            CornerRadius="6"
+            Padding="10"
+            Margin="0,10,0,0">
+      <TextBlock Text="{Binding MensajeError}"
+                 Foreground="#ef5350"
+                 TextWrapping="Wrap"/>
+    </Border>
+
+  </Grid>
+
+</UserControl>
+
+

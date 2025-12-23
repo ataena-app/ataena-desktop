@@ -204,7 +204,8 @@
                                   Padding="28,24,40,24"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Margin="0,0,0,20">
+                        <!-- Margen inferior generoso para que los últimos campos (checkboxes) no queden ocultos tras el footer -->
+                        <StackPanel Margin="0,0,0,80">
                             <!-- Nombre -->
                             <TextBlock Text="Nombre *" Opacity="0.7" Margin="0,0,0,5"/>
                             <TextBox Classes="form-field"

@@ -94,6 +94,13 @@
                 
                 <!-- Configuración y utilidades (abajo) -->
                 <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,20">
+                    <Button Classes="nav-btn" Command="{Binding IrAConsentimientosCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📝" FontSize="18"/>
+                            <TextBlock Text="Consentimientos" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
                     <Button Classes="nav-btn" 
                             Command="{Binding IrAConfiguracionCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -141,6 +148,10 @@
                 <!-- Trabajos -->
                 <views:TrabajosView DataContext="{Binding TrabajosVM}"
                                      IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Trabajos}"/>
+
+                <!-- Consentimientos -->
+                <views:ConsentimientosView DataContext="{Binding ConsentimientosVM}"
+                                           IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Consentimientos}"/>
                 
                 <!-- Placeholder para vistas no implementadas -->
                 
