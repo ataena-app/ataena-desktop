@@ -121,6 +121,21 @@ public class FirmaWebService : IDisposable
     }
 
     /// <summary>
+    /// Genera la URL completa para una sesión de captura de foto.
+    /// </summary>
+    /// <param name="token">Token único de la sesión.</param>
+    /// <returns>URL completa (http://{IP}:{Puerto}/foto/{token}).</returns>
+    public string GenerarUrlFoto(string token)
+    {
+        if (string.IsNullOrEmpty(UrlBase))
+            throw new InvalidOperationException("El servidor no está iniciado. Llama a IniciarServidor() primero.");
+
+        var url = $"{UrlBase}/foto/{token}";
+        Log.Debug("URL de foto generada: {URL}", url);
+        return url;
+    }
+
+    /// <summary>
     /// Configura automáticamente el firewall de Windows para permitir conexiones en el puerto especificado.
     /// </summary>
     /// <param name="puerto">Puerto a abrir en el firewall.</param>
@@ -482,26 +497,43 @@ public class FirmaWebService : IDisposable
                 return;
             }
             
-            // GET /firma/{token} - Servir página HTML
+            // GET /firma/{token} - Servir página HTML de firma
             if (request.HttpMethod == "GET" && path.StartsWith("/firma/"))
             {
                 var token = path.Substring("/firma/".Length);
                 await ServirPaginaFirma(context, token);
+            }
+            // GET /foto/{token} - Servir página HTML de foto
+            else if (request.HttpMethod == "GET" && path.StartsWith("/foto/"))
+            {
+                var token = path.Substring("/foto/".Length);
+                await ServirPaginaFoto(context, token);
             }
             // GET /styles.css - Servir CSS
             else if (request.HttpMethod == "GET" && path == "/styles.css")
             {
                 await ServirArchivoEstatico(context, "styles.css", "text/css");
             }
-            // GET /signature.js - Servir JavaScript
+            // GET /signature.js - Servir JavaScript de firma
             else if (request.HttpMethod == "GET" && path == "/signature.js")
             {
                 await ServirArchivoEstatico(context, "signature.js", "application/javascript");
+            }
+            // GET /photo.js - Servir JavaScript de foto
+            else if (request.HttpMethod == "GET" && path == "/photo.js")
+            {
+                await ServirArchivoEstatico(context, "photo.js", "application/javascript");
             }
             // POST /firma/{token} - Recibir firma
             else if (request.HttpMethod == "POST" && path.StartsWith("/firma/"))
             {
                 var token = path.Substring("/firma/".Length);
+                await RecibirFirma(request, response, token);
+            }
+            // POST /foto/{token} - Recibir foto (mismo formato que firma)
+            else if (request.HttpMethod == "POST" && path.StartsWith("/foto/"))
+            {
+                var token = path.Substring("/foto/".Length);
                 await RecibirFirma(request, response, token);
             }
             else

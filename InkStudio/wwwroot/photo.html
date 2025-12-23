@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Foto del trabajo</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>📸 Foto del trabajo</h1>
+    <p>Permite acceso a la cámara, encuadra la zona y pulsa en "Tomar foto".</p>
+
+    <div class="camera-container">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <div class="buttons">
+      <button id="btnCapture">Tomar foto</button>
+    </div>
+
+    <p id="status"></p>
+  </div>
+
+  <script src="/photo.js"></script>
+</body>
+</html>
+
+

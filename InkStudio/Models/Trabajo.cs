@@ -98,10 +98,20 @@ public class Trabajo
     #region Fotos y Notas
 
     /// <summary>
-    /// Rutas de las fotos en formato JSON.
+    /// Rutas de las fotos en formato JSON (uso general futuro).
     /// Usar la propiedad <see cref="Fotos"/> para acceder.
     /// </summary>
     public string? FotosJson { get; set; }
+
+    /// <summary>
+    /// Ruta de la foto "antes" del trabajo (si existe).
+    /// </summary>
+    public string? FotoAntesPath { get; set; }
+
+    /// <summary>
+    /// Ruta de la foto "después" del trabajo (si existe).
+    /// </summary>
+    public string? FotoDespuesPath { get; set; }
 
     /// <summary>
     /// Notas adicionales sobre el trabajo (opcional).

@@ -478,6 +478,61 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Fotos del trabajo (antes / después) -->
+                            <Border IsVisible="{Binding EsEdicion}"
+                                    Background="#020617"
+                                    CornerRadius="12"
+                                    Padding="20"
+                                    Margin="16,16,0,0">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="📸 Fotos del trabajo"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Margin="0,0,0,4"/>
+                                    <TextBlock Text="Solo disponibles si el cliente tiene RGPD e imágenes firmados y el trabajo tiene consentimiento."
+                                               FontSize="12"
+                                               Opacity="0.7"
+                                               TextWrapping="Wrap"/>
+
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
+                                        <StackPanel Grid.Column="0" Spacing="6">
+                                            <TextBlock Text="Foto ANTES"
+                                                       FontSize="13"
+                                                       Opacity="0.8"/>
+                                            <Button Content="📸 Tomar foto ANTES"
+                                                    Classes="btn-secondary"
+                                                    Command="{Binding TomarFotoAntesCommand}"
+                                                    CommandParameter="{Binding TrabajoSeleccionado}"
+                                                    Height="40"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="Foto DESPUÉS"
+                                                       FontSize="13"
+                                                       Opacity="0.8"/>
+                                            <Button Content="📸 Tomar foto DESPUÉS"
+                                                    Classes="btn-secondary"
+                                                    Command="{Binding TomarFotoDespuesCommand}"
+                                                    CommandParameter="{Binding TrabajoSeleccionado}"
+                                                    Height="40"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Button Content="📂 Abrir carpeta de fotos"
+                                            Classes="btn-secondary"
+                                            Command="{Binding AbrirCarpetaFotosTrabajoCommand}"
+                                            CommandParameter="{Binding TrabajoSeleccionado}"
+                                            Height="40"
+                                            HorizontalAlignment="Left"
+                                            MinWidth="190"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
                             <!-- Mensaje de error -->
                             <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                     Background="#3d2a2a"
@@ -550,6 +605,9 @@
         
         <!-- Modal de firma de consentimientos -->
         <views:ConsentimientoFirmaView DataContext="{Binding ConsentimientoFirmaVM}"/>
+
+        <!-- Modal de fotos de trabajo -->
+        <views:FotoTrabajoView DataContext="{Binding FotoTrabajoVM}"/>
         
         <!-- Aviso de consentimiento pendiente (no bloqueante) -->
         <Border Grid.Row="1"

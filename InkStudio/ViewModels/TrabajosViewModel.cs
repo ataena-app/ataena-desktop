@@ -76,6 +76,12 @@ public partial class TrabajosViewModel : ViewModelBase
     private ConsentimientoFirmaViewModel? _consentimientoFirmaVM;
 
     /// <summary>
+    /// ViewModel del modal de fotos de trabajo.
+    /// </summary>
+    [ObservableProperty]
+    private FotoTrabajoViewModel? _fotoTrabajoVM;
+
+    /// <summary>
     /// Indica si se debe mostrar un aviso sobre consentimiento pendiente.
     /// </summary>
     [ObservableProperty]
@@ -223,6 +229,7 @@ public partial class TrabajosViewModel : ViewModelBase
     {
         _ = CargarTrabajos();
         _ = CargarClientes();
+        FotoTrabajoVM = new FotoTrabajoViewModel(_db);
     }
 
     #endregion
@@ -557,6 +564,111 @@ public partial class TrabajosViewModel : ViewModelBase
         finally
         {
             Cargando = false;
+        }
+    }
+
+    /// <summary>
+    /// Inicia la captura de la foto ANTES del trabajo.
+    /// </summary>
+    [RelayCommand]
+    private async Task TomarFotoAntes(Trabajo? trabajo)
+    {
+        await IniciarCapturaFotoAsync(trabajo, esAntes: true);
+    }
+
+    /// <summary>
+    /// Inicia la captura de la foto DESPUÉS del trabajo.
+    /// </summary>
+    [RelayCommand]
+    private async Task TomarFotoDespues(Trabajo? trabajo)
+    {
+        await IniciarCapturaFotoAsync(trabajo, esAntes: false);
+    }
+
+    /// <summary>
+    /// Abre el explorador de archivos en la carpeta de fotos del trabajo.
+    /// </summary>
+    [RelayCommand]
+    private Task AbrirCarpetaFotosTrabajo(Trabajo? trabajo)
+    {
+        var trabajoVer = trabajo ?? TrabajoSeleccionado;
+        if (trabajoVer == null)
+            return Task.CompletedTask;
+
+        try
+        {
+            var rutaCarpeta = Services.ConsentimientoPathService.ObtenerRutaCarpetaTrabajo(trabajoVer.ClienteId, trabajoVer.Id);
+            if (!Directory.Exists(rutaCarpeta))
+            {
+                Directory.CreateDirectory(rutaCarpeta);
+            }
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = rutaCarpeta,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir carpeta de fotos para trabajo {TrabajoId}", trabajoVer.Id);
+            MensajeError = $"Error al abrir la carpeta de fotos: {ex.Message}";
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Lógica común para iniciar la captura de foto, validando consentimientos.
+    /// </summary>
+    private async Task IniciarCapturaFotoAsync(Trabajo? trabajo, bool esAntes)
+    {
+        var trabajoFoto = trabajo ?? TrabajoSeleccionado;
+        if (trabajoFoto == null)
+        {
+            MensajeError = "No hay trabajo seleccionado.";
+            return;
+        }
+
+        try
+        {
+            // Cargar cliente y consentimientos
+            await _db.Entry(trabajoFoto).Reference(t => t.Cliente).LoadAsync();
+            await _db.Entry(trabajoFoto.Cliente).Collection(c => c.Consentimientos).LoadAsync();
+            await _db.Entry(trabajoFoto).Reference(t => t.Consentimiento).LoadAsync();
+
+            // Validaciones de consentimiento
+            if (!trabajoFoto.Cliente.TieneConsentimientoRGPD)
+            {
+                MensajeError = "El cliente debe tener RGPD firmado antes de tomar fotos.";
+                return;
+            }
+
+            if (!trabajoFoto.Cliente.TieneConsentimientoImagenes)
+            {
+                MensajeError = "El cliente debe tener firmado el consentimiento de uso de imágenes antes de tomar fotos.";
+                return;
+            }
+
+            if (trabajoFoto.Consentimiento == null || !trabajoFoto.Consentimiento.Firmado)
+            {
+                MensajeError = "Debes firmar primero el consentimiento de trabajo antes de tomar fotos.";
+                return;
+            }
+
+            MensajeError = string.Empty;
+
+            if (FotoTrabajoVM == null)
+            {
+                FotoTrabajoVM = new FotoTrabajoViewModel(_db);
+            }
+
+            await FotoTrabajoVM.AbrirModalAsync(trabajoFoto, esAntes);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al iniciar captura de foto para trabajo {TrabajoId}", trabajoFoto.Id);
+            MensajeError = $"Error al iniciar la captura de foto: {ex.Message}";
         }
     }
 

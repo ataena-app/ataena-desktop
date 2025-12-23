@@ -64,15 +64,67 @@ public static class ConsentimientoPathService
         var baseFicheros = ObtenerRutaBaseFicheros();
         var carpetaClientes = Path.Combine(baseFicheros, "clientes");
         var carpetaCliente = Path.Combine(carpetaClientes, clienteId.ToString());
+
+        // Crear carpeta base del cliente si no existe
+        if (!Directory.Exists(carpetaCliente))
+        {
+            Directory.CreateDirectory(carpetaCliente);
+        }
+
+        return carpetaCliente;
+    }
+
+    /// <summary>
+    /// Obtiene la ruta de la carpeta de consentimientos para un cliente específico.
+    /// Estructura: %LOCALAPPDATA%\InkStudio\ficheros\clientes\{id}\consentimientos\
+    /// </summary>
+    public static string ObtenerRutaCarpetaConsentimientosCliente(int clienteId)
+    {
+        var carpetaCliente = ObtenerRutaCarpetaCliente(clienteId);
         var carpetaConsentimientos = Path.Combine(carpetaCliente, "consentimientos");
 
-        // Crear todas las carpetas si no existen
         if (!Directory.Exists(carpetaConsentimientos))
         {
             Directory.CreateDirectory(carpetaConsentimientos);
         }
 
         return carpetaConsentimientos;
+    }
+
+    /// <summary>
+    /// Obtiene la ruta de la carpeta de un trabajo concreto de un cliente.
+    /// Estructura: %LOCALAPPDATA%\InkStudio\ficheros\clientes\{clienteId}\trabajos\{trabajoId}\
+    /// </summary>
+    public static string ObtenerRutaCarpetaTrabajo(int clienteId, int trabajoId)
+    {
+        var carpetaCliente = ObtenerRutaCarpetaCliente(clienteId);
+        var carpetaTrabajos = Path.Combine(carpetaCliente, "trabajos");
+        var carpetaTrabajo = Path.Combine(carpetaTrabajos, trabajoId.ToString());
+
+        if (!Directory.Exists(carpetaTrabajo))
+        {
+            Directory.CreateDirectory(carpetaTrabajo);
+        }
+
+        return carpetaTrabajo;
+    }
+
+    /// <summary>
+    /// Obtiene la ruta completa para la foto "antes" de un trabajo.
+    /// </summary>
+    public static string ObtenerRutaFotoAntes(int clienteId, int trabajoId)
+    {
+        var carpetaTrabajo = ObtenerRutaCarpetaTrabajo(clienteId, trabajoId);
+        return Path.Combine(carpetaTrabajo, "antes.jpg");
+    }
+
+    /// <summary>
+    /// Obtiene la ruta completa para la foto "después" de un trabajo.
+    /// </summary>
+    public static string ObtenerRutaFotoDespues(int clienteId, int trabajoId)
+    {
+        var carpetaTrabajo = ObtenerRutaCarpetaTrabajo(clienteId, trabajoId);
+        return Path.Combine(carpetaTrabajo, "despues.jpg");
     }
 
     /// <summary>
@@ -143,7 +195,7 @@ public static class ConsentimientoPathService
     /// <returns>Ruta completa al archivo PDF.</returns>
     public static string ObtenerRutaCompletaPdf(int clienteId, Models.TipoConsentimiento tipoConsentimiento, int? trabajoId = null)
     {
-        var carpetaCliente = ObtenerRutaCarpetaCliente(clienteId);
+        var carpetaCliente = ObtenerRutaCarpetaConsentimientosCliente(clienteId);
         var nombreArchivo = GenerarNombreArchivo(clienteId, tipoConsentimiento, trabajoId);
         return Path.Combine(carpetaCliente, nombreArchivo);
     }
