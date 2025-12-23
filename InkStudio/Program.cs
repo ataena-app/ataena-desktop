@@ -1,5 +1,7 @@
 ﻿using Avalonia;
 using InkStudio.Services;
+using InkStudio.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace InkStudio;
@@ -24,6 +26,18 @@ sealed class Program
 
         try
         {
+            // Asegurar que la base de datos y el esquema existen (crea/aplica migraciones en primer arranque)
+            try
+            {
+                using var db = new InkStudioDbContext();
+                db.Database.Migrate();
+            }
+            catch (Exception exDb)
+            {
+                Serilog.Log.Fatal(exDb, "Error al aplicar migraciones de base de datos al iniciar la aplicación");
+                throw;
+            }
+
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }
