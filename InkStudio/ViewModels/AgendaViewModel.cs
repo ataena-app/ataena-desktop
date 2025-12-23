@@ -1113,6 +1113,37 @@ public partial class AgendaViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Crea una nueva cita desde el calendario semanal, precargando fecha, hora y duración.
+    /// </summary>
+    /// <param name="fecha">Fecha de la cita.</param>
+    /// <param name="horaInicio">Hora de inicio (ya alineada a slots de 30 min).</param>
+    /// <param name="duracionMinutos">Duración en minutos (múltiplo de 30).</param>
+    public void CrearCitaDesdeCalendario(DateTime fecha, TimeSpan horaInicio, int duracionMinutos)
+    {
+        LimpiarFormulario();
+
+        // Fecha y hora
+        FechaCita = new DateTimeOffset(fecha);
+        HoraInicioString = $"{horaInicio.Hours:D2}:{horaInicio.Minutes:D2}";
+
+        // Duración (asegurar múltiplos de 30 minutos)
+        if (duracionMinutos < 30) duracionMinutos = 30;
+        duracionMinutos = (int)(Math.Round(duracionMinutos / 30.0) * 30);
+        DuracionMinutos = duracionMinutos;
+
+        // Valores por defecto razonables
+        EstadoCita = EstadoCita.Pendiente;
+        if (TipoCita == 0)
+        {
+            TipoCita = TipoCita.Tatuaje;
+        }
+
+        EsEdicion = false;
+        TituloFormulario = "✨ Nueva Cita";
+        MostrarFormulario = true;
+    }
+
+    /// <summary>
     /// Abre el formulario para editar la cita seleccionada.
     /// </summary>
     [RelayCommand]

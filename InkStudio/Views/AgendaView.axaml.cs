@@ -126,6 +126,11 @@ public partial class AgendaView : UserControl
     /// </summary>
     private const double AlturaZonaRedimensionado = 10.0;
 
+    // Estado para creación de nuevas citas arrastrando sobre el calendario
+    private bool _estaCreandoNuevaCita = false;
+    private Avalonia.Point _posicionInicioCreacion;
+    private Border? _indicadorCreacionNueva;
+
     /// <summary>
     /// Se ejecuta cuando el Canvas de citas se carga o cambia de tamaño.
     /// Crea y posiciona los bloques de citas manualmente en el Canvas.
@@ -138,7 +143,8 @@ public partial class AgendaView : UserControl
             _canvasCitas = canvas;
             _viewModel = vm;
             
-            // Suscribirse a eventos del Canvas para seguir el arrastre incluso fuera del Border
+            // Suscribirse a eventos del Canvas para creación, arrastre y redimensionado
+            canvas.PointerPressed += OnCanvasPointerPressed;
             canvas.PointerMoved += OnCanvasPointerMoved;
             canvas.PointerReleased += OnCanvasPointerReleased;
             void ActualizarCitas()
@@ -661,11 +667,116 @@ public partial class AgendaView : UserControl
     }
 
     /// <summary>
+    /// Se ejecuta cuando se presiona el mouse sobre el Canvas.
+    /// Permite iniciar la creación de una nueva cita arrastrando sobre un hueco vacío.
+    /// </summary>
+    private void OnCanvasPointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (_canvasCitas == null || _viewModel == null)
+            return;
+
+        // Si se ha hecho click sobre una cita existente (cualquier parte del Border),
+        // NO iniciar creación de nueva cita: dejamos que actúe la lógica de esa cita.
+        var posicionEnCanvas = e.GetPosition(_canvasCitas);
+        foreach (var kvp in _citaBorders)
+        {
+            var border = kvp.Value;
+            if (border.Tag is Models.Cita)
+            {
+                var leftCita = Canvas.GetLeft(border);
+                var topCita = Canvas.GetTop(border);
+                var rectCita = new Avalonia.Rect(leftCita, topCita, border.Bounds.Width, border.Bounds.Height);
+                if (rectCita.Contains(posicionEnCanvas))
+                {
+                    // Click dentro de una cita → no creamos nueva
+                    return;
+                }
+            }
+        }
+
+        // Solo botón izquierdo
+        var point = e.GetCurrentPoint(_canvasCitas);
+        if (!point.Properties.IsLeftButtonPressed)
+            return;
+
+        // Iniciar modo creación
+        _estaCreandoNuevaCita = true;
+        _posicionInicioCreacion = e.GetPosition(_canvasCitas);
+
+        // Capturar el puntero en el Canvas para seguir el arrastre
+        e.Pointer.Capture(_canvasCitas);
+
+        // Crear indicador visual de creación (borde punteado translúcido)
+        _indicadorCreacionNueva = new Border
+        {
+            BorderBrush = Avalonia.Media.Brushes.White,
+            BorderThickness = new Avalonia.Thickness(1.5),
+            CornerRadius = new Avalonia.CornerRadius(6),
+            Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromArgb(40, 59, 130, 246)), // Azul muy translúcido
+            IsHitTestVisible = false
+        };
+
+        // Posición inicial mínima (un slot)
+        var anchoPorColumna = _canvasCitas.Bounds.Width / 7.0;
+        var altoPorFila = _canvasCitas.Bounds.Height / 28.0;
+
+        var columna = (int)Math.Floor(Math.Max(0, Math.Min(6, _posicionInicioCreacion.X / anchoPorColumna)));
+        var fila = (int)Math.Floor(Math.Max(0, Math.Min(27, _posicionInicioCreacion.Y / altoPorFila)));
+
+        var left = columna * anchoPorColumna + 2;
+        var top = fila * altoPorFila;
+
+        Canvas.SetLeft(_indicadorCreacionNueva, left);
+        Canvas.SetTop(_indicadorCreacionNueva, top);
+        _indicadorCreacionNueva.Width = anchoPorColumna - 6;
+        _indicadorCreacionNueva.Height = altoPorFila - 1;
+
+        _canvasCitas.Children.Add(_indicadorCreacionNueva);
+    }
+
+    /// <summary>
     /// Se ejecuta cuando se mueve el mouse durante el arrastre o redimensionado. Actualiza la posición visual.
     /// Este handler se suscribe al Canvas para capturar el movimiento incluso fuera del Border.
     /// </summary>
     private void OnCanvasPointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
     {
+        // Manejar creación de nueva cita arrastrando sobre Canvas vacío
+        if (_estaCreandoNuevaCita && _canvasCitas != null && _viewModel != null && _indicadorCreacionNueva != null)
+        {
+            var posicionActual = e.GetPosition(_canvasCitas);
+
+            var anchoPorColumna = _canvasCitas.Bounds.Width / 7.0;
+            var altoPorFila = _canvasCitas.Bounds.Height / 28.0;
+
+            // Columna determinada por la posición inicial (no cambiamos de día durante el arrastre)
+            var columna = (int)Math.Floor(Math.Max(0, Math.Min(6, _posicionInicioCreacion.X / anchoPorColumna)));
+
+            // Fila de inicio y fin según Y (permitir arrastrar hacia arriba o hacia abajo)
+            var filaInicio = (int)Math.Floor(Math.Max(0, Math.Min(27, _posicionInicioCreacion.Y / altoPorFila)));
+            var filaActual = (int)Math.Floor(Math.Max(0, Math.Min(27, posicionActual.Y / altoPorFila)));
+
+            var filaMin = Math.Min(filaInicio, filaActual);
+            var filaMax = Math.Max(filaInicio, filaActual);
+
+            // Asegurar al menos 1 fila (30 minutos)
+            if (filaMax == filaMin)
+                filaMax = Math.Min(27, filaMin + 1);
+
+            var rowSpan = filaMax - filaMin + 1;
+
+            var left = columna * anchoPorColumna + 2;
+            var top = filaMin * altoPorFila;
+            var width = anchoPorColumna - 6;
+            var height = rowSpan * altoPorFila - 1;
+
+            Canvas.SetLeft(_indicadorCreacionNueva, left);
+            Canvas.SetTop(_indicadorCreacionNueva, top);
+            _indicadorCreacionNueva.Width = width;
+            _indicadorCreacionNueva.Height = height;
+
+            return;
+        }
+
         // Manejar redimensionado
         if (_estaRedimensionando && _citaRedimensionandose != null && _citaRedimensionOriginal != null && _canvasCitas != null && _viewModel != null)
         {
@@ -890,6 +1001,74 @@ public partial class AgendaView : UserControl
     /// </summary>
     private async void OnCanvasPointerReleased(object? sender, Avalonia.Input.PointerReleasedEventArgs e)
     {
+        // Manejar finalización de creación de nueva cita
+        if (_estaCreandoNuevaCita && _canvasCitas != null && _viewModel != null)
+        {
+            // Liberar captura (si la tenía)
+            e.Pointer.Capture(null);
+
+                // Calcular rango final basándose en _posicionInicioCreacion y posición de suelta
+                var posicionFinal = e.GetPosition(_canvasCitas);
+
+                var anchoColumnaCreacion = _canvasCitas.Bounds.Width / 7.0;
+                var altoFilaCreacion = _canvasCitas.Bounds.Height / 28.0;
+
+                var columna = (int)Math.Floor(Math.Max(0, Math.Min(6, _posicionInicioCreacion.X / anchoColumnaCreacion)));
+
+                var filaInicio = (int)Math.Floor(Math.Max(0, Math.Min(27, _posicionInicioCreacion.Y / altoFilaCreacion)));
+                var filaFinal = (int)Math.Floor(Math.Max(0, Math.Min(27, posicionFinal.Y / altoFilaCreacion)));
+
+                var filaMin = Math.Min(filaInicio, filaFinal);
+                var filaMax = Math.Max(filaInicio, filaFinal);
+
+                if (filaMax == filaMin)
+                    filaMax = Math.Min(27, filaMin + 1);
+
+                var rowSpan = filaMax - filaMin + 1;
+
+                // Convertir a hora de inicio y duración (snap natural a slots de 30 minutos)
+                var minutosDesdeInicioDia = filaMin * 30; // cada fila = 30 minutos
+                var horaInicio = TimeSpan.FromMinutes(8 * 60 + minutosDesdeInicioDia); // día empieza a las 08:00
+                var duracionMinutos = rowSpan * 30;
+
+                // Obtener fecha del día correspondiente según la columna actual (vista semanal)
+                DateTime fechaCita = DateTime.Today;
+                try
+                {
+                    if (_viewModel.DiasSemana != null && _viewModel.DiasSemana.Count == 7)
+                    {
+                        fechaCita = _viewModel.DiasSemana[columna].Fecha;
+                    }
+                    else if (_viewModel.FechaSeleccionada.HasValue)
+                    {
+                        fechaCita = _viewModel.FechaSeleccionada.Value.Date;
+                    }
+                }
+                catch
+                {
+                    // Fallback a hoy si algo falla
+                    fechaCita = DateTime.Today;
+                }
+
+                // Eliminar indicador visual
+                if (_indicadorCreacionNueva != null)
+                {
+                    _canvasCitas.Children.Remove(_indicadorCreacionNueva);
+                    _indicadorCreacionNueva = null;
+                }
+
+                _estaCreandoNuevaCita = false;
+
+                // Abrir modal de nueva cita con hora y duración precargadas
+                _viewModel.CrearCitaDesdeCalendario(fechaCita, horaInicio, duracionMinutos);
+
+                Serilog.Log.Information("🆕 Creación de cita desde calendario: Fecha={Fecha}, HoraInicio={Hora}, Duracion={Duracion}min",
+                    fechaCita, horaInicio, duracionMinutos);
+
+                // No continuar con lógica de arrastre/redimensionado
+                return;
+        }
+
         // Manejar finalización de redimensionado PRIMERO
         if (_estaRedimensionando && _citaRedimensionandose != null && _citaRedimensionOriginal != null && _canvasCitas != null && _viewModel != null)
         {

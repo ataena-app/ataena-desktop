@@ -335,6 +335,7 @@
                                     Grid.RowSpan="28"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Stretch"
+                                    Background="Transparent"
                                     ZIndex="10"
                                     Loaded="OnCanvasCitasLoaded"/>
                         </Grid>

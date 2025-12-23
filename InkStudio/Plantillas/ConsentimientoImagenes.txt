@@ -24,10 +24,3 @@ He leído y comprendido la información anterior y doy mi consentimiento para el
 
 Fecha: {FECHA_FIRMA}
 Hora: {HORA_FIRMA}
-
-Firma del cliente:
-_________________________
-
-{NOMBRE_CLIENTE}
-DNI/NIE: {DNI_CLIENTE}
-

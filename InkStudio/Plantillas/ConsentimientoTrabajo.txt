@@ -48,16 +48,3 @@ He leído y comprendido toda la información proporcionada. Todas mis preguntas 
 
 Fecha: {FECHA_FIRMA}
 Hora: {HORA_FIRMA}
-
-Firma del cliente:
-_________________________
-
-{NOMBRE_CLIENTE}
-DNI/NIE: {DNI_CLIENTE}
-
-Firma del profesional:
-_________________________
-
-{NOMBRE_PROFESIONAL}
-Colegiado: {NUMERO_COLEGIADO}
-
