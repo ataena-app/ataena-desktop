@@ -237,11 +237,51 @@
                                      Watermark="12345678A"/>
 
                             <!-- Fecha nacimiento -->
-                            <TextBlock Text="Fecha de nacimiento" Opacity="0.7" Margin="16,16,0,5"/>
-                            <DatePicker SelectedDate="{Binding FechaNacimiento}"
-                                        Classes="form-field"
-                                        Margin="0,0,0,15"
-                                        HorizontalAlignment="Stretch"/>
+                            <TextBlock Text="Fecha de nacimiento (DD/MM/YYYY)" Opacity="0.7" Margin="16,16,0,5"/>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,15">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding FechaNacimientoTexto, Mode=TwoWay}"
+                                         Watermark="DDMMYYYY (ej: 15031990)"
+                                         Classes="form-field"
+                                         HorizontalAlignment="Stretch"
+                                         Name="FechaNacimientoTextBox"
+                                         TextChanged="OnFechaNacimientoTextChanged"/>
+                                <Button Grid.Column="1"
+                                        Content="📅"
+                                        Width="44"
+                                        Height="44"
+                                        Margin="8,0,0,0"
+                                        Padding="0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        FontSize="18"
+                                        Background="#1f2937"
+                                        BorderBrush="#374151"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Click="OnAbrirCalendarioFechaNacimiento">
+                                    <Button.Styles>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="#374151"/>
+                                        </Style>
+                                    </Button.Styles>
+                                </Button>
+                            </Grid>
+                            <!-- Popup con DatePicker -->
+                            <Popup Name="FechaNacimientoPopup"
+                                   PlacementTarget="{Binding #FechaNacimientoTextBox}"
+                                   Placement="Bottom"
+                                   IsLightDismissEnabled="True"
+                                   Width="300">
+                                <Border Background="#1e1e2e"
+                                        CornerRadius="8"
+                                        Padding="10"
+                                        BorderBrush="#374151"
+                                        BorderThickness="1">
+                                    <DatePicker SelectedDate="{Binding FechaNacimiento}"
+                                                 HorizontalAlignment="Stretch"/>
+                                </Border>
+                            </Popup>
 
                             <!-- Alergias -->
                             <TextBlock Text="Alergias (importante para tintas)" Opacity="0.7" Margin="16,16,0,5"/>

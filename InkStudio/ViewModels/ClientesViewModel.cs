@@ -114,6 +114,116 @@ public partial class ClientesViewModel : ViewModelBase
     [ObservableProperty]
     private DateTimeOffset? _fechaNacimiento;
 
+    /// <summary>
+    /// Texto de la fecha de nacimiento para entrada por teclado (formato DD/MM/YYYY o DD-MM-YYYY).
+    /// Se sincroniza automáticamente con FechaNacimiento.
+    /// </summary>
+    [ObservableProperty]
+    private string _fechaNacimientoTexto = string.Empty;
+
+    /// <summary>
+    /// Se ejecuta cuando cambia FechaNacimientoTexto.
+    /// Intenta parsear el texto a fecha y actualizar FechaNacimiento.
+    /// Esto permite que el DatePicker acepte entrada de texto manual.
+    /// </summary>
+    partial void OnFechaNacimientoTextoChanged(string value)
+    {
+        // Esta propiedad se mantiene para compatibilidad, pero el DatePicker maneja la entrada directamente
+        // Solo actualizamos si el texto es válido y diferente de lo que ya está en FechaNacimiento
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            if (FechaNacimiento.HasValue)
+            {
+                _actualizandoFechaDesdeTexto = true;
+                FechaNacimiento = null;
+                _actualizandoFechaDesdeTexto = false;
+            }
+            return;
+        }
+
+        // Intentar parsear en varios formatos comunes
+        var formatos = new[] { "dd/MM/yyyy", "dd-MM-yyyy", "d/M/yyyy", "d-M-yyyy", "dd/MM/yy", "dd-MM-yy" };
+        foreach (var formato in formatos)
+        {
+            if (DateTime.TryParseExact(value.Trim(), formato, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var fecha))
+            {
+                // Si el año tiene 2 dígitos, asumir 19xx o 20xx según el valor
+                if (formato.Contains("yy") && !formato.Contains("yyyy"))
+                {
+                    if (fecha.Year < 50)
+                        fecha = fecha.AddYears(2000);
+                    else if (fecha.Year < 100)
+                        fecha = fecha.AddYears(1900);
+                }
+
+                var nuevaFecha = new DateTimeOffset(fecha);
+                // Solo actualizar si es diferente para evitar bucles
+                if (!FechaNacimiento.HasValue || FechaNacimiento.Value.Date != nuevaFecha.Date)
+                {
+                    _actualizandoFechaDesdeTexto = true;
+                    FechaNacimiento = nuevaFecha;
+                    _actualizandoFechaDesdeTexto = false;
+                }
+                return;
+            }
+        }
+
+        // Si no se pudo parsear, intentar parseo flexible
+        if (DateTime.TryParse(value.Trim(), System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var fechaFlexible))
+        {
+            var nuevaFecha = new DateTimeOffset(fechaFlexible);
+            if (!FechaNacimiento.HasValue || FechaNacimiento.Value.Date != nuevaFecha.Date)
+            {
+                _actualizandoFechaDesdeTexto = true;
+                FechaNacimiento = nuevaFecha;
+                _actualizandoFechaDesdeTexto = false;
+            }
+        }
+        // Si no se puede parsear, no actualizamos FechaNacimiento (permitimos texto parcial mientras se escribe)
+    }
+
+    private bool _actualizandoFechaDesdeTexto = false;
+
+    /// <summary>
+    /// Se ejecuta cuando cambia FechaNacimiento.
+    /// Actualiza FechaNacimientoTexto para mantener sincronización.
+    /// </summary>
+    partial void OnFechaNacimientoChanged(DateTimeOffset? value)
+    {
+        // Evitar bucle infinito: si estamos actualizando desde el texto, no actualizar el texto
+        if (_actualizandoFechaDesdeTexto)
+            return;
+
+        if (value.HasValue)
+        {
+            var texto = value.Value.ToString("dd/MM/yyyy");
+            if (FechaNacimientoTexto != texto)
+            {
+                FechaNacimientoTexto = texto;
+            }
+        }
+        else
+        {
+            // Solo limpiar si el texto actual no parece ser una fecha válida parcial
+            if (!string.IsNullOrWhiteSpace(FechaNacimientoTexto))
+            {
+                var formatos = new[] { "dd/MM/yyyy", "dd-MM-yyyy", "d/M/yyyy", "d-M-yyyy" };
+                bool esFormatoValido = formatos.Any(f => 
+                    DateTime.TryParseExact(FechaNacimientoTexto.Trim(), f, 
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out _));
+                
+                // Solo limpiar si no es un formato válido y no parece ser una fecha parcial en escritura
+                if (!esFormatoValido && !FechaNacimientoTexto.Contains("/") && !FechaNacimientoTexto.Contains("-"))
+                {
+                    FechaNacimientoTexto = string.Empty;
+                }
+            }
+        }
+    }
+
     [ObservableProperty]
     private string _alergias = string.Empty;
 
@@ -1172,7 +1282,8 @@ public partial class ClientesViewModel : ViewModelBase
         Telefono = string.Empty;
         Email = string.Empty;
         Dni = string.Empty;
-        FechaNacimiento = DateTimeOffset.Now.Date;
+        FechaNacimiento = null;
+        FechaNacimientoTexto = string.Empty;
         Alergias = string.Empty;
         Notas = string.Empty;
         MensajeError = string.Empty;
@@ -1193,7 +1304,8 @@ public partial class ClientesViewModel : ViewModelBase
         Dni = cliente.Dni ?? string.Empty;
         FechaNacimiento = cliente.FechaNacimiento.HasValue 
             ? new DateTimeOffset(cliente.FechaNacimiento.Value) 
-            : DateTimeOffset.Now.Date;
+            : null;
+        // FechaNacimientoTexto se actualizará automáticamente por OnFechaNacimientoChanged
         Alergias = cliente.Alergias ?? string.Empty;
         Notas = cliente.Notas ?? string.Empty;
         MensajeError = string.Empty;
