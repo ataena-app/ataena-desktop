@@ -117,47 +117,59 @@ public class RestauracionService
                     var rutaWalBackup = rutaBaseDatos + "-wal.backup";
                     var rutaShmBackup = rutaBaseDatos + "-shm.backup";
                     
-                    // Intentar renombrar (no crítico si falla, continuaremos de todos modos)
+                    // Intentar renombrar archivos WAL y SHM (no crítico si falla)
+                    // Estos archivos pueden estar en uso por conexiones activas, pero SQLite
+                    // creará nuevos cuando se abra la base de datos restaurada
+                    bool walRenombrado = false;
+                    bool shmRenombrado = false;
+                    
                     try
                     {
                         await RenombrarArchivoConReintentos(rutaWal, rutaWalBackup);
+                        walRenombrado = true;
+                        Log.Information("✅ Archivo WAL renombrado correctamente");
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Log.Warning(ex, "⚠️ No se pudo renombrar el archivo WAL, continuando de todos modos. SQLite creará uno nuevo.");
+                        Log.Information("ℹ️ No se pudo renombrar el archivo WAL (está en uso), pero no es crítico. SQLite creará uno nuevo al abrir la base de datos.");
                     }
                     
                     try
                     {
                         await RenombrarArchivoConReintentos(rutaShm, rutaShmBackup);
+                        shmRenombrado = true;
+                        Log.Information("✅ Archivo SHM renombrado correctamente");
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Log.Warning(ex, "⚠️ No se pudo renombrar el archivo SHM, continuando de todos modos.");
+                        Log.Information("ℹ️ No se pudo renombrar el archivo SHM (está en uso), pero no es crítico. SQLite creará uno nuevo al abrir la base de datos.");
                     }
 
                     // Reemplazar base de datos (esto es lo importante)
                     await CopiarArchivoConReintentos(rutaDbEnZip, rutaBaseDatos);
                     Log.Information("✅ Base de datos restaurada");
                     
-                    // Intentar eliminar los archivos renombrados (opcional, no crítico)
-                    await Task.Delay(500);
-                    try
+                    // Intentar eliminar los archivos renombrados (solo si se renombraron correctamente)
+                    if (walRenombrado || shmRenombrado)
                     {
-                        if (File.Exists(rutaWalBackup))
+                        await Task.Delay(500);
+                        try
                         {
-                            File.Delete(rutaWalBackup);
-                            Log.Information("✅ Archivo WAL antiguo eliminado");
+                            if (walRenombrado && File.Exists(rutaWalBackup))
+                            {
+                                File.Delete(rutaWalBackup);
+                                Log.Information("✅ Archivo WAL antiguo eliminado");
+                            }
+                            if (shmRenombrado && File.Exists(rutaShmBackup))
+                            {
+                                File.Delete(rutaShmBackup);
+                                Log.Information("✅ Archivo SHM antiguo eliminado");
+                            }
                         }
-                        if (File.Exists(rutaShmBackup))
+                        catch
                         {
-                            File.Delete(rutaShmBackup);
-                            Log.Information("✅ Archivo SHM antiguo eliminado");
+                            Log.Information("ℹ️ No se pudieron eliminar los archivos WAL/SHM renombrados. Se eliminarán automáticamente en el próximo inicio de la aplicación.");
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning(ex, "⚠️ No se pudieron eliminar los archivos WAL/SHM renombrados, se eliminarán en el próximo inicio");
                     }
 
                     // Restaurar archivos WAL y SHM si existen
