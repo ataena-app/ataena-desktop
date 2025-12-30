@@ -567,8 +567,17 @@ public partial class ClientesViewModel : ViewModelBase
                 return;
             }
 
+            // Normalizar DNI: eliminar espacios y convertir a mayúsculas
+            var dniTrimmed = Dni.Trim().ToUpperInvariant();
+
+            // Validar formato de DNI/NIE
+            if (!EsDniNieValido(dniTrimmed))
+            {
+                MensajeError = "El formato del DNI/NIE no es válido. Formato: 12345678A (DNI) o X1234567L (NIE)";
+                return;
+            }
+
             // Verificar que el DNI no esté duplicado (solo para nuevos clientes o si cambió el DNI)
-            var dniTrimmed = Dni.Trim();
             var clienteIdActual = EsEdicion && ClienteSeleccionado != null ? ClienteSeleccionado.Id : 0;
             
             if (!EsEdicion || (EsEdicion && ClienteSeleccionado != null && ClienteSeleccionado.Dni != dniTrimmed))
@@ -603,7 +612,7 @@ public partial class ClientesViewModel : ViewModelBase
                 ClienteSeleccionado.Apellidos = apellidosCapitalizados;
                 ClienteSeleccionado.Telefono = string.IsNullOrWhiteSpace(Telefono) ? string.Empty : Telefono.Trim();
                 ClienteSeleccionado.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
-                ClienteSeleccionado.Dni = Dni.Trim(); // DNI es obligatorio, no puede ser null
+                ClienteSeleccionado.Dni = dniTrimmed; // DNI ya validado y en mayúsculas
                 ClienteSeleccionado.FechaNacimiento = FechaNacimiento?.DateTime;
                 ClienteSeleccionado.Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim();
                 ClienteSeleccionado.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
@@ -620,7 +629,7 @@ public partial class ClientesViewModel : ViewModelBase
                     Apellidos = apellidosCapitalizados,
                     Telefono = string.IsNullOrWhiteSpace(Telefono) ? string.Empty : Telefono.Trim(),
                     Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
-                    Dni = Dni.Trim(), // DNI es obligatorio, no puede ser null
+                    Dni = dniTrimmed, // DNI ya validado y en mayúsculas
                     FechaNacimiento = FechaNacimiento?.DateTime,
                     Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim(),
                     Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim(),
@@ -1397,6 +1406,99 @@ public partial class ClientesViewModel : ViewModelBase
         
         // Usar ToTitleCase para capitalizar cada palabra
         return textInfo.ToTitleCase(texto.ToLower(cultureInfo));
+    }
+
+    /// <summary>
+    /// Valida el formato de un DNI o NIE español.
+    /// DNI: 8 dígitos seguidos de una letra (ej: 12345678A)
+    /// NIE: X, Y o Z seguido de 7 dígitos y una letra (ej: X1234567L)
+    /// </summary>
+    private static bool EsDniNieValido(string dni)
+    {
+        if (string.IsNullOrWhiteSpace(dni))
+        {
+            return false;
+        }
+
+        // Eliminar espacios y convertir a mayúsculas
+        dni = dni.Trim().ToUpperInvariant();
+
+        // Validar formato DNI: 8 dígitos + 1 letra
+        if (System.Text.RegularExpressions.Regex.IsMatch(dni, @"^\d{8}[A-Z]$"))
+        {
+            return ValidarLetraDni(dni);
+        }
+
+        // Validar formato NIE: X/Y/Z + 7 dígitos + 1 letra
+        if (System.Text.RegularExpressions.Regex.IsMatch(dni, @"^[XYZ]\d{7}[A-Z]$"))
+        {
+            return ValidarLetraNie(dni);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Valida la letra de control de un DNI español.
+    /// </summary>
+    private static bool ValidarLetraDni(string dni)
+    {
+        if (dni.Length != 9)
+            return false;
+
+        // Extraer los 8 dígitos
+        if (!int.TryParse(dni.Substring(0, 8), out int numero))
+            return false;
+
+        // Letras válidas para DNI (en orden)
+        string letras = "TRWAGMYFPDXBNJZSQVHLCKE";
+        int resto = numero % 23;
+        char letraEsperada = letras[resto];
+        char letraRecibida = dni[8];
+
+        return letraEsperada == letraRecibida;
+    }
+
+    /// <summary>
+    /// Valida la letra de control de un NIE español.
+    /// </summary>
+    private static bool ValidarLetraNie(string nie)
+    {
+        if (nie.Length != 9)
+            return false;
+
+        // Reemplazar X, Y, Z por 0, 1, 2 respectivamente
+        char primeraLetra = nie[0];
+        string numeroStr = nie.Substring(1, 7);
+        
+        if (!int.TryParse(numeroStr, out int numero))
+            return false;
+
+        // Convertir primera letra a número
+        int numeroInicial = primeraLetra switch
+        {
+            'X' => 0,
+            'Y' => 1,
+            'Z' => 2,
+            _ => -1
+        };
+
+        if (numeroInicial == -1)
+            return false;
+
+        // Construir el número completo: primera letra como número + 7 dígitos
+        string numeroCompleto = numeroInicial.ToString() + numeroStr;
+        
+        if (!int.TryParse(numeroCompleto, out int numeroTotal))
+            return false;
+
+        // Letras válidas para NIE (mismo algoritmo que DNI)
+        string letras = "TRWAGMYFPDXBNJZSQVHLCKE";
+        int resto = numeroTotal % 23;
+        char letraEsperada = letras[resto];
+        char letraRecibida = nie[8];
+
+        return letraEsperada == letraRecibida;
     }
 
     #endregion
