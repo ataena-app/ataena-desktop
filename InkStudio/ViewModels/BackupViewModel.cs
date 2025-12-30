@@ -448,6 +448,7 @@ public partial class BackupViewModel : ViewModelBase
 
     /// <summary>
     /// Restaura un backup seleccionado.
+    /// Muestra un diálogo de confirmación antes de proceder.
     /// </summary>
     [RelayCommand]
     private async Task RestaurarBackup(InfoBackup? backup)
@@ -467,15 +468,24 @@ public partial class BackupViewModel : ViewModelBase
                 return;
             }
 
-            // Mostrar resumen
+            // Obtener resumen del backup
             var resumen = _restauracionService.ObtenerResumenBackup(backup.RutaCompleta);
-            MensajeEstado = $"⚠️ ¿Restaurar este backup?\n\n{resumen}\n\nEsto reemplazará TODOS los datos actuales.";
 
-            // TODO: Mostrar diálogo de confirmación
-            // Por ahora, proceder directamente
+            // Mostrar diálogo de confirmación
+            var confirmado = await DialogService.ConfirmarRestaurarBackupAsync(
+                nombreBackup: backup.NombreArchivo,
+                resumen: resumen
+            );
+
+            if (!confirmado)
+            {
+                Log.Debug("Restauración de backup cancelada por el usuario: {Backup}", backup.NombreArchivo);
+                return;
+            }
 
             Cargando = true;
             MensajeError = string.Empty;
+            MensajeEstado = "🔄 Restaurando backup...";
             Progreso = 0;
 
             await Task.Run(async () =>
@@ -488,7 +498,12 @@ public partial class BackupViewModel : ViewModelBase
             MensajeEstado = "✅ Backup restaurado exitosamente. Por favor, reinicia la aplicación.";
             Progreso = 0;
 
-            // TODO: Mostrar mensaje de que debe reiniciar la aplicación
+            // Mostrar mensaje informativo de que debe reiniciar
+            await DialogService.MostrarInfoAsync(
+                titulo: "✅ Backup Restaurado",
+                mensaje: "El backup se ha restaurado correctamente.\n\n" +
+                         "Por favor, cierra y vuelve a abrir la aplicación para que los cambios surtan efecto."
+            );
         }
         catch (Exception ex)
         {
@@ -583,6 +598,7 @@ public partial class BackupViewModel : ViewModelBase
 
     /// <summary>
     /// Elimina un backup.
+    /// Muestra un diálogo de confirmación antes de proceder.
     /// </summary>
     [RelayCommand]
     private async Task EliminarBackup(InfoBackup? backup)
@@ -592,12 +608,25 @@ public partial class BackupViewModel : ViewModelBase
             return;
         }
 
+        // Mostrar diálogo de confirmación
+        var confirmado = await DialogService.ConfirmarEliminarAsync(
+            tipoElemento: "el backup",
+            nombreElemento: $"{backup.NombreArchivo}\nFecha: {backup.FechaCreacion:dd/MM/yyyy HH:mm}\nTamaño: {backup.TamañoFormateado}",
+            advertenciaAdicional: "El archivo de backup se eliminará permanentemente."
+        );
+
+        if (!confirmado)
+        {
+            Log.Debug("Eliminación de backup cancelada por el usuario: {Backup}", backup.NombreArchivo);
+            return;
+        }
+
         try
         {
-            // TODO: Mostrar confirmación
             BackupService.EliminarBackup(backup.RutaCompleta);
             await ActualizarListaBackupsCommand.ExecuteAsync(null);
             MensajeEstado = "✅ Backup eliminado";
+            Log.Information("Backup eliminado: {Backup}", backup.NombreArchivo);
         }
         catch (Exception ex)
         {

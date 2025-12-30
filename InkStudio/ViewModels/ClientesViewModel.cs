@@ -893,11 +893,33 @@ public partial class ClientesViewModel : ViewModelBase
     /// <summary>
     /// Elimina permanentemente el cliente seleccionado de la base de datos.
     /// También elimina todas sus citas, trabajos y consentimientos relacionados (cascada).
+    /// Muestra un diálogo de confirmación antes de proceder.
     /// </summary>
     [RelayCommand]
     private async Task EliminarCliente()
     {
         if (ClienteSeleccionado == null) return;
+
+        // Contar elementos relacionados para mostrar en la confirmación
+        var numTrabajos = await _db.Trabajos.CountAsync(t => t.ClienteId == ClienteSeleccionado.Id);
+        var numCitas = await _db.Citas.CountAsync(c => c.ClienteId == ClienteSeleccionado.Id);
+        
+        var advertencia = numTrabajos > 0 || numCitas > 0
+            ? $"También se eliminarán {numTrabajos} trabajo(s) y {numCitas} cita(s) del cliente."
+            : "Esta acción no se puede deshacer.";
+
+        // Mostrar diálogo de confirmación
+        var confirmado = await DialogService.ConfirmarEliminarAsync(
+            tipoElemento: "el cliente",
+            nombreElemento: ClienteSeleccionado.NombreCompleto,
+            advertenciaAdicional: advertencia
+        );
+
+        if (!confirmado)
+        {
+            Log.Debug("Eliminación de cliente cancelada por el usuario: {ClienteId}", ClienteSeleccionado.Id);
+            return;
+        }
 
         try
         {
@@ -935,24 +957,47 @@ public partial class ClientesViewModel : ViewModelBase
     /// Elimina permanentemente TODOS los clientes de la base de datos.
     /// ADVERTENCIA: Esta operación es irreversible y eliminará también todas las citas,
     /// trabajos y consentimientos relacionados.
+    /// Muestra un diálogo de confirmación antes de proceder.
     /// </summary>
     [RelayCommand]
     private async Task EliminarTodosLosClientes()
     {
+        // Contar clientes antes de mostrar confirmación
+        var totalClientes = await _db.Clientes.CountAsync();
+        
+        if (totalClientes == 0)
+        {
+            MensajeError = "No hay clientes para eliminar";
+            return;
+        }
+
+        var totalTrabajos = await _db.Trabajos.CountAsync();
+        var totalCitas = await _db.Citas.CountAsync();
+
+        // Mostrar diálogo de confirmación MUY explícito
+        var confirmado = await DialogService.ConfirmarAccionAsync(
+            titulo: "⚠️ ELIMINAR TODOS LOS DATOS",
+            mensaje: $"¿Estás SEGURO de que deseas eliminar TODOS los datos?\n\n" +
+                     $"📊 Se eliminarán:\n" +
+                     $"  • {totalClientes} cliente(s)\n" +
+                     $"  • {totalTrabajos} trabajo(s)\n" +
+                     $"  • {totalCitas} cita(s)\n" +
+                     $"  • Todos los consentimientos asociados\n\n" +
+                     $"❌ ESTA ACCIÓN NO SE PUEDE DESHACER",
+            botonConfirmar: "Eliminar todo",
+            esPeligroso: true
+        );
+
+        if (!confirmado)
+        {
+            Log.Debug("Eliminación de todos los clientes cancelada por el usuario");
+            return;
+        }
+
         try
         {
             Cargando = true;
             MensajeError = string.Empty;
-
-            // Contar clientes antes de eliminar
-            var totalClientes = await _db.Clientes.CountAsync();
-            
-            if (totalClientes == 0)
-            {
-                MensajeError = "No hay clientes para eliminar";
-                Cargando = false;
-                return;
-            }
 
             Log.Warning("═══════════════════════════════════════════════════════");
             Log.Warning("ELIMINANDO TODOS LOS CLIENTES DE LA BASE DE DATOS");

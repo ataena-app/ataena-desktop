@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using InkStudio.Data;
 using InkStudio.Models;
+using InkStudio.Services;
 using Serilog;
 
 namespace InkStudio.ViewModels;
@@ -1393,6 +1394,24 @@ public partial class AgendaViewModel : ViewModelBase
     private async Task EliminarCita()
     {
         if (CitaSeleccionada == null) return;
+
+        // Preparar descripción para el diálogo
+        var descripcionCita = $"{CitaSeleccionada.Fecha:dd/MM/yyyy} a las {CitaSeleccionada.HoraInicio:hh\\:mm}";
+        var clienteNombre = CitaSeleccionada.Cliente?.NombreCompleto ?? "Cliente desconocido";
+        var trabajoDesc = CitaSeleccionada.Trabajo?.Descripcion ?? "Sin trabajo asociado";
+
+        // Mostrar diálogo de confirmación
+        var confirmado = await DialogService.ConfirmarEliminarAsync(
+            tipoElemento: "la cita",
+            nombreElemento: $"{descripcionCita}\nCliente: {clienteNombre}\nTrabajo: {trabajoDesc}",
+            advertenciaAdicional: "La cita se eliminará permanentemente."
+        );
+
+        if (!confirmado)
+        {
+            Log.Debug("Eliminación de cita cancelada por el usuario: {CitaId}", CitaSeleccionada.Id);
+            return;
+        }
 
         try
         {

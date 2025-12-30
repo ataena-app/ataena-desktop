@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using InkStudio.Data;
 using InkStudio.Models;
+using InkStudio.Services;
 using Serilog;
 
 namespace InkStudio.ViewModels;
@@ -942,11 +943,47 @@ public partial class TrabajosViewModel : ViewModelBase
 
     /// <summary>
     /// Elimina el trabajo seleccionado.
+    /// Muestra un diálogo de confirmación antes de proceder.
     /// </summary>
     [RelayCommand]
     private async Task EliminarTrabajo()
     {
         if (TrabajoSeleccionado == null) return;
+
+        // Contar citas asociadas al trabajo
+        var numCitas = await _db.Citas.CountAsync(c => c.TrabajoId == TrabajoSeleccionado.Id);
+        var tieneConsentimiento = TrabajoSeleccionado.Consentimiento != null;
+        
+        string advertencia;
+        if (numCitas > 0 && tieneConsentimiento)
+        {
+            advertencia = $"También se eliminarán {numCitas} cita(s) y el consentimiento firmado.";
+        }
+        else if (numCitas > 0)
+        {
+            advertencia = $"También se eliminarán {numCitas} cita(s) asociada(s).";
+        }
+        else if (tieneConsentimiento)
+        {
+            advertencia = "También se eliminará el consentimiento firmado.";
+        }
+        else
+        {
+            advertencia = "Esta acción no se puede deshacer.";
+        }
+
+        // Mostrar diálogo de confirmación
+        var confirmado = await DialogService.ConfirmarEliminarAsync(
+            tipoElemento: "el trabajo",
+            nombreElemento: $"{TrabajoSeleccionado.Descripcion} ({TrabajoSeleccionado.Cliente?.NombreCompleto ?? "Cliente"})",
+            advertenciaAdicional: advertencia
+        );
+
+        if (!confirmado)
+        {
+            Log.Debug("Eliminación de trabajo cancelada por el usuario: {TrabajoId}", TrabajoSeleccionado.Id);
+            return;
+        }
 
         try
         {
