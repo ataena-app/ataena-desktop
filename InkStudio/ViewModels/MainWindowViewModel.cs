@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InkStudio.Services;
@@ -65,10 +66,83 @@ public partial class MainWindowViewModel : ViewModelBase
         TrabajosVM.SetClientesViewModel(ClientesVM);
         ClientesVM.SetTrabajosViewModel(TrabajosVM);
         ClientesVM.SetMainWindowViewModel(this);
+
+        // Registrar handler para diálogos de confirmación
+        DialogService.OnConfirmacionRequerida += ProcesarSolicitudConfirmacion;
     }
 
-    // TODO: Añadir estos ViewModels cuando se creen las vistas
-    // public ConfiguracionViewModel ConfiguracionVM { get; } = new();
+    #endregion
+
+    #region Diálogo de Confirmación
+
+    /// <summary>
+    /// Indica si el diálogo de confirmación está visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _mostrarDialogoConfirmacion;
+
+    /// <summary>
+    /// Título del diálogo de confirmación.
+    /// </summary>
+    [ObservableProperty]
+    private string _dialogoTitulo = "";
+
+    /// <summary>
+    /// Mensaje del diálogo de confirmación.
+    /// </summary>
+    [ObservableProperty]
+    private string _dialogoMensaje = "";
+
+    /// <summary>
+    /// Texto del botón de confirmar.
+    /// </summary>
+    [ObservableProperty]
+    private string _dialogoBotonConfirmar = "Confirmar";
+
+    /// <summary>
+    /// Indica si la acción es peligrosa (botón rojo).
+    /// </summary>
+    [ObservableProperty]
+    private bool _dialogoEsPeligroso = true;
+
+    // TaskCompletionSource para esperar la respuesta del usuario
+    private TaskCompletionSource<bool>? _dialogoTcs;
+
+    /// <summary>
+    /// Muestra el diálogo de confirmación y espera la respuesta.
+    /// </summary>
+    private Task<bool> ProcesarSolicitudConfirmacion(DialogService.ConfirmacionInfo info)
+    {
+        DialogoTitulo = info.Titulo;
+        DialogoMensaje = info.Mensaje;
+        DialogoBotonConfirmar = info.BotonConfirmar;
+        DialogoEsPeligroso = info.EsPeligroso;
+        
+        _dialogoTcs = new TaskCompletionSource<bool>();
+        MostrarDialogoConfirmacion = true;
+        
+        return _dialogoTcs.Task;
+    }
+
+    /// <summary>
+    /// El usuario confirma la acción.
+    /// </summary>
+    [RelayCommand]
+    private void ConfirmarDialogo()
+    {
+        MostrarDialogoConfirmacion = false;
+        _dialogoTcs?.TrySetResult(true);
+    }
+
+    /// <summary>
+    /// El usuario cancela la acción.
+    /// </summary>
+    [RelayCommand]
+    private void CancelarDialogo()
+    {
+        MostrarDialogoConfirmacion = false;
+        _dialogoTcs?.TrySetResult(false);
+    }
 
     #endregion
 

@@ -495,15 +495,8 @@ public partial class BackupViewModel : ViewModelBase
                 Progreso = 100;
             });
 
-            MensajeEstado = "✅ Backup restaurado exitosamente. Por favor, reinicia la aplicación.";
+            MensajeEstado = "✅ Backup restaurado exitosamente.\n\n⚠️ Por favor, cierra y vuelve a abrir la aplicación para que los cambios surtan efecto.";
             Progreso = 0;
-
-            // Mostrar mensaje informativo de que debe reiniciar
-            await DialogService.MostrarInfoAsync(
-                titulo: "✅ Backup Restaurado",
-                mensaje: "El backup se ha restaurado correctamente.\n\n" +
-                         "Por favor, cierra y vuelve a abrir la aplicación para que los cambios surtan efecto."
-            );
         }
         catch (Exception ex)
         {

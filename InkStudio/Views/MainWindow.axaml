@@ -179,6 +179,61 @@
             </Panel>
         </Border>
         
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- OVERLAY: DIÁLOGO DE CONFIRMACIÓN GLOBAL                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.ColumnSpan="2"
+                IsVisible="{Binding MostrarDialogoConfirmacion}"
+                Background="#E0000000"
+                ZIndex="1000">
+            <Border Background="#1e1e2e"
+                    CornerRadius="16"
+                    Padding="32"
+                    MaxWidth="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BorderBrush="#374151"
+                    BorderThickness="1">
+                <StackPanel Spacing="20">
+                    <!-- Título -->
+                    <TextBlock Text="{Binding DialogoTitulo}"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"/>
+                    
+                    <!-- Mensaje -->
+                    <TextBlock Text="{Binding DialogoMensaje}"
+                               FontSize="14"
+                               Opacity="0.85"
+                               TextWrapping="Wrap"
+                               MaxWidth="380"/>
+                    
+                    <!-- Botones -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12"
+                                Margin="0,12,0,0">
+                        <Button Content="Cancelar"
+                                Classes="btn-secondary"
+                                Command="{Binding CancelarDialogoCommand}"
+                                MinWidth="120"
+                                Height="42"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                        <Button Content="{Binding DialogoBotonConfirmar}"
+                                Classes="btn-danger"
+                                Command="{Binding ConfirmarDialogoCommand}"
+                                MinWidth="120"
+                                Height="42"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+        
     </Grid>
 
 </Window>
