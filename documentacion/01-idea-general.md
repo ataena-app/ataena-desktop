@@ -1,9 +1,9 @@
 # InkStudio CRM - Documento de Idea General
 
-> **Versión:** 2.0  
+> **Versión:** 3.0  
 > **Fecha:** Diciembre 2024  
 > **Autor:** Jose Vallejo  
-> **Estado:** En Desarrollo - Fase 2 Completada (50% del proyecto)
+> **Estado:** En Desarrollo - Fase 3 Avanzada (75% del proyecto)
 
 ---
 
@@ -427,7 +427,7 @@ dotnet ef database update
 
 > **Ver documento detallado:** `02-roadmap.md`
 
-### Completado ✅
+### Fase 1: Fundamentos ✅
 - [x] Configurar proyecto Avalonia base
 - [x] Configurar FluentAvalonia
 - [x] Crear estructura de carpetas
@@ -437,7 +437,7 @@ dotnet ef database update
 - [x] Implementar MainWindow con navegación
 - [x] Desarrollar Dashboard
 
-### Completado ✅
+### Fase 2: Módulos Principales ✅
 - [x] Desarrollar módulo de Clientes (CRUD completo)
 - [x] Desarrollar módulo de Agenda (calendario y citas)
 - [x] Desarrollar módulo de Trabajos (CRUD completo)
@@ -446,20 +446,33 @@ dotnet ef database update
 - [x] Modales con efectos visuales modernos
 - [x] Estilos globales de botones con degradados
 
-### En Desarrollo 🔨
-- [x] **Módulo de Consentimientos** (75% completado)
+### Fase 3: Funcionalidades Adicionales ✅
+- [x] **Módulo de Consentimientos** (100% completado)
   - ✅ Sistema de firma dual (móvil táctil / PC mouse)
   - ✅ Generación de PDFs legalmente válidos
   - ✅ Integración en flujos de Clientes (RGPD e Imágenes opcionales)
-  - ⏳ Pendiente: Integración en Trabajos (Fase 8)
-  - ⏳ Pendiente: Vista de Consentimientos (Fase 9)
+  - ✅ Integración en Trabajos (consentimiento por trabajo)
+  - ✅ Vista de Consentimientos global con filtros
   - Ver plan detallado: `documentacion/03-plan-consentimientos.md`
+- [x] **Módulo de Configuración** (completado)
+  - ✅ Datos del estudio
+  - ✅ Configuración de backups
+- [x] **Fotos de Trabajos** (completado)
+  - ✅ Captura desde móvil (antes/después)
+  - ✅ Almacenamiento local
+  - ✅ Galería en modal de trabajo
+- [x] **Sistema de Backup y Restauración** (completado)
+  - ✅ Crear backups locales
+  - ✅ Sincronización con nube (OneDrive, Google Drive, Dropbox)
+  - ✅ Restaurar backups
+  - ✅ Rotación automática de backups
+  - ✅ Configuración de frecuencia y retención
 
 ### Pendiente ⏳
-- [ ] Implementar módulo de Configuración
-- [ ] Subida de fotos para trabajos
-- [ ] Galería de fotos
-- [ ] Implementar seguridad
+- [ ] Configuración SMTP para emails
+- [ ] Sistema de emails (confirmación de citas)
+- [ ] Tema claro/oscuro
+- [ ] Implementar seguridad (login, cifrado)
 - [ ] Crear instalador
 
 ---
