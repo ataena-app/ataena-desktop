@@ -3,6 +3,7 @@
              xmlns:vm="using:InkStudio.ViewModels"
              xmlns:models="using:InkStudio.Models"
              xmlns:views="using:InkStudio.Views"
+             xmlns:converters="using:InkStudio.Converters"
              x:Class="InkStudio.Views.ClientesView"
              x:DataType="vm:ClientesViewModel"
              Loaded="OnLoaded">
@@ -83,8 +84,11 @@
                         Command="{Binding NuevoClienteCommand}"/>
             </Grid>
             
-            <!-- Lista de clientes -->
-            <ScrollViewer Grid.Row="2">
+            <!-- Lista de clientes (altura fija, sin scroll) -->
+            <Border Grid.Row="2" 
+                    BorderBrush="#272738" 
+                    BorderThickness="0,1,0,1"
+                    Background="Transparent">
                 <ItemsControl ItemsSource="{Binding Clientes}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="models:Cliente">
@@ -143,7 +147,68 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
+            </Border>
+            
+            <!-- Controles de paginación -->
+            <Border Grid.Row="3"
+                    Background="Transparent"
+                    Padding="0,15,0,0"
+                    IsVisible="{Binding TotalPaginas, Converter={x:Static converters:GreaterThanConverter.One}}">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                    <!-- Botón página anterior -->
+                    <Button Grid.Column="0"
+                            Content="◀ Anterior"
+                            Command="{Binding PaginaAnteriorCommand}"
+                            Classes="btn-secondary"
+                            Margin="0,0,15,0"
+                            MinWidth="130"
+                            Height="36"
+                            Padding="20,0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"/>
+                    
+                    <!-- Información de página -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8">
+                        <TextBlock Text="Página"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding PaginaActual}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="de"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalPaginas}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="("
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalClientes}"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="clientes)"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <!-- Botón página siguiente -->
+                    <Button Grid.Column="2"
+                            Content="Siguiente ▶"
+                            Command="{Binding PaginaSiguienteCommand}"
+                            Classes="btn-secondary"
+                            Margin="15,0,0,0"
+                            MinWidth="130"
+                            Height="36"
+                            Padding="20,0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"/>
+                </Grid>
+            </Border>
             
             <!-- Mensaje de error -->
             <Border Grid.Row="3"
@@ -230,11 +295,11 @@
                                      Text="{Binding Email}"
                                      Watermark="cliente@email.com"/>
 
-                            <!-- DNI -->
-                            <TextBlock Text="DNI *" Opacity="0.7" Margin="16,16,0,5"/>
+                            <!-- DNI/NIE/Pasaporte -->
+                            <TextBlock Text="DNI/NIE/Pasaporte *" Opacity="0.7" Margin="16,16,0,5"/>
                             <TextBox Classes="form-field"
                                      Text="{Binding Dni}"
-                                     Watermark="12345678A (obligatorio)"/>
+                                     Watermark="12345678A, X1234567L o número de pasaporte (obligatorio)"/>
 
                             <!-- Fecha nacimiento -->
                             <TextBlock Text="Fecha de nacimiento (DD/MM/YYYY)" Opacity="0.7" Margin="16,16,0,5"/>
@@ -497,7 +562,7 @@
                                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ClienteSeleccionado.Email}" Margin="0,0,0,8"
                                                    IsVisible="{Binding ClienteSeleccionado.Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                         
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="DNI:" Opacity="0.7" Margin="0,0,12,8"
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="DNI/NIE/Pasaporte:" Opacity="0.7" Margin="0,0,12,8"
                                                    IsVisible="{Binding ClienteSeleccionado.Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ClienteSeleccionado.Dni}" Margin="0,0,0,8"
                                                    IsVisible="{Binding ClienteSeleccionado.Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>

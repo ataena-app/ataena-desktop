@@ -51,7 +51,12 @@ public partial class ClientesViewModel : ViewModelBase
     #region Propiedades - Lista y Selección
 
     /// <summary>
-    /// Colección observable de clientes mostrados en la lista.
+    /// Colección completa de clientes (sin paginación).
+    /// </summary>
+    private ObservableCollection<Cliente> _todosLosClientes = new();
+
+    /// <summary>
+    /// Colección observable de clientes mostrados en la página actual.
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<Cliente> _clientes = new();
@@ -280,6 +285,24 @@ public partial class ClientesViewModel : ViewModelBase
     private int _totalClientes;
 
     /// <summary>
+    /// Página actual (empezando en 1).
+    /// </summary>
+    [ObservableProperty]
+    private int _paginaActual = 1;
+
+    /// <summary>
+    /// Tamaño de página (número de clientes por página).
+    /// </summary>
+    [ObservableProperty]
+    private int _tamanoPagina = 10;
+
+    /// <summary>
+    /// Total de páginas.
+    /// </summary>
+    [ObservableProperty]
+    private int _totalPaginas = 1;
+
+    /// <summary>
     /// Indica si se desea solicitar consentimiento de imágenes (opcional).
     /// </summary>
     [ObservableProperty]
@@ -325,15 +348,16 @@ public partial class ClientesViewModel : ViewModelBase
             Cargando = true;
             MensajeError = string.Empty;
 
-            var lista = await _db.Clientes
-                .Include(c => c.Consentimientos)
-                .OrderBy(c => c.Nombre)
-                .ThenBy(c => c.Apellidos)
-                .ToListAsync();
+                    var lista = await _db.Clientes
+                        .Include(c => c.Consentimientos)
+                        .OrderBy(c => c.Nombre)
+                        .ThenBy(c => c.Apellidos)
+                        .ToListAsync();
 
-            Clientes = new ObservableCollection<Cliente>(lista);
-            TotalClientes = lista.Count;
-            Log.Information("Clientes cargados: {Count} clientes activos", lista.Count);
+                    _todosLosClientes = new ObservableCollection<Cliente>(lista);
+                    TotalClientes = lista.Count;
+                    ActualizarPaginacion();
+                    Log.Information("Clientes cargados: {Count} clientes activos", lista.Count);
         }
         catch (Exception ex)
         {
@@ -375,8 +399,10 @@ public partial class ClientesViewModel : ViewModelBase
                 .OrderBy(c => c.Nombre)
                 .ToListAsync();
 
-            Clientes = new ObservableCollection<Cliente>(lista);
+            _todosLosClientes = new ObservableCollection<Cliente>(lista);
             TotalClientes = lista.Count;
+            PaginaActual = 1; // Resetear a primera página
+            ActualizarPaginacion();
             Log.Information("Búsqueda completada: {Count} resultados para '{Termino}'", lista.Count, TextoBusqueda);
         }
         catch (Exception ex)
@@ -575,20 +601,26 @@ public partial class ClientesViewModel : ViewModelBase
                 return;
             }
 
+            // DNI/NIE/Pasaporte es obligatorio
             if (string.IsNullOrWhiteSpace(Dni))
             {
-                MensajeError = "El DNI es obligatorio";
+                MensajeError = "El documento de identidad (DNI/NIE/Pasaporte) es obligatorio";
                 return;
             }
 
             // Normalizar DNI: eliminar espacios y convertir a mayúsculas
             var dniTrimmed = Dni.Trim().ToUpperInvariant();
 
-            // Validar formato de DNI/NIE
+            // Validar formato de DNI/NIE (si no es válido, puede ser un pasaporte)
             if (!EsDniNieValido(dniTrimmed))
             {
-                MensajeError = "El formato del DNI/NIE no es válido. Formato: 12345678A (DNI) o X1234567L (NIE)";
-                return;
+                // Si no es DNI/NIE válido, verificar que tenga al menos algún formato razonable (mínimo 5 caracteres)
+                if (dniTrimmed.Length < 5)
+                {
+                    MensajeError = "El documento de identidad debe tener al menos 5 caracteres. Formato: 12345678A (DNI), X1234567L (NIE) o número de pasaporte";
+                    return;
+                }
+                // Si tiene más de 5 caracteres, asumimos que es un pasaporte (no validamos formato específico)
             }
 
             // Validar teléfono (opcional, pero si se proporciona debe tener formato válido)
@@ -613,7 +645,7 @@ public partial class ClientesViewModel : ViewModelBase
                 }
             }
 
-            // Verificar que el DNI no esté duplicado (solo para nuevos clientes o si cambió el DNI)
+            // Verificar que el DNI/Pasaporte no esté duplicado (para nuevos clientes o si cambió)
             var clienteIdActual = EsEdicion && ClienteSeleccionado != null ? ClienteSeleccionado.Id : 0;
             
             if (!EsEdicion || (EsEdicion && ClienteSeleccionado != null && ClienteSeleccionado.Dni != dniTrimmed))
@@ -623,7 +655,7 @@ public partial class ClientesViewModel : ViewModelBase
                 
                 if (dniDuplicado)
                 {
-                    MensajeError = "Ya existe un cliente con ese DNI.";
+                    MensajeError = "Ya existe un cliente con ese documento de identidad.";
                     return;
                 }
             }
@@ -648,7 +680,7 @@ public partial class ClientesViewModel : ViewModelBase
                 ClienteSeleccionado.Apellidos = apellidosCapitalizados;
                 ClienteSeleccionado.Telefono = string.IsNullOrWhiteSpace(Telefono) ? string.Empty : Telefono.Trim();
                 ClienteSeleccionado.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
-                ClienteSeleccionado.Dni = dniTrimmed; // DNI ya validado y en mayúsculas
+                ClienteSeleccionado.Dni = dniTrimmed; // DNI/NIE/Pasaporte validado y en mayúsculas
                 ClienteSeleccionado.FechaNacimiento = FechaNacimiento?.DateTime;
                 ClienteSeleccionado.Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim();
                 ClienteSeleccionado.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
@@ -665,7 +697,7 @@ public partial class ClientesViewModel : ViewModelBase
                     Apellidos = apellidosCapitalizados,
                     Telefono = string.IsNullOrWhiteSpace(Telefono) ? string.Empty : Telefono.Trim(),
                     Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
-                    Dni = dniTrimmed, // DNI ya validado y en mayúsculas
+                    Dni = dniTrimmed, // DNI/NIE/Pasaporte validado y en mayúsculas
                     FechaNacimiento = FechaNacimiento?.DateTime,
                     Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim(),
                     Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim(),
@@ -761,8 +793,8 @@ public partial class ClientesViewModel : ViewModelBase
             Log.Warning("Intento de crear cliente con clave única duplicada. DNI: {Dni}. Error: {Error}", 
                 Dni, ex.Message);
 
-            // Verificar específicamente si es el DNI el que está duplicado
-            var dniTrimmed = Dni?.Trim();
+            // Verificar específicamente si es el DNI/Pasaporte el que está duplicado
+            var dniTrimmed = Dni?.Trim()?.ToUpperInvariant();
             var clienteIdActual = 0;
             if (EsEdicion && ClienteSeleccionado != null)
             {
@@ -777,7 +809,7 @@ public partial class ClientesViewModel : ViewModelBase
                 
                 if (dniDuplicado)
                 {
-                    MensajeError = "Ya existe un cliente con ese DNI.";
+                    MensajeError = "Ya existe un cliente con ese documento de identidad.";
                 }
                 else
                 {
@@ -1040,7 +1072,10 @@ public partial class ClientesViewModel : ViewModelBase
                 .Where(c => !c.Consentimientos.Any(cons => cons.Tipo == TipoConsentimiento.RGPD && cons.Firmado))
                 .ToList();
 
-            Clientes = new ObservableCollection<Cliente>(clientesSinRGPD);
+            _todosLosClientes = new ObservableCollection<Cliente>(clientesSinRGPD);
+            TotalClientes = clientesSinRGPD.Count;
+            PaginaActual = 1; // Resetear a primera página al filtrar
+            ActualizarPaginacion();
             TotalClientes = clientesSinRGPD.Count;
             
             Log.Information("Filtrado completado: {Count} clientes sin consentimiento RGPD", clientesSinRGPD.Count);
@@ -1582,6 +1617,94 @@ public partial class ClientesViewModel : ViewModelBase
             return false;
         }
     }
+
+    #endregion
+
+    #region Paginación
+
+    /// <summary>
+    /// Actualiza la lista de clientes mostrados según la página actual.
+    /// </summary>
+    private void ActualizarPaginacion()
+    {
+        if (_todosLosClientes == null || _todosLosClientes.Count == 0)
+        {
+            Clientes.Clear();
+            TotalPaginas = 1;
+            return;
+        }
+
+        // Calcular total de páginas
+        TotalPaginas = (int)Math.Ceiling((double)_todosLosClientes.Count / TamanoPagina);
+        
+        // Asegurar que la página actual sea válida
+        if (PaginaActual < 1)
+            PaginaActual = 1;
+        if (PaginaActual > TotalPaginas)
+            PaginaActual = TotalPaginas;
+
+        // Obtener los clientes de la página actual
+        var inicio = (PaginaActual - 1) * TamanoPagina;
+        var fin = Math.Min(inicio + TamanoPagina, _todosLosClientes.Count);
+        var clientesPagina = _todosLosClientes.Skip(inicio).Take(fin - inicio).ToList();
+
+        Clientes = new ObservableCollection<Cliente>(clientesPagina);
+        
+        // Notificar cambios en los comandos de navegación
+        PaginaAnteriorCommand.NotifyCanExecuteChanged();
+        PaginaSiguienteCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Se ejecuta cuando cambia la página actual.
+    /// </summary>
+    partial void OnPaginaActualChanged(int value)
+    {
+        ActualizarPaginacion();
+    }
+
+    /// <summary>
+    /// Se ejecuta cuando cambia el tamaño de página.
+    /// </summary>
+    partial void OnTamanoPaginaChanged(int value)
+    {
+        PaginaActual = 1; // Resetear a primera página
+        ActualizarPaginacion();
+    }
+
+    /// <summary>
+    /// Navega a la página anterior.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(PuedeIrAPaginaAnterior))]
+    private void PaginaAnterior()
+    {
+        if (PaginaActual > 1)
+        {
+            PaginaActual--;
+        }
+    }
+
+    /// <summary>
+    /// Navega a la página siguiente.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(PuedeIrAPaginaSiguiente))]
+    private void PaginaSiguiente()
+    {
+        if (PaginaActual < TotalPaginas)
+        {
+            PaginaActual++;
+        }
+    }
+
+    /// <summary>
+    /// Determina si se puede ir a la página anterior.
+    /// </summary>
+    private bool PuedeIrAPaginaAnterior() => PaginaActual > 1;
+
+    /// <summary>
+    /// Determina si se puede ir a la página siguiente.
+    /// </summary>
+    private bool PuedeIrAPaginaSiguiente() => PaginaActual < TotalPaginas;
 
     #endregion
 }

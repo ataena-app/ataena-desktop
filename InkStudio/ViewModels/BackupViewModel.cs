@@ -30,9 +30,10 @@ public partial class BackupViewModel : ViewModelBase
     {
         _backupService = new BackupService(_db);
         _restauracionService = new RestauracionService();
-        // Cargar datos de forma asíncrona sin bloquear el constructor
-        // Usar Task.Run para evitar ejecuciones múltiples en el constructor
-        Task.Run(async () =>
+
+        // Cargar datos iniciales en el hilo de UI para evitar errores de "Call from invalid thread"
+        // al ejecutar comandos (AsyncRelayCommand) que notifican CanExecuteChanged.
+        Dispatcher.UIThread.Post(async () =>
         {
             try
             {
@@ -44,7 +45,7 @@ public partial class BackupViewModel : ViewModelBase
             {
                 Log.Error(ex, "Error al cargar datos iniciales en BackupViewModel");
             }
-        });
+        }, DispatcherPriority.Background);
     }
 
     #region Propiedades - Servicios de Nube
