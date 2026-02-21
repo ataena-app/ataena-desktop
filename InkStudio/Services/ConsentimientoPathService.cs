@@ -128,6 +128,41 @@ public static class ConsentimientoPathService
     }
 
     /// <summary>
+    /// Obtiene la ruta de la carpeta de documentos de un cliente.
+    /// Estructura: %LOCALAPPDATA%\InkStudio\ficheros\clientes\{clienteId}\documentos\
+    /// </summary>
+    public static string ObtenerRutaCarpetaDocumentosCliente(int clienteId)
+    {
+        var carpetaCliente = ObtenerRutaCarpetaCliente(clienteId);
+        var carpetaDocumentos = Path.Combine(carpetaCliente, "documentos");
+
+        if (!Directory.Exists(carpetaDocumentos))
+        {
+            Directory.CreateDirectory(carpetaDocumentos);
+        }
+
+        return carpetaDocumentos;
+    }
+
+    /// <summary>
+    /// Obtiene la ruta completa para la foto del DNI del cliente.
+    /// </summary>
+    public static string ObtenerRutaFotoDni(int clienteId)
+    {
+        var carpetaDocumentos = ObtenerRutaCarpetaDocumentosCliente(clienteId);
+        return Path.Combine(carpetaDocumentos, "dni_cliente.jpg");
+    }
+
+    /// <summary>
+    /// Obtiene la ruta completa para la foto del DNI del tutor.
+    /// </summary>
+    public static string ObtenerRutaFotoDniTutor(int clienteId)
+    {
+        var carpetaDocumentos = ObtenerRutaCarpetaDocumentosCliente(clienteId);
+        return Path.Combine(carpetaDocumentos, "dni_tutor.jpg");
+    }
+
+    /// <summary>
     /// Obtiene la ruta de la carpeta para un tipo específico de consentimiento.
     /// DEPRECADO: Usar ObtenerRutaCarpetaCliente en su lugar.
     /// </summary>

@@ -354,6 +354,12 @@ public partial class ClientesViewModel : ViewModelBase
     private ConsentimientoFirmaViewModel? _consentimientoFirmaVM;
 
     /// <summary>
+    /// ViewModel del modal para subir fotos de DNI.
+    /// </summary>
+    [ObservableProperty]
+    private FotoDniViewModel? _fotoDniVM;
+
+    /// <summary>
     /// Lista de trabajos del cliente seleccionado (para la ficha).
     /// </summary>
     [ObservableProperty]
@@ -896,13 +902,11 @@ public partial class ClientesViewModel : ViewModelBase
     {
         try
         {
-            // Validar datos del tutor si es menor
-            if (cliente.EsMenorDeEdad && !cliente.TieneDatosTutor)
-            {
-                MensajeError = "⚠️ Para firmar consentimiento de menor se requieren los datos del tutor. Edita el cliente primero.";
-                Log.Warning("Firma RGPD bloqueada: menor sin datos de tutor: {ClienteId}", cliente.Id);
-                return;
-            }
+            // Limpiar cualquier mensaje de error previo
+            MensajeError = string.Empty;
+            
+            // No validamos aquí los datos del tutor, el modal de firma lo hace internamente
+            // y muestra un mensaje prominente si faltan datos
 
             if (ConsentimientoFirmaVM == null)
             {
@@ -961,6 +965,76 @@ public partial class ClientesViewModel : ViewModelBase
         {
             Log.Error(ex, "Error al abrir firma de imágenes desde ficha de cliente {ClienteId}", cliente.Id);
             MensajeError = $"Error al abrir el consentimiento de imágenes: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Abre el modal para subir foto del DNI del cliente.
+    /// </summary>
+    [RelayCommand]
+    private async Task SubirFotoDniCliente(Cliente cliente)
+    {
+        try
+        {
+            MensajeError = string.Empty;
+
+            if (FotoDniVM == null)
+            {
+                FotoDniVM = new FotoDniViewModel();
+                FotoDniVM.FotoGuardada += async (s, c) =>
+                {
+                    await CargarClientes();
+                    await RefrescarFichaClientePorIdAsync(c.Id);
+                };
+            }
+
+            await FotoDniVM.AbrirModalAsync(cliente, esDniTutor: false);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir modal de foto DNI para cliente {ClienteId}", cliente.Id);
+            MensajeError = $"Error al abrir el modal de foto de DNI: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Abre el modal para subir foto del DNI del tutor (para menores).
+    /// </summary>
+    [RelayCommand]
+    private async Task SubirFotoDniTutor(Cliente cliente)
+    {
+        try
+        {
+            MensajeError = string.Empty;
+
+            if (!cliente.EsMenorDeEdad)
+            {
+                MensajeError = "⚠️ Solo se puede subir foto de DNI de tutor para clientes menores de edad.";
+                return;
+            }
+
+            if (!cliente.TieneDatosTutor)
+            {
+                MensajeError = "⚠️ Primero debes rellenar los datos del tutor (nombre, apellidos, DNI).";
+                return;
+            }
+
+            if (FotoDniVM == null)
+            {
+                FotoDniVM = new FotoDniViewModel();
+                FotoDniVM.FotoGuardada += async (s, c) =>
+                {
+                    await CargarClientes();
+                    await RefrescarFichaClientePorIdAsync(c.Id);
+                };
+            }
+
+            await FotoDniVM.AbrirModalAsync(cliente, esDniTutor: true);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir modal de foto DNI tutor para cliente {ClienteId}", cliente.Id);
+            MensajeError = $"Error al abrir el modal de foto de DNI del tutor: {ex.Message}";
         }
     }
 

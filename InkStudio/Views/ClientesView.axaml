@@ -663,6 +663,28 @@
                                         <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ClienteSeleccionado.Alergias}" TextWrapping="Wrap"
                                                    IsVisible="{Binding ClienteSeleccionado.Alergias, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </Grid>
+                                    
+                                    <!-- Foto del DNI del cliente -->
+                                    <Border Background="#1e293b" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="🪪" FontSize="18" VerticalAlignment="Center"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="Foto del DNI" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Text="{Binding ClienteSeleccionado.TieneFotoDni, Converter={StaticResource BoolToTextConverter}, ConverterParameter='✅ Guardada|⚠️ Sin foto'}"
+                                                               FontSize="11" Opacity="0.7"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="2"
+                                                    Content="📷 Subir foto"
+                                                    Command="{Binding SubirFotoDniClienteCommand}"
+                                                    CommandParameter="{Binding ClienteSeleccionado}"
+                                                    Classes="btn-secondary"
+                                                    Height="32"
+                                                    Padding="12,0"
+                                                    FontSize="12"/>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
                             </Border>
 
@@ -703,6 +725,28 @@
                                         <TextBlock Grid.Row="2" Grid.Column="1" 
                                                    Text="{Binding ClienteSeleccionado.TelefonoTutor, TargetNullValue='No especificado'}"/>
                                     </Grid>
+                                    
+                                    <!-- Foto del DNI del tutor -->
+                                    <Border Background="#1e293b" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="🪪" FontSize="18" VerticalAlignment="Center"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="Foto del DNI del tutor" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Text="{Binding ClienteSeleccionado.TieneFotoDniTutor, Converter={StaticResource BoolToTextConverter}, ConverterParameter='✅ Guardada|⚠️ Sin foto'}"
+                                                               FontSize="11" Opacity="0.7"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="2"
+                                                    Content="📷 Subir foto"
+                                                    Command="{Binding SubirFotoDniTutorCommand}"
+                                                    CommandParameter="{Binding ClienteSeleccionado}"
+                                                    Classes="btn-secondary"
+                                                    Height="32"
+                                                    Padding="12,0"
+                                                    FontSize="12"/>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
                             </Border>
 
@@ -744,9 +788,9 @@
                                                         Padding="16"
                                                         Margin="0,0,0,12">
                                                     <Border.Background>
-                                                        <MultiBinding Converter="{StaticResource BoolToTextConverter}" ConverterParameter="#5a2d2d|#1a1a2e">
-                                                            <Binding Path="NecesitaRenovacion"/>
-                                                        </MultiBinding>
+                                                        <Binding Path="NecesitaRenovacion" 
+                                                                 Converter="{StaticResource BoolToTextConverter}" 
+                                                                 ConverterParameter="#5a2d2d|#1a1a2e"/>
                                                     </Border.Background>
                                                     <Grid ColumnDefinitions="*,Auto">
                                                         <StackPanel Grid.Column="0">
@@ -975,8 +1019,21 @@
             </Border>
         </Border>
 
-        <!-- Modal de firma de consentimientos -->
-        <views:ConsentimientoFirmaView DataContext="{Binding ConsentimientoFirmaVM}"/>
+        <!-- Modal de firma de consentimientos (ZIndex alto para estar sobre todo) -->
+        <views:ConsentimientoFirmaView Grid.Row="0"
+                                        Grid.RowSpan="99"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="99"
+                                        ZIndex="2000"
+                                        DataContext="{Binding ConsentimientoFirmaVM}"/>
+        
+        <!-- Modal de foto de DNI -->
+        <views:FotoDniView Grid.Row="0"
+                            Grid.RowSpan="99"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="99"
+                            ZIndex="2000"
+                            DataContext="{Binding FotoDniVM}"/>
         
     </Grid>
 

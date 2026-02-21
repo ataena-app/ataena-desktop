@@ -83,6 +83,20 @@ public class Cliente
 
     #endregion
 
+    #region Fotos de DNI
+
+    /// <summary>
+    /// Ruta a la foto del DNI del cliente.
+    /// </summary>
+    public string? FotoDniPath { get; set; }
+
+    /// <summary>
+    /// Ruta a la foto del DNI del tutor (para menores).
+    /// </summary>
+    public string? FotoDniTutorPath { get; set; }
+
+    #endregion
+
     #region Información Médica y Notas
 
     /// <summary>
@@ -198,6 +212,18 @@ public class Cliente
     public string NombreCompletoTutor => TieneDatosTutor 
         ? $"{NombreTutor} {ApellidosTutor}" 
         : string.Empty;
+
+    /// <summary>
+    /// Indica si el cliente tiene foto de su DNI.
+    /// </summary>
+    public bool TieneFotoDni => !string.IsNullOrWhiteSpace(FotoDniPath) && 
+                                 System.IO.File.Exists(FotoDniPath);
+
+    /// <summary>
+    /// Indica si el tutor tiene foto de DNI (para menores).
+    /// </summary>
+    public bool TieneFotoDniTutor => !string.IsNullOrWhiteSpace(FotoDniTutorPath) && 
+                                      System.IO.File.Exists(FotoDniTutorPath);
 
     /// <summary>
     /// Indica si el cliente tiene consentimientos que necesitan renovación.

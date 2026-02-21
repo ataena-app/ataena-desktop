@@ -44,8 +44,56 @@
                     </Grid>
                 </Border>
 
-                <!-- Contenido scrollable -->
+                <!-- Aviso de datos del tutor faltantes (para menores) -->
+                <Border Grid.Row="1"
+                        IsVisible="{Binding FaltanDatosTutor}"
+                        Background="#7f1d1d"
+                        BorderBrush="#ef4444"
+                        BorderThickness="2"
+                        CornerRadius="12"
+                        Padding="24"
+                        Margin="24,24,24,0"
+                        VerticalAlignment="Top">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="⚠️"
+                                       FontSize="28"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="FALTAN DATOS DEL TUTOR"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="#fca5a5"/>
+                                <TextBlock Text="No se puede firmar consentimiento de menor sin datos del tutor"
+                                           FontSize="13"
+                                           Opacity="0.9"
+                                           Foreground="White"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Border Height="1" Background="#ef4444" Opacity="0.3"/>
+                        <TextBlock TextWrapping="Wrap"
+                                   FontSize="13"
+                                   Foreground="#fecaca"
+                                   LineHeight="20">
+                            <Run Text="Para firmar el consentimiento de un menor de edad, primero debes rellenar los datos del tutor o representante legal en la ficha del cliente:"/>
+                        </TextBlock>
+                        <StackPanel Spacing="4" Margin="12,0,0,0">
+                            <TextBlock Text="• Nombre del tutor" FontSize="12" Foreground="#fecaca"/>
+                            <TextBlock Text="• Apellidos del tutor" FontSize="12" Foreground="#fecaca"/>
+                            <TextBlock Text="• DNI del tutor" FontSize="12" Foreground="#fecaca"/>
+                            <TextBlock Text="• Teléfono del tutor" FontSize="12" Foreground="#fecaca"/>
+                        </StackPanel>
+                        <Border Height="1" Background="#ef4444" Opacity="0.3" Margin="0,4,0,0"/>
+                        <TextBlock Text="👉 Cierra esta ventanita, edita el cliente y rellena los datos del tutor."
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Contenido scrollable (oculto si faltan datos del tutor) -->
                 <ScrollViewer Grid.Row="1"
+                              IsVisible="{Binding !FaltanDatosTutor}"
                               Padding="28,24,40,24"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
