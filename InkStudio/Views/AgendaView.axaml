@@ -358,7 +358,157 @@
                     </Border>
                 </Grid>
 
-                <!-- Lista de citas para vista Día/Mes -->
+                <!-- Vista mensual (calendario de mes completo) -->
+                <Grid IsVisible="{Binding MostrarMes}">
+                    <Grid.RowDefinitions>
+                        <!-- Título del mes -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Cabecera días de la semana -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Grid de días -->
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Título del mes y navegación -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding MesAnioActual}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"/>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="8"
+                                    HorizontalAlignment="Right">
+                            <Button Content="◀ Mes anterior"
+                                    Command="{Binding DiaAnteriorCommand}"
+                                    Height="30"
+                                    FontSize="12"
+                                    Padding="12,0"/>
+                            <Button Content="Mes siguiente ▶"
+                                    Command="{Binding DiaSiguienteCommand}"
+                                    Height="30"
+                                    FontSize="12"
+                                    Padding="12,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Cabecera de días de la semana -->
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*,*,*" Margin="0,0,0,4">
+                        <TextBlock Grid.Column="0" Text="Lun" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <TextBlock Grid.Column="1" Text="Mar" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <TextBlock Grid.Column="2" Text="Mié" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <TextBlock Grid.Column="3" Text="Jue" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <TextBlock Grid.Column="4" Text="Vie" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <TextBlock Grid.Column="5" Text="Sáb" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Foreground="#f59e0b"/>
+                        <TextBlock Grid.Column="6" Text="Dom" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" Foreground="#ef4444"/>
+                    </Grid>
+
+                    <!-- Grid de días del mes (6 filas x 7 columnas = 42 días) -->
+                    <ItemsControl Grid.Row="2" ItemsSource="{Binding DiasMes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="7" Rows="6"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding ColorFondo}"
+                                        BorderBrush="#27272a"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Margin="2"
+                                        MinHeight="80"
+                                        Padding="6">
+                                    <Grid RowDefinitions="Auto,*">
+                                        <!-- Cabecera del día: número + festivo -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                                            <!-- Número del día -->
+                                            <Border Grid.Column="0"
+                                                    Background="{Binding EsHoy, Converter={StaticResource BoolToTodayBackgroundConverter}}"
+                                                    CornerRadius="12"
+                                                    Width="24"
+                                                    Height="24"
+                                                    HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Dia}"
+                                                           FontSize="13"
+                                                           FontWeight="{Binding EsHoy, Converter={StaticResource BoolToFontWeightConverter}}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Opacity="{Binding EsDelMesActual, Converter={StaticResource BoolToOpacityConverter}}"/>
+                                            </Border>
+                                            
+                                            <!-- Badge de festivo -->
+                                            <Border Grid.Column="1"
+                                                    IsVisible="{Binding EsFestivo}"
+                                                    Background="{Binding ColorFestivo}"
+                                                    CornerRadius="4"
+                                                    Padding="4,2"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    ToolTip.Tip="{Binding NombreFestivo}">
+                                                <TextBlock Text="🎉"
+                                                           FontSize="10"/>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Lista de citas del día (máximo 3) -->
+                                        <StackPanel Grid.Row="1" Spacing="2" Margin="0,4,0,0">
+                                            <ItemsControl ItemsSource="{Binding CitasDelDia}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="models:Cita">
+                                                        <Border Background="#10b981"
+                                                                CornerRadius="3"
+                                                                Padding="4,2"
+                                                                Margin="0,1">
+                                                            <TextBlock FontSize="9"
+                                                                       Foreground="White"
+                                                                       TextTrimming="CharacterEllipsis">
+                                                                <Run Text="{Binding HoraInicioFormateada}"/>
+                                                                <Run Text=" "/>
+                                                                <Run Text="{Binding Cliente.Nombre}"/>
+                                                            </TextBlock>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            
+                                            <!-- Indicador de más citas -->
+                                            <TextBlock Text="{Binding TextoMasCitas}"
+                                                       IsVisible="{Binding TieneMasCitas}"
+                                                       FontSize="9"
+                                                       Opacity="0.7"
+                                                       HorizontalAlignment="Right"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Leyenda de festivos -->
+                    <StackPanel Grid.Row="2"
+                                Orientation="Horizontal"
+                                Spacing="16"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Left"
+                                Margin="4,0,0,4">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Border Width="12" Height="12" CornerRadius="3" Background="#dc2626"/>
+                            <TextBlock Text="Nacional" FontSize="10" Opacity="0.7"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Border Width="12" Height="12" CornerRadius="3" Background="#ea580c"/>
+                            <TextBlock Text="Autonómico" FontSize="10" Opacity="0.7"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Border Width="12" Height="12" CornerRadius="3" Background="#7c3aed"/>
+                            <TextBlock Text="Local" FontSize="10" Opacity="0.7"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Lista de citas para vista Día -->
                 <ScrollViewer IsVisible="{Binding MostrarLista}">
                     <ItemsControl ItemsSource="{Binding Citas}">
                         <ItemsControl.ItemTemplate>

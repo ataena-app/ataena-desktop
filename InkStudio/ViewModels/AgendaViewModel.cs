@@ -109,6 +109,72 @@ public partial class AgendaViewModel : ViewModelBase
         public int NumeroCitasSuperpuestas => CitasSuperpuestas.Count;
     }
 
+    /// <summary>
+    /// Información de un día en la vista mensual.
+    /// </summary>
+    public class DiaMesInfo : ObservableObject
+    {
+        public DateTime Fecha { get; set; }
+        public int Dia => Fecha.Day;
+        public bool EsHoy => Fecha.Date == DateTime.Today;
+        public bool EsDelMesActual { get; set; } = true;
+        public bool EsFinDeSemana => Fecha.DayOfWeek == DayOfWeek.Saturday || Fecha.DayOfWeek == DayOfWeek.Sunday;
+        
+        /// <summary>
+        /// Indica si es un día festivo.
+        /// </summary>
+        public bool EsFestivo { get; set; }
+        
+        /// <summary>
+        /// Nombre del festivo (si aplica).
+        /// </summary>
+        public string? NombreFestivo { get; set; }
+        
+        /// <summary>
+        /// Color del festivo para mostrar en el calendario.
+        /// </summary>
+        public string ColorFestivo { get; set; } = "#dc2626";
+        
+        /// <summary>
+        /// Tipo de festivo (Nacional, Autonómico, Local).
+        /// </summary>
+        public TipoFestivo? TipoFestivo { get; set; }
+        
+        /// <summary>
+        /// Número de citas en este día.
+        /// </summary>
+        public int NumeroCitas { get; set; }
+        
+        /// <summary>
+        /// Lista de citas del día (máximo 3-4 para mostrar en el calendario).
+        /// </summary>
+        public ObservableCollection<Cita> CitasDelDia { get; set; } = new();
+        
+        /// <summary>
+        /// Indica si hay más citas de las que se muestran.
+        /// </summary>
+        public bool TieneMasCitas => NumeroCitas > 3;
+        
+        /// <summary>
+        /// Texto de "más citas" (ej: "+2 más").
+        /// </summary>
+        public string TextoMasCitas => TieneMasCitas ? $"+{NumeroCitas - 3} más" : string.Empty;
+        
+        /// <summary>
+        /// Color de fondo según el estado del día.
+        /// </summary>
+        public string ColorFondo
+        {
+            get
+            {
+                if (EsFestivo) return "#1c1917"; // Fondo oscuro para festivos
+                if (!EsDelMesActual) return "#0c0a09"; // Muy oscuro para días de otros meses
+                if (EsFinDeSemana) return "#1c1917"; // Oscuro para fines de semana
+                return "#171717"; // Normal
+            }
+        }
+    }
+
     #endregion
 
     #region Campos Privados
@@ -117,6 +183,11 @@ public partial class AgendaViewModel : ViewModelBase
     /// Contexto de base de datos.
     /// </summary>
     private readonly InkStudioDbContext _db = new();
+
+    /// <summary>
+    /// Servicio de gestión de festivos.
+    /// </summary>
+    private readonly FestivosService _festivosService = new();
 
     /// <summary>
     /// Referencia opcional al ViewModel de trabajos (para crear trabajos desde el modal de cita).
@@ -151,23 +222,34 @@ public partial class AgendaViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(MostrarLista));
         OnPropertyChanged(nameof(MostrarSemana));
+        OnPropertyChanged(nameof(MostrarMes));
 
         // Cuando entramos en vista Semana, recalcular la semana actual
         if (value == VistaAgenda.Semana)
         {
             ActualizarSemana();
         }
+        // Cuando entramos en vista Mes, recalcular el mes actual
+        else if (value == VistaAgenda.Mes)
+        {
+            _ = ActualizarMesAsync();
+        }
     }
 
     /// <summary>
-    /// Indica si mostrar la lista de citas (modo Día o Mes).
+    /// Indica si mostrar la lista de citas (solo modo Día).
     /// </summary>
-    public bool MostrarLista => VistaActual != VistaAgenda.Semana;
+    public bool MostrarLista => VistaActual == VistaAgenda.Dia;
 
     /// <summary>
     /// Indica si mostrar la nueva vista semanal personalizada.
     /// </summary>
     public bool MostrarSemana => VistaActual == VistaAgenda.Semana;
+
+    /// <summary>
+    /// Indica si mostrar la vista mensual.
+    /// </summary>
+    public bool MostrarMes => VistaActual == VistaAgenda.Mes;
 
     /// <summary>
     /// Información de los días de la semana actual (para la cabecera del calendario semanal).
@@ -198,6 +280,18 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<CitaSemanaInfo> _citasSemana = new();
+
+    /// <summary>
+    /// Lista de días para la vista mensual (6 semanas x 7 días = 42 días).
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<DiaMesInfo> _diasMes = new();
+
+    /// <summary>
+    /// Lista de festivos del mes actual.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<DiaFestivo> _festivosMes = new();
 
     /// <summary>
     /// Cita actualmente seleccionada.
@@ -484,16 +578,22 @@ public partial class AgendaViewModel : ViewModelBase
     [RelayCommand]
     private void DiaAnterior()
     {
-        // En vista Día/Mes: mover 1 día. En vista Semana: mover 7 días hacia atrás.
-        var delta = VistaActual == VistaAgenda.Semana ? -7 : -1;
-
-        if (FechaSeleccionada.HasValue)
+        var fechaActual = FechaSeleccionada?.Date ?? DateTime.Now.Date;
+        
+        if (VistaActual == VistaAgenda.Mes)
         {
-            FechaSeleccionada = FechaSeleccionada.Value.AddDays(delta);
+            // En vista Mes: retroceder un mes
+            FechaSeleccionada = new DateTimeOffset(fechaActual.AddMonths(-1));
+        }
+        else if (VistaActual == VistaAgenda.Semana)
+        {
+            // En vista Semana: retroceder 7 días
+            FechaSeleccionada = new DateTimeOffset(fechaActual.AddDays(-7));
         }
         else
         {
-            FechaSeleccionada = DateTimeOffset.Now.Date.AddDays(delta);
+            // En vista Día: retroceder 1 día
+            FechaSeleccionada = new DateTimeOffset(fechaActual.AddDays(-1));
         }
         _ = CargarCitas();
     }
@@ -504,16 +604,22 @@ public partial class AgendaViewModel : ViewModelBase
     [RelayCommand]
     private void DiaSiguiente()
     {
-        // En vista Día/Mes: mover 1 día. En vista Semana: mover 7 días hacia adelante.
-        var delta = VistaActual == VistaAgenda.Semana ? 7 : 1;
-
-        if (FechaSeleccionada.HasValue)
+        var fechaActual = FechaSeleccionada?.Date ?? DateTime.Now.Date;
+        
+        if (VistaActual == VistaAgenda.Mes)
         {
-            FechaSeleccionada = FechaSeleccionada.Value.AddDays(delta);
+            // En vista Mes: avanzar un mes
+            FechaSeleccionada = new DateTimeOffset(fechaActual.AddMonths(1));
+        }
+        else if (VistaActual == VistaAgenda.Semana)
+        {
+            // En vista Semana: avanzar 7 días
+            FechaSeleccionada = new DateTimeOffset(fechaActual.AddDays(7));
         }
         else
         {
-            FechaSeleccionada = DateTimeOffset.Now.Date.AddDays(delta);
+            // En vista Día: avanzar 1 día
+            FechaSeleccionada = new DateTimeOffset(fechaActual.AddDays(1));
         }
         _ = CargarCitas();
     }
@@ -623,6 +729,11 @@ public partial class AgendaViewModel : ViewModelBase
                 // Forzar notificación de cambio para que el Canvas recalcule posiciones
                 OnPropertyChanged(nameof(CitasSemana));
             }
+            // Si estamos en vista mensual, actualizar la estructura del mes
+            else if (VistaActual == VistaAgenda.Mes)
+            {
+                await ActualizarMesAsync();
+            }
 
             var fechaLog = FechaSeleccionada ?? DateTimeOffset.Now.Date;
             Log.Debug("Citas cargadas: {Count} citas para {Vista} del {Fecha}", 
@@ -702,6 +813,97 @@ public partial class AgendaViewModel : ViewModelBase
         
         // Forzar notificación de cambio para que el Canvas recalcule posiciones
         OnPropertyChanged(nameof(CitasSemana));
+    }
+
+    /// <summary>
+    /// Calcula los días del mes actual para la vista mensual.
+    /// Incluye festivos y resumen de citas por día.
+    /// </summary>
+    private async Task ActualizarMesAsync()
+    {
+        try
+        {
+            Cargando = true;
+            
+            // Determinar el mes de referencia
+            var referenciaOffset = FechaSeleccionada ?? DateTimeOffset.Now.Date;
+            var referencia = referenciaOffset.Date;
+            var primerDiaMes = new DateTime(referencia.Year, referencia.Month, 1);
+            var ultimoDiaMes = primerDiaMes.AddMonths(1).AddDays(-1);
+
+            // Actualizar título del mes
+            MesAnioActual = primerDiaMes.ToString("MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("es-ES"));
+
+            // Calcular el primer día a mostrar (puede ser del mes anterior)
+            var diasDesdeLunes = ((int)primerDiaMes.DayOfWeek + 6) % 7;
+            var primerDiaGrid = primerDiaMes.AddDays(-diasDesdeLunes);
+
+            // Cargar festivos del mes desde API y locales
+            var festivos = await _festivosService.ObtenerFestivosMesAsync(referencia.Year, referencia.Month);
+            FestivosMes = new ObservableCollection<DiaFestivo>(festivos);
+
+            // Inicializar festivos locales de Guadalajara si es necesario
+            await _festivosService.InicializarFestivosLocalesGuadalajaraAsync(referencia.Year);
+
+            // Crear diccionario de festivos por fecha para acceso rápido
+            var festivosPorFecha = festivos.ToDictionary(f => f.Fecha.Date, f => f);
+
+            // Cargar citas del mes
+            var citasMes = await _db.Citas
+                .Include(c => c.Cliente)
+                .Include(c => c.Trabajo)
+                .Where(c => c.Fecha >= primerDiaMes && c.Fecha <= ultimoDiaMes)
+                .OrderBy(c => c.Fecha)
+                .ThenBy(c => c.HoraInicio)
+                .ToListAsync();
+
+            // Agrupar citas por día
+            var citasPorDia = citasMes.GroupBy(c => c.Fecha.Date).ToDictionary(g => g.Key, g => g.ToList());
+
+            // Generar 42 días (6 semanas completas)
+            DiasMes.Clear();
+            for (int i = 0; i < 42; i++)
+            {
+                var fecha = primerDiaGrid.AddDays(i);
+                var esDelMesActual = fecha.Month == referencia.Month;
+
+                // Buscar festivo para esta fecha
+                festivosPorFecha.TryGetValue(fecha.Date, out var festivo);
+
+                // Obtener citas del día
+                citasPorDia.TryGetValue(fecha.Date, out var citasDelDia);
+                var listaCitas = citasDelDia ?? new List<Cita>();
+
+                var diaInfo = new DiaMesInfo
+                {
+                    Fecha = fecha,
+                    EsDelMesActual = esDelMesActual,
+                    EsFestivo = festivo != null,
+                    NombreFestivo = festivo?.Nombre,
+                    ColorFestivo = festivo?.ColorFondo ?? "#dc2626",
+                    TipoFestivo = festivo?.Tipo,
+                    NumeroCitas = listaCitas.Count,
+                    CitasDelDia = new ObservableCollection<Cita>(listaCitas.Take(3))
+                };
+
+                DiasMes.Add(diaInfo);
+            }
+
+            // Actualizar total de citas
+            TotalCitas = citasMes.Count;
+
+            Log.Information("📅 Vista mensual actualizada: {Mes} {Anio}, {Festivos} festivos, {Citas} citas", 
+                referencia.Month, referencia.Year, festivos.Count, citasMes.Count);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al actualizar vista mensual");
+            MensajeError = $"Error al cargar el mes: {ex.Message}";
+        }
+        finally
+        {
+            Cargando = false;
+        }
     }
 
     /// <summary>

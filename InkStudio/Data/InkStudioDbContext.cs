@@ -42,6 +42,11 @@ public class InkStudioDbContext : DbContext
     /// </summary>
     public DbSet<Configuracion> Configuracion => Set<Configuracion>();
 
+    /// <summary>
+    /// Tabla de días festivos (nacionales, autonómicos y locales).
+    /// </summary>
+    public DbSet<DiaFestivo> DiasFestivos => Set<DiaFestivo>();
+
     #endregion
 
     #region Configuración de Conexión
@@ -81,6 +86,7 @@ public class InkStudioDbContext : DbContext
         ConfigurarCita(modelBuilder);
         ConfigurarTrabajo(modelBuilder);
         ConfigurarConsentimiento(modelBuilder);
+        ConfigurarDiaFestivo(modelBuilder);
         ConfigurarDatosIniciales(modelBuilder);
     }
 
@@ -172,6 +178,22 @@ public class InkStudioDbContext : DbContext
                   .WithOne(t => t.Consentimiento)
                   .HasForeignKey<Consentimiento>(e => e.TrabajoId)
                   .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
+    /// <summary>
+    /// Configura la entidad DiaFestivo.
+    /// </summary>
+    /// <param name="modelBuilder">Builder del modelo.</param>
+    private static void ConfigurarDiaFestivo(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DiaFestivo>(entity =>
+        {
+            // Índice compuesto para búsquedas por año y mes
+            entity.HasIndex(e => new { e.Anio, e.Fecha });
+            
+            // Índice único para evitar duplicados (misma fecha + nombre)
+            entity.HasIndex(e => new { e.Fecha, e.Nombre }).IsUnique();
         });
     }
 

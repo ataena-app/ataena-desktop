@@ -19,6 +19,9 @@
         <converters:IsNotNullConverter x:Key="IsNotNullConverter"/>
         <converters:IsNullConverter x:Key="IsNullConverter"/>
         <converters:GreaterThanConverter x:Key="GreaterThanConverter"/>
+        <converters:BoolToTodayBackgroundConverter x:Key="BoolToTodayBackgroundConverter"/>
+        <converters:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter"/>
+        <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
 
         <!-- Paleta base oscura moderna (morado / naranja) -->
         <SolidColorBrush x:Key="AppBackgroundBrush" Color="#020617"/>
