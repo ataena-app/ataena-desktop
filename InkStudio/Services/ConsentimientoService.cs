@@ -92,8 +92,9 @@ public static class ConsentimientoService
         resultado = resultado.Replace("{DNI_TUTOR}", cliente.DniTutor ?? "No especificado");
         resultado = resultado.Replace("{TELEFONO_TUTOR}", cliente.TelefonoTutor ?? "No especificado");
 
-        // Datos del estudio
+        // Datos del estudio y empresa
         resultado = resultado.Replace("{NOMBRE_ESTUDIO}", configuracion.NombreEstudio);
+        resultado = resultado.Replace("{NOMBRE_EMPRESA}", configuracion.NombreEmpresa ?? configuracion.NombreEstudio);
         resultado = resultado.Replace("{DIRECCION_ESTUDIO}", configuracion.Direccion ?? "No especificada");
         resultado = resultado.Replace("{EMAIL_ESTUDIO}", configuracion.Email ?? "No especificado");
         resultado = resultado.Replace("{TELEFONO_ESTUDIO}", configuracion.Telefono ?? "No especificado");

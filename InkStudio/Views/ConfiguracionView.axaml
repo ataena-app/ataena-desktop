@@ -34,6 +34,13 @@
             <StackPanel>
               <TextBlock Text="Nombre del estudio *" Opacity="0.7" Margin="0,0,0,5"/>
               <TextBox Text="{Binding NombreEstudio}" Width="300"/>
+              <TextBlock Text="Nombre comercial (ej: Erzulie Tattoo)" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <StackPanel>
+              <TextBlock Text="Nombre de la empresa / Razón social" Opacity="0.7" Margin="0,8,0,5"/>
+              <TextBox Text="{Binding NombreEmpresa}" Width="400"/>
+              <TextBlock Text="Para documentos legales (ej: Alfredo Y Rebeca C.B)" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
             </StackPanel>
 
             <StackPanel>

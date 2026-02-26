@@ -1,10 +1,10 @@
-{NOMBRE_ESTUDIO}
+{NOMBRE_EMPRESA}
 
 CONSENTIMIENTO EXPLÍCITO PARA EL TRATAMIENTO DE DATOS PERSONALES DE MENOR DE EDAD
 
 Guadalajara, a fecha {FECHA_FIRMA}
 
-{NOMBRE_ESTUDIO} es el Responsable del tratamiento de los datos personales del interesado y le informa que estos datos serán tratados de conformidad con lo dispuesto en el Reglamento (UE) 2016/679 de 27 de Abril de 2016 (GDPR) y la Ley Orgánica 3/2018 de Protección de Datos Personales, por lo que se le facilita la siguiente información del tratamiento:
+{NOMBRE_EMPRESA} es el Responsable del tratamiento de los datos personales del interesado y le informa que estos datos serán tratados de conformidad con lo dispuesto en el Reglamento (UE) 2016/679 de 27 de Abril de 2016 (GDPR) y la Ley Orgánica 3/2018 de Protección de Datos Personales, por lo que se le facilita la siguiente información del tratamiento:
 
 FINALIDAD DEL TRATAMIENTO:
 Mantener una relación comercial mediante la gestión de citas, servicios de tatuaje y piercing, facturación, y comunicaciones relacionadas con nuestros productos o servicios.
@@ -24,7 +24,7 @@ DERECHOS QUE ASISTEN AL INTERESADO Y SU REPRESENTANTE:
 - Derecho a presentar una reclamación ante la Autoridad de control (aepd.es) si considera que el tratamiento no se ajusta a la normativa vigente.
 
 DATOS DE CONTACTO PARA EJERCER SUS DERECHOS:
-{NOMBRE_ESTUDIO}
+{NOMBRE_EMPRESA}
 {DIRECCION_ESTUDIO}
 Email: {EMAIL_ESTUDIO}
 

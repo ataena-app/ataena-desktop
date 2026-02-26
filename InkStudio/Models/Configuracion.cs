@@ -22,9 +22,16 @@ public class Configuracion
     #region Datos del Estudio
 
     /// <summary>
-    /// Nombre del estudio de tatuajes.
+    /// Nombre del estudio de tatuajes (nombre comercial).
+    /// Ej: "Erzulie Tattoo"
     /// </summary>
     public string NombreEstudio { get; set; } = "Mi Estudio";
+
+    /// <summary>
+    /// Nombre de la empresa o razón social (para documentos legales).
+    /// Ej: "Alfredo Y Rebeca C.B"
+    /// </summary>
+    public string? NombreEmpresa { get; set; }
 
     /// <summary>
     /// Dirección física del estudio (opcional).

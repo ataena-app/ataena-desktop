@@ -21,6 +21,9 @@ public partial class ConfiguracionViewModel : ViewModelBase
     private string _nombreEstudio = string.Empty;
 
     [ObservableProperty]
+    private string? _nombreEmpresa;
+
+    [ObservableProperty]
     private string? _direccion;
 
     [ObservableProperty]
@@ -82,6 +85,7 @@ public partial class ConfiguracionViewModel : ViewModelBase
             }
 
             NombreEstudio = cfg.NombreEstudio;
+            NombreEmpresa = cfg.NombreEmpresa;
             Direccion = cfg.Direccion;
             Telefono = cfg.Telefono;
             Email = cfg.Email;
@@ -121,6 +125,7 @@ public partial class ConfiguracionViewModel : ViewModelBase
             }
 
             cfg.NombreEstudio = string.IsNullOrWhiteSpace(NombreEstudio) ? "Mi Estudio" : NombreEstudio.Trim();
+            cfg.NombreEmpresa = string.IsNullOrWhiteSpace(NombreEmpresa) ? null : NombreEmpresa.Trim();
             cfg.Direccion = string.IsNullOrWhiteSpace(Direccion) ? null : Direccion.Trim();
             cfg.Telefono = string.IsNullOrWhiteSpace(Telefono) ? null : Telefono.Trim();
             cfg.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
