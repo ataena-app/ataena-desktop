@@ -98,26 +98,44 @@
                     <!-- Acciones -->
                     <StackPanel Grid.Column="2"
                                 Orientation="Horizontal"
-                                Spacing="6"
+                                Spacing="8"
                                 VerticalAlignment="Center">
-                      <Button Content="📄"
-                              Classes="btn-secondary"
-                              Width="32"
-                              Height="32"
+                      <Button Classes="btn-secondary"
+                              MinWidth="90"
+                              Height="34"
+                              Padding="10,0"
+                              ToolTip.Tip="Ver PDF"
                               Command="{Binding $parent[UserControl].DataContext.AbrirConsentimientoCommand}"
-                              CommandParameter="{Binding}"/>
-                      <Button Content="💾"
-                              Classes="btn-secondary"
-                              Width="32"
-                              Height="32"
+                              CommandParameter="{Binding}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center"/>
+                          <TextBlock Text="Ver" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </Button>
+                      <Button Classes="btn-secondary"
+                              MinWidth="100"
+                              Height="34"
+                              Padding="10,0"
+                              ToolTip.Tip="Exportar a archivo"
                               Command="{Binding $parent[UserControl].DataContext.ExportarConsentimientoCommand}"
-                              CommandParameter="{Binding}"/>
-                      <Button Content="📧"
-                              Classes="btn-secondary"
-                              Width="32"
-                              Height="32"
+                              CommandParameter="{Binding}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <TextBlock Text="💾" FontSize="14" VerticalAlignment="Center"/>
+                          <TextBlock Text="Exportar" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </Button>
+                      <Button Classes="btn-secondary"
+                              MinWidth="90"
+                              Height="34"
+                              Padding="10,0"
+                              ToolTip.Tip="Enviar por correo"
                               Command="{Binding $parent[UserControl].DataContext.EnviarConsentimientoPorCorreoCommand}"
-                              CommandParameter="{Binding}"/>
+                              CommandParameter="{Binding}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <TextBlock Text="📧" FontSize="14" VerticalAlignment="Center"/>
+                          <TextBlock Text="Enviar" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </Button>
                     </StackPanel>
                   </Grid>
                 </Border>

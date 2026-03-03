@@ -57,6 +57,12 @@ public partial class FotoDniViewModel : ViewModelBase
     [ObservableProperty]
     private string _instrucciones = string.Empty;
 
+    /// <summary>
+    /// Indica si la opción de escanear está habilitada (desde configuración).
+    /// </summary>
+    [ObservableProperty]
+    private bool _usarEscanner;
+
     #endregion
 
     /// <summary>
@@ -82,6 +88,9 @@ public partial class FotoDniViewModel : ViewModelBase
             MensajeError = string.Empty;
             EstadoConexion = "⏳ Preparando captura...";
 
+            // Cargar si escáner está habilitado
+            await CargarConfigEscannerAsync();
+
             // Cargar preview existente
             CargarPreview();
 
@@ -94,6 +103,21 @@ public partial class FotoDniViewModel : ViewModelBase
         {
             Log.Error(ex, "Error al abrir modal de foto de DNI");
             MensajeError = $"Error al abrir el modal: {ex.Message}";
+        }
+    }
+
+    private async Task CargarConfigEscannerAsync()
+    {
+        try
+        {
+            using var db = new InkStudioDbContext();
+            var cfg = await db.Configuracion.FirstOrDefaultAsync(c => c.Id == 1);
+            UsarEscanner = cfg?.UsarEscanner ?? false;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Error al cargar config escáner");
+            UsarEscanner = false;
         }
     }
 
@@ -397,6 +421,80 @@ public partial class FotoDniViewModel : ViewModelBase
             Log.Error(ex, "Error al subir foto DNI desde ordenador");
             MensajeError = $"Error al subir la foto: {ex.Message}";
             EstadoConexion = "❌ Error al subir la foto";
+        }
+    }
+
+    [RelayCommand]
+    private async Task EscanearAsync()
+    {
+        if (_cliente == null)
+        {
+            MensajeError = "No hay cliente seleccionado.";
+            return;
+        }
+
+        if (!EscannerService.EstaDisponible)
+        {
+            MensajeError = "El escaneo solo está disponible en Windows.";
+            return;
+        }
+
+        try
+        {
+            EstaProcesando = true;
+            EstadoConexion = "🖨️ Abriendo escáner...";
+            MensajeError = string.Empty;
+
+            var ruta = _esDniTutor
+                ? ConsentimientoPathService.ObtenerRutaFotoDniTutor(_cliente.Id)
+                : ConsentimientoPathService.ObtenerRutaFotoDni(_cliente.Id);
+
+            var (exito, mensaje) = await EscannerService.EscanearAsync(ruta);
+
+            if (exito)
+            {
+                // Actualizar cliente en BD
+                using var db = new InkStudioDbContext();
+                var clienteDb = await db.Clientes.FirstOrDefaultAsync(c => c.Id == _cliente.Id);
+                if (clienteDb != null)
+                {
+                    if (_esDniTutor)
+                    {
+                        clienteDb.FotoDniTutorPath = ruta;
+                        _cliente.FotoDniTutorPath = ruta;
+                    }
+                    else
+                    {
+                        clienteDb.FotoDniPath = ruta;
+                        _cliente.FotoDniPath = ruta;
+                    }
+                    await db.SaveChangesAsync();
+                }
+
+                PreviewFotoDni = CargarBitmapDesdeRuta(ruta);
+                OnPropertyChanged(nameof(PreviewFotoDni));
+                EstadoConexion = "✅ Documento escaneado y guardado correctamente";
+                MensajeError = string.Empty;
+                FotoGuardada?.Invoke(this, clienteDb ?? _cliente);
+
+                await Task.Delay(1500);
+                Cerrar();
+            }
+            else
+            {
+                MensajeError = mensaje;
+                EstadoConexion = "❌ " + mensaje;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al escanear DNI");
+            MensajeError = $"Error al escanear: {ex.Message}";
+            EstadoConexion = "❌ Error al escanear";
+        }
+        finally
+        {
+            EstaProcesando = false;
         }
     }
 }

@@ -51,6 +51,12 @@ public partial class ConfiguracionViewModel : ViewModelBase
     private bool _smtpUsarSsl = true;
 
     [ObservableProperty]
+    private bool _usarEscanner;
+
+    [ObservableProperty]
+    private bool _usarImpresora;
+
+    [ObservableProperty]
     private bool _temaOscuro = true;
 
     [ObservableProperty]
@@ -105,6 +111,8 @@ public partial class ConfiguracionViewModel : ViewModelBase
             SmtpUsuario = cfg.SmtpUsuario;
             SmtpPassword = cfg.SmtpPassword;
             SmtpUsarSsl = cfg.SmtpUsarSsl;
+            UsarEscanner = cfg.UsarEscanner;
+            UsarImpresora = cfg.UsarImpresora;
             TemaOscuro = cfg.TemaOscuro;
             IdiomaApp = cfg.IdiomaApp;
             LogoPath = cfg.LogoPath;
@@ -149,6 +157,8 @@ public partial class ConfiguracionViewModel : ViewModelBase
             cfg.SmtpUsuario = string.IsNullOrWhiteSpace(SmtpUsuario) ? null : SmtpUsuario.Trim();
             cfg.SmtpPassword = string.IsNullOrWhiteSpace(SmtpPassword) ? null : SmtpPassword;
             cfg.SmtpUsarSsl = SmtpUsarSsl;
+            cfg.UsarEscanner = UsarEscanner;
+            cfg.UsarImpresora = UsarImpresora;
             cfg.TemaOscuro = TemaOscuro;
             cfg.IdiomaApp = string.IsNullOrWhiteSpace(IdiomaApp) ? "es" : IdiomaApp.Trim();
             cfg.LogoPath = LogoPath;

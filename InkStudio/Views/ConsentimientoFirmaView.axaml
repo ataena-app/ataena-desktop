@@ -207,17 +207,31 @@
                         Padding="24,20"
                         CornerRadius="0,0,18,18">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                        <!-- Botones antes de generar -->
                         <Button Grid.Column="1"
                                 Content="Cancelar"
                                 Classes="btn-secondary"
                                 Command="{Binding CancelarFirmaCommand}"
-                                IsEnabled="{Binding !EstaProcesando}"/>
+                                IsEnabled="{Binding !EstaProcesando}"
+                                IsVisible="{Binding !PdfGenerado}"/>
                         <Button Grid.Column="2"
                                 Content="Generar PDF"
                                 Classes="btn-primary"
                                 Command="{Binding ConfirmarFirmaCommand}"
                                 IsEnabled="{Binding FirmaRecibida}"
-                                IsVisible="{Binding FirmaRecibida}"/>
+                                IsVisible="{Binding !PdfGenerado}"/>
+                        <!-- Botones después de generar -->
+                        <Button Grid.Column="1"
+                                Content="🖨️ Imprimir"
+                                Classes="btn-secondary"
+                                Command="{Binding ImprimirPdfCommand}"
+                                IsEnabled="{Binding !EstaProcesando}"
+                                IsVisible="{Binding MostrarImprimir}"/>
+                        <Button Grid.Column="2"
+                                Content="Cerrar"
+                                Classes="btn-primary"
+                                Command="{Binding CancelarFirmaCommand}"
+                                IsVisible="{Binding PdfGenerado}"/>
                     </Grid>
                 </Border>
             </Grid>

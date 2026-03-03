@@ -89,6 +89,20 @@ public class Configuracion
 
     #endregion
 
+    #region Escáner e Impresora
+
+    /// <summary>
+    /// Habilita la opción de escanear documentos (DNI, etc.) con el escáner predeterminado de Windows.
+    /// </summary>
+    public bool UsarEscanner { get; set; } = false;
+
+    /// <summary>
+    /// Habilita la opción de imprimir consentimientos con la impresora predeterminada de Windows.
+    /// </summary>
+    public bool UsarImpresora { get; set; } = false;
+
+    #endregion
+
     #region Preferencias de la Aplicación
 
     /// <summary>

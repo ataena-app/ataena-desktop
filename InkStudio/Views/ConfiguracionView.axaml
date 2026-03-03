@@ -172,6 +172,36 @@
           </StackPanel>
         </Border>
 
+        <!-- Escáner e Impresora -->
+        <Border Background="#111827"
+                CornerRadius="12"
+                Padding="20">
+          <StackPanel Spacing="12">
+            <TextBlock Text="🖨️ Escáner e Impresora"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Margin="0,0,0,8"/>
+            <TextBlock Text="Configura el escáner e impresora predeterminados en Windows. Las opciones aparecerán en foto DNI y consentimientos."
+                       FontSize="12"
+                       Opacity="0.7"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,12"/>
+            <CheckBox Content="Habilitar opción de escanear (DNI, documentos)"
+                      IsChecked="{Binding UsarEscanner}"/>
+            <TextBlock Text="Permite escanear con el escáner predeterminado de Windows"
+                       FontSize="11"
+                       Opacity="0.5"
+                       Margin="24,0,0,0"/>
+            <CheckBox Content="Habilitar opción de imprimir (consentimientos)"
+                      IsChecked="{Binding UsarImpresora}"
+                      Margin="0,12,0,0"/>
+            <TextBlock Text="Permite imprimir PDFs con la impresora predeterminada"
+                       FontSize="11"
+                       Opacity="0.5"
+                       Margin="24,0,0,0"/>
+          </StackPanel>
+        </Border>
+
         <!-- Preferencias -->
         <Border Background="#111827"
                 CornerRadius="12"

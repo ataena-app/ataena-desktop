@@ -65,6 +65,28 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     private Trabajo? _trabajo;
 
     /// <summary>
+    /// Indica si el PDF ya se generó (para mostrar opción Imprimir).
+    /// </summary>
+    [ObservableProperty]
+    private bool _pdfGenerado;
+
+    /// <summary>
+    /// Ruta del PDF generado (para imprimir).
+    /// </summary>
+    private string? _rutaPdfGenerado;
+
+    /// <summary>
+    /// Indica si la opción de imprimir está habilitada.
+    /// </summary>
+    [ObservableProperty]
+    private bool _usarImpresora;
+
+    /// <summary>
+    /// Indica si mostrar el botón Imprimir (PDF generado y impresora habilitada).
+    /// </summary>
+    public bool MostrarImprimir => PdfGenerado && UsarImpresora;
+
+    /// <summary>
     /// URL para acceder a la página de firma desde el móvil.
     /// </summary>
     [ObservableProperty]
@@ -332,13 +354,14 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
             }
 
             EstadoConexion = "✅ Consentimiento firmado y guardado correctamente";
+            _rutaPdfGenerado = rutaPdf;
+            PdfGenerado = true;
+            OnPropertyChanged(nameof(MostrarImprimir));
 
             // Disparar evento de firma completada
             FirmaCompletada?.Invoke(this, Cliente);
 
-            // Esperar un momento para que el usuario vea el mensaje y cerrar el modal
-            await Task.Delay(1500);
-            CerrarModal();
+            // No cerrar automáticamente: el usuario puede imprimir o cerrar
         }
         catch (Exception ex)
         {
@@ -423,6 +446,13 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
                 trabajo,
                 configuracion,
                 DateTime.Now);
+        }
+
+        // Cargar UsarImpresora
+        using (var dbConfig = new InkStudioDbContext())
+        {
+            var cfg = await dbConfig.Configuracion.FirstOrDefaultAsync(c => c.Id == 1);
+            UsarImpresora = cfg?.UsarImpresora ?? false;
         }
 
         // Crear o cargar consentimiento
@@ -555,6 +585,46 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
         FirmaMenorBase64 = null;
         FirmaMenorRecibida = false;
         FirmaTutorRecibida = false;
+
+        // Limpiar estado post-generación
+        PdfGenerado = false;
+        _rutaPdfGenerado = null;
+    }
+
+    [RelayCommand]
+    private async Task ImprimirPdf()
+    {
+        if (string.IsNullOrEmpty(_rutaPdfGenerado) || !System.IO.File.Exists(_rutaPdfGenerado))
+        {
+            EstadoConexion = "❌ No hay PDF para imprimir";
+            return;
+        }
+
+        try
+        {
+            EstaProcesando = true;
+            EstadoConexion = "🖨️ Enviando a imprimir...";
+
+            var (exito, mensaje) = await ImpresorService.ImprimirPdfAsync(_rutaPdfGenerado);
+
+            if (exito)
+            {
+                EstadoConexion = "✅ " + mensaje;
+            }
+            else
+            {
+                EstadoConexion = "❌ " + mensaje;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al imprimir PDF");
+            EstadoConexion = $"❌ Error al imprimir: {ex.Message}";
+        }
+        finally
+        {
+            EstaProcesando = false;
+        }
     }
 
     #endregion

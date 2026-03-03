@@ -1,7 +1,7 @@
 # Roadmap del Proyecto
 
-> **Última actualización:** 30 de Diciembre 2025  
-> **Estado general:** En desarrollo - Fase 3 Completada, Fase 4 en progreso (75% del proyecto)
+> **Última actualización:** 21 de Febrero 2026  
+> **Estado general:** En desarrollo - Fase 4 en progreso (~85% del proyecto)
 
 ---
 
@@ -13,6 +13,9 @@
 4. [Fase 3: Funcionalidades Adicionales](#-fase-3-funcionalidades-adicionales-pendiente)
 5. [Fase 4: Pulido y Distribución](#-fase-4-pulido-y-distribución-pendiente)
 6. [Historial de Cambios](#-historial-de-cambios)
+7. [Ruta Completa - Lo que queda](#-ruta-completa---lo-que-queda)
+
+> 📔 **Diario de desarrollo:** Ver `06-diario-desarrollo.md` para registro cronológico detallado.
 
 ---
 
@@ -20,11 +23,11 @@
 
 ```
 Fase 1: Fundamentos          [████████████████████] 100%
-Fase 2: Módulos Principales  [████████████████████] 100%
+Fase 2: Módulos Principales   [████████████████████] 100%
 Fase 3: Funcionalidades      [████████████████████] 100%
-Fase 4: Distribución         [░░░░░░░░░░░░░░░░░░░░]   0%
+Fase 4: Distribución         [████████░░░░░░░░░░░░]  40%
 ─────────────────────────────────────────────────────────
-Total del proyecto           [███████████████░░░░░]  75%
+Total del proyecto            [█████████████████░░░]  85%
 ```
 
 ---
@@ -117,6 +120,9 @@ Total del proyecto           [███████████████░�
 | Visualización lado a lado (Teams-style) | ✅ Completado | Dic 2025 |
 | Preview mejorada durante arrastre | ✅ Completado | Dic 2025 |
 | Menú contextual para citas superpuestas | ✅ Completado | Dic 2025 |
+| Vista de mes (6 semanas) | ✅ Completado | Feb 2026 | Calendario mensual con resumen de citas |
+| Días festivos (API Nager.Date) | ✅ Completado | Feb 2026 | Nacionales, autonómicos, locales Guadalajara |
+| Aviso consentimiento RGPD en citas | ✅ Completado | Feb 2026 | Icono warning si cliente sin RGPD |
 
 ### Trabajos / Galería
 
@@ -152,7 +158,8 @@ Total del proyecto           [███████████████░�
 | ConfiguracionViewModel | ✅ Completado | Dic 2025 | |
 | ConfiguracionView | ✅ Completado | Dic 2025 | |
 | Datos del estudio | ✅ Completado | Dic 2025 | Configuración inicial hardcodeada (Estudio Erzulie) |
-| Configuración SMTP | ⏳ Pendiente | | Diferido para más adelante |
+| Configuración SMTP | ✅ Completado | Feb 2026 | UI completa, contraseña con espacios automáticos |
+| Botón probar conexión SMTP | ✅ Completado | Feb 2026 | |
 | Tema claro/oscuro | ⏳ Pendiente | | Diferido para más adelante |
 
 ---
@@ -175,17 +182,21 @@ Total del proyecto           [███████████████░�
 | Vista de consentimientos | ✅ Completado | Dic 2025 | Lista global con filtros por cliente y tipo |
 | Gestión de consentimientos | ✅ Completado | Dic 2025 | Ver, exportar y enviar por email |
 | Almacenamiento de documentos | ✅ Completado | Dic 2025 | PDFs en %LOCALAPPDATA%\InkStudio\ficheros\clientes\{id}\consentimientos\ |
+| Menores y tutores | ✅ Completado | Feb 2026 | RGPD_Menor, Trabajo_Menor, doble firma, datos tutor |
+| Renovación de consentimientos | ✅ Completado | Feb 2026 | Histórico, antigüedad, aviso ≥2 años |
+| Plantillas RGPD actualizadas | ✅ Completado | Feb 2026 | lgpd.txt, NOMBRE_EMPRESA vs NOMBRE_ESTUDIO |
+| Foto DNI cliente y tutor | ✅ Completado | Feb 2026 | QR + subida desde PC |
 
 **Ver plan detallado:** `documentacion/03-plan-consentimientos.md`
 
 ### Emails
 
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Servicio de envío de emails | ⏳ Pendiente | |
-| Plantillas de email | ⏳ Pendiente | |
-| Email de confirmación de cita | ⏳ Pendiente | |
-| Configuración SMTP en UI | ⏳ Pendiente | |
+| Tarea | Estado | Fecha | Notas |
+|-------|--------|-------|-------|
+| EmailService.cs | ✅ Completado | Feb 2026 | Envío SMTP con limpieza de espacios en contraseña |
+| Plantilla RecordatorioCita.html | ✅ Completado | Feb 2026 | HTML responsive con datos de cita |
+| Email de recordatorio de cita | ✅ Completado | Feb 2026 | Botón "Recordar" en tarjetas de cita |
+| Registro EmailEnviado en Cita | ✅ Completado | Feb 2026 | Ya existía en modelo |
 
 ### Backup y Restauración ✅
 
@@ -236,12 +247,12 @@ Total del proyecto           [███████████████░�
 
 ### Distribución
 
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Crear instalador | ⏳ Pendiente | |
-| Icono de aplicación | ⏳ Pendiente | |
-| Splash screen | ⏳ Pendiente | |
-| Auto-actualización (opcional) | ⏳ Pendiente | |
+| Tarea | Estado | Fecha | Notas |
+|-------|--------|-------|-------|
+| Crear instalador | ⏳ Pendiente | | |
+| Icono de aplicación | ⏳ Pendiente | | |
+| Splash screen | ✅ Completado | Feb 2026 | Logo configurable desde Configuración |
+| Auto-actualización (opcional) | ⏳ Pendiente | | |
 
 ---
 
@@ -362,19 +373,80 @@ Total del proyecto           [███████████████░�
 - ✅ Bloqueo de BD durante backup → VACUUM INTO para copia limpia
 - ✅ Archivos WAL/SHM bloqueados → Reintentos con fallback
 
+**Enero - Febrero 2026:**
+- ✅ Identificación de menores por fecha nacimiento
+- ✅ Datos tutor obligatorios (nombre, DNI, teléfono)
+- ✅ Consentimientos RGPD_Menor y Trabajo_Menor con doble firma
+- ✅ Indicador menor en clientes, citas y agenda
+- ✅ Aviso renovación cuando cliente cumple 18 años
+- ✅ Antigüedad de consentimientos (aviso ≥2 años)
+- ✅ Histórico y renovación de consentimientos
+
+**Agenda:**
+- ✅ Vista de mes (6 semanas) con resumen de citas
+- ✅ API festivos (Nager.Date) nacionales, autonómicos, locales
+- ✅ Aviso RGPD en tarjetas de cita si cliente sin consentimiento
+
+**Clientes:**
+- ✅ Foto DNI cliente y tutor (QR + subida desde PC)
+- ✅ NombreEmpresa vs NombreEstudio en Configuración
+- ✅ Plantillas RGPD actualizadas (lgpd.txt)
+
+**Emails:**
+- ✅ EmailService con SMTP
+- ✅ Recordatorio de cita con plantilla HTML
+- ✅ Botón "Recordar" en citas, registro de envío
+- ✅ Contraseña SMTP: limpieza automática de espacios (Google)
+
+**UI/UX:**
+- ✅ Splash screen con logo configurable
+- ✅ Botón Guardar configuración (texto centrado, padding)
+
 ---
 
 ## 🎯 Próximos Pasos Inmediatos
 
-1. [ ] Implementar configuración SMTP (diferido)
-2. [ ] Implementar tema claro/oscuro (diferido)
-3. [x] ~~Implementar backup y restauración de base de datos~~ ✅ Completado
-4. [ ] Crear instalador de la aplicación
-5. [ ] Implementar sistema de emails (confirmación de citas, etc.)
-6. [ ] Mejoras y pulido final (Fase 10 de Consentimientos)
+1. [x] ~~Implementar configuración SMTP~~ ✅ Completado
+2. [x] ~~Implementar sistema de emails (recordatorio de citas)~~ ✅ Completado
+3. [x] ~~Splash screen con logo~~ ✅ Completado
+4. [ ] Implementar tema claro/oscuro (diferido)
+5. [ ] Crear instalador de la aplicación
+6. [ ] Animaciones y transiciones (UX)
 7. [ ] Implementar seguridad (login, cifrado de BD)
 
 ---
 
-> **Nota:** Este documento se actualizará conforme avance el desarrollo del proyecto.
+## 🗺️ Ruta Completa - Lo que queda
+
+### Prioridad Alta
+| # | Tarea | Fase | Esfuerzo |
+|---|-------|------|----------|
+| 1 | Crear instalador (Inno Setup o Velopack) | 4 | Alto |
+| 2 | Icono de aplicación profesional | 4 | Bajo |
+| 3 | Testing manual completo | 4 | Medio |
+
+### Prioridad Media
+| # | Tarea | Fase | Esfuerzo |
+|---|-------|------|----------|
+| 4 | Tema claro/oscuro | 4 | Medio |
+| 5 | Animaciones y transiciones | 4 | Bajo |
+| 6 | Auto-actualización (opcional) | 4 | Alto |
+
+### Prioridad Baja / Futuro
+| # | Tarea | Fase | Esfuerzo |
+|---|-------|------|----------|
+| 7 | Tests unitarios | 4 | Alto |
+| 8 | Tests de integración | 4 | Alto |
+| 9 | Login de usuario | Seguridad | Alto |
+| 10 | Cifrado de BD (SQLCipher) | Seguridad | Alto |
+| 11 | Cifrado de campos sensibles | Seguridad | Medio |
+
+### Resumen de lo pendiente
+- **Para MVP/distribución:** Instalador + icono + testing manual
+- **Pulido:** Tema claro/oscuro, animaciones
+- **Opcional:** Auto-update, tests automatizados, seguridad
+
+---
+
+> **Nota:** Este documento se actualiza conforme avance el desarrollo del proyecto.
 
