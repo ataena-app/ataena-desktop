@@ -1,4 +1,4 @@
-# Plan de Distribución: InkStudio CRM
+# Plan de Distribución: Ataena CRM
 
 > **Fecha de creación:** 30 de Diciembre 2025  
 > **Estado:** Planificación  
@@ -26,7 +26,7 @@
 ## 🎯 Resumen Ejecutivo
 
 ### Objetivo
-Crear un sistema de distribución profesional para InkStudio CRM que permita:
+Crear un sistema de distribución profesional para Ataena CRM que permita:
 - Instalar la aplicación de forma sencilla
 - Actualizar automáticamente
 - Controlar el uso mediante licencias
@@ -77,11 +77,11 @@ Crear un sistema de distribución profesional para InkStudio CRM que permita:
 ### Estructura del Instalador
 
 ```
-InkStudio_Setup_v1.0.0.exe
+Ataena_Setup_v1.0.0.exe
 │
 ├── 📦 Contenido
-│   ├── InkStudio.exe (aplicación principal)
-│   ├── InkStudio.dll (librerías)
+│   ├── Ataena.exe (aplicación principal)
+│   ├── Ataena.dll (librerías)
 │   ├── wwwroot/ (archivos web para firma móvil)
 │   ├── Plantillas/ (plantillas de consentimientos)
 │   └── Recursos adicionales
@@ -89,8 +89,8 @@ InkStudio_Setup_v1.0.0.exe
 ├── 🔧 Acciones de Instalación
 │   ├── Verificar .NET Runtime instalado
 │   ├── Instalar .NET Runtime si es necesario
-│   ├── Copiar archivos a %PROGRAMFILES%\InkStudio
-│   ├── Crear carpeta de datos en %LOCALAPPDATA%\InkStudio
+│   ├── Copiar archivos a %PROGRAMFILES%\Ataena
+│   ├── Crear carpeta de datos en %LOCALAPPDATA%\Ataena
 │   ├── Crear acceso directo en escritorio
 │   ├── Crear entrada en menú inicio
 │   ├── Registrar programa en "Agregar/Quitar programas"
@@ -106,7 +106,7 @@ InkStudio_Setup_v1.0.0.exe
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  1. Descarga InkStudio_Setup.exe desde web oficial          │
+│  1. Descarga Ataena_Setup.exe desde web oficial          │
 │                          ↓                                   │
 │  2. Ejecuta instalador (UAC pide permisos admin)            │
 │                          ↓                                   │
@@ -122,7 +122,7 @@ InkStudio_Setup_v1.0.0.exe
 │     - Configura firewall                                    │
 │                          ↓                                   │
 │  7. Pantalla de finalización                                │
-│     - Checkbox: "Ejecutar InkStudio"                        │
+│     - Checkbox: "Ejecutar Ataena"                        │
 │     - Checkbox: "Crear acceso directo"                      │
 │                          ↓                                   │
 │  8. Primer inicio → Pantalla de activación                  │
@@ -151,7 +151,7 @@ InkStudio_Setup_v1.0.0.exe
   - Evita advertencias de "Aplicación no reconocida"
 
 - [ ] ¿Installer silencioso para empresas?
-  - Permitir `InkStudio_Setup.exe /silent /key=XXXX-XXXX-XXXX`
+  - Permitir `Ataena_Setup.exe /silent /key=XXXX-XXXX-XXXX`
 
 ---
 
@@ -184,7 +184,7 @@ Velopack incluye todo lo necesario:
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────┐         ┌─────────────┐                   │
-│  │  InkStudio  │ ──────→ │  Servidor   │                   │
+│  │  Ataena  │ ──────→ │  Servidor   │                   │
 │  │  (Cliente)  │  HTTP   │  Updates    │                   │
 │  └─────────────┘         └─────────────┘                   │
 │        │                        │                           │
@@ -234,7 +234,7 @@ Velopack incluye todo lo necesario:
 │        │ 5. Reinicio automático con v1.1.0              │
 │        ↓                                                │
 │  ┌─────────────┐                                        │
-│  │  InkStudio  │  ← Versión 1.1.0                       │
+│  │  Ataena  │  ← Versión 1.1.0                       │
 │  │  v1.1.0 ✓   │                                        │
 │  └─────────────┘                                        │
 │                                                             │
@@ -257,13 +257,13 @@ Servidor de Actualizaciones (CDN/S3/Azure Blob)
 ├── /releases/
 │   ├── stable/
 │   │   ├── RELEASES (manifest)
-│   │   ├── InkStudio-1.0.0-full.nupkg (instalación completa)
-│   │   ├── InkStudio-1.0.0-1.1.0-delta.nupkg (solo cambios)
-│   │   └── InkStudio-1.1.0-full.nupkg
+│   │   ├── Ataena-1.0.0-full.nupkg (instalación completa)
+│   │   ├── Ataena-1.0.0-1.1.0-delta.nupkg (solo cambios)
+│   │   └── Ataena-1.1.0-full.nupkg
 │   │
 │   └── beta/
 │       ├── RELEASES
-│       └── InkStudio-1.2.0-beta1-full.nupkg
+│       └── Ataena-1.2.0-beta1-full.nupkg
 │
 └── /api/
     └── check-update (endpoint JSON alternativo)
@@ -316,7 +316,7 @@ Ejemplo: INK1-A3B7-C9D2-E5F8
 
 Estructura:
 ┌────┬────────────────────────────────────────────────────────┐
-│INK1│ Prefijo del producto (InkStudio v1)                   │
+│INK1│ Prefijo del producto (Ataena v1)                   │
 ├────┼────────────────────────────────────────────────────────┤
 │A3B7│ ID único del cliente (codificado)                     │
 ├────┼────────────────────────────────────────────────────────┤
@@ -346,11 +346,11 @@ Estructura:
 │     ↓                                                       │
 │  2. Recibe email con serial: INK1-XXXX-XXXX-XXXX            │
 │     ↓                                                       │
-│  3. Instala InkStudio                                       │
+│  3. Instala Ataena                                       │
 │     ↓                                                       │
 │  4. Primer inicio → Pantalla de activación                  │
 │     ┌─────────────────────────────────────────────────┐     │
-│     │  🔑 Activar InkStudio                           │     │
+│     │  🔑 Activar Ataena                           │     │
 │     │                                                   │     │
 │     │  Introduce tu clave de licencia:                 │     │
 │     │  ┌─────────────────────────────────────────────┐ │     │
@@ -782,7 +782,7 @@ Coste: ~5-10% de cada venta (pero sin infraestructura que mantener)
 | Concepto | Coste | Notas |
 |----------|-------|-------|
 | Certificado firma código | 200-400€/año | Comodo, DigiCert, etc. |
-| Dominio | 10-15€/año | inkstudio.es / .com |
+| Dominio | 10-15€/año | ataena.es / .com |
 | Logo profesional | 0-100€ | Opcional si ya existe |
 | **Total único** | **210-515€** | |
 

@@ -42,7 +42,7 @@ Implementar un sistema completo de gestión de consentimientos que permita:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    PC (InkStudio)                        │
+│                    PC (Ataena)                        │
 │  ┌──────────────────────────────────────────────────┐  │
 │  │  Modal de Firma de Consentimiento                 │  │
 │  │  ├─ Vista previa del texto                       │  │
@@ -511,7 +511,7 @@ Total del Módulo                       [█████████████
 - ✅ Alternativa mouse/trackpad si no hay móvil
 
 ### Almacenamiento
-- ✅ PDFs en: `%LOCALAPPDATA%\InkStudio\consentimientos\[Tipo]\`
+- ✅ PDFs en: `%LOCALAPPDATA%\Ataena\consentimientos\[Tipo]\`
 - ✅ Nombre: `cliente-{id}_rgpd_{fecha}_{hora}.pdf`
 - ✅ Ruta guardada en BD: `Consentimiento.RutaDocumento`
 - ✅ Backup incluido en backup general de BD

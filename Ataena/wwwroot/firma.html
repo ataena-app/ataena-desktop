@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Firma de Consentimiento - Ataena</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #a855f7 0%, #f97316 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        main {
+            padding: 30px 20px;
+        }
+        .canvas-container {
+            position: relative;
+            background: #f8f9fa;
+            border: 3px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #signatureCanvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            color: #adb5bd;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .btn-primary:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: white;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+        }
+        .instructions {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #374151;
+        }
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .instructions li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            color: #6b7280;
+            font-size: 15px;
+        }
+        .instructions li:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+            color: #a855f7;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .status-message {
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            margin-top: 20px;
+        }
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Firma de Consentimiento</h1>
+            <p class="subtitle">Firma en el área de abajo con tu dedo</p>
+        </header>
+
+        <main>
+            <!-- Área de firma -->
+            <div class="signature-section">
+                <div class="canvas-container">
+                    <canvas id="signatureCanvas"></canvas>
+                    <div class="canvas-overlay" id="canvasOverlay">
+                        <p>Firma aquí</p>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="buttons">
+                    <button id="btnLimpiar" class="btn btn-secondary">
+                        🗑️ Limpiar
+                    </button>
+                    <button id="btnEnviar" class="btn btn-primary" disabled>
+                        ✓ Enviar Firma
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="instructions">
+                <h3>Instrucciones:</h3>
+                <ul>
+                    <li>Usa tu dedo para firmar en el área blanca</li>
+                    <li>Puedes limpiar y volver a firmar si es necesario</li>
+                    <li>Cuando estés satisfecho, presiona "Enviar Firma"</li>
+                </ul>
+            </div>
+
+            <!-- Estado de envío -->
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+        </main>
+    </div>
+
+    <script src="/signature.js"></script>
+</body>
+</html>
+

@@ -1,4 +1,4 @@
-# Estudio de Mercado y Viabilidad: InkStudio CRM
+# Estudio de Mercado y Viabilidad: Ataena CRM
 
 > **Fecha:** 30 de Diciembre 2025  
 > **Estado:** Análisis realista  
@@ -21,7 +21,7 @@ NO como negocio principal.
 1. [Resumen Ejecutivo](#-resumen-ejecutivo)
 2. [Análisis del Mercado](#-análisis-del-mercado)
 3. [Análisis de Competencia](#-análisis-de-competencia)
-4. [Posicionamiento de InkStudio](#-posicionamiento-de-inkstudio)
+4. [Posicionamiento de Ataena](#-posicionamiento-de-ataena)
 5. [Modelo de Negocio](#-modelo-de-negocio)
 6. [Proyección Financiera](#-proyección-financiera)
 7. [Riesgos y Mitigación](#-riesgos-y-mitigación)
@@ -34,7 +34,7 @@ NO como negocio principal.
 
 ### La Oportunidad
 
-InkStudio CRM es un software de gestión para estudios de tatuajes con dos diferenciadores clave:
+Ataena CRM es un software de gestión para estudios de tatuajes con dos diferenciadores clave:
 1. **100% Offline** - Los datos del cliente están en SU ordenador, no en la nube
 2. **Pago único** - Sin suscripciones mensuales, licencia perpetua
 
@@ -172,7 +172,7 @@ InkStudio CRM es un software de gestión para estudios de tatuajes con dos difer
                          PRECIO
                     Bajo ◄────────► Alto
                       │
-         InkStudio    │    TattooNet
+         Ataena    │    TattooNet
          (79-99€      │    (67-197€/año)
           único)      │
                       │
@@ -202,7 +202,7 @@ InkStudio CRM es un software de gestión para estudios de tatuajes con dos difer
 
 ---
 
-## 🎯 Posicionamiento de InkStudio
+## 🎯 Posicionamiento de Ataena
 
 ### Propuesta de Valor
 
@@ -245,7 +245,7 @@ InkStudio CRM es un software de gestión para estudios de tatuajes con dos difer
 
 | Producto | Precio | Incluye |
 |----------|--------|---------|
-| **InkStudio Licencia** | **79€** | Licencia perpetua + 1 año updates |
+| **Ataena Licencia** | **79€** | Licencia perpetua + 1 año updates |
 | Renovación updates (opcional) | 29€/año | Actualizaciones del año siguiente |
 | Soporte prioritario (opcional) | 19€/año | Respuesta en 24h |
 
@@ -262,7 +262,7 @@ InkStudio CRM es un software de gestión para estudios de tatuajes con dos difer
 
 | Software | Año 1 | Año 2 | Año 3 | **Total 3 años** |
 |----------|-------|-------|-------|------------------|
-| **InkStudio** | 79€ | 0€* | 0€* | **79€** |
+| **Ataena** | 79€ | 0€* | 0€* | **79€** |
 | TattooNet Básico | 67€ | 67€ | 67€ | **201€** |
 | iTattoo Solo | 150€ | 150€ | 150€ | **450€** |
 | StudioApp Basic | 240€ | 240€ | 240€ | **720€** |
@@ -277,7 +277,7 @@ InkStudio CRM es un software de gestión para estudios de tatuajes con dos difer
 
 | Concepto | Coste/año | Notas |
 |----------|-----------|-------|
-| Dominio | 12€ | inkstudio.es |
+| Dominio | 12€ | ataena.es |
 | Hosting web | 0€ | GitHub Pages gratis |
 | Pasarela de pago | 0€ fijo | Solo % por venta |
 | **TOTAL FIJO** | **~12€** | |

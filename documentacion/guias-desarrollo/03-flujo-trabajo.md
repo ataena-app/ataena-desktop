@@ -82,7 +82,7 @@ Piensa qué información quieres guardar de un cliente.
 using System;
 using System.Collections.Generic;
 
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Cliente
 {
@@ -126,19 +126,19 @@ public class Cliente
 
 ```
 📁 Data/
-   └── 📄 InkStudioDbContext.cs   ← MODIFICAR ESTE ARCHIVO
+   └── 📄 AtaenaDbContext.cs   ← MODIFICAR ESTE ARCHIVO
 ```
 
 ### Añadir el DbSet:
 
 ```csharp
-// Data/InkStudioDbContext.cs
+// Data/AtaenaDbContext.cs
 using Microsoft.EntityFrameworkCore;
-using InkStudio.Models;
+using Ataena.Models;
 
-namespace InkStudio.Data;
+namespace Ataena.Data;
 
-public class InkStudioDbContext : DbContext
+public class AtaenaDbContext : DbContext
 {
     // AÑADIR ESTA LÍNEA:
     public DbSet<Cliente> Clientes => Set<Cliente>();
@@ -148,7 +148,7 @@ public class InkStudioDbContext : DbContext
     {
         var appData = Environment.GetFolderPath(
             Environment.SpecialFolder.LocalApplicationData);
-        var dbPath = Path.Combine(appData, "InkStudio", "data.db");
+        var dbPath = Path.Combine(appData, "Ataena", "data.db");
         
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
         options.UseSqlite($"Data Source={dbPath}");
@@ -174,7 +174,7 @@ Es un archivo que describe los cambios en la estructura de la BD. EF Core los ge
 
 ```powershell
 # Navegar al proyecto
-cd InkStudio
+cd Ataena
 
 # Crear la migración
 dotnet ef migrations add CrearTablaClientes
@@ -189,7 +189,7 @@ dotnet ef database update
 📁 Data/
    └── 📁 Migrations/
        ├── 📄 20251205120000_CrearTablaClientes.cs      ← NUEVO
-       └── 📄 InkStudioDbContextModelSnapshot.cs        ← NUEVO
+       └── 📄 AtaenaDbContextModelSnapshot.cs        ← NUEVO
 ```
 
 ### Si algo sale mal:
@@ -222,14 +222,14 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
-using InkStudio.Data;
-using InkStudio.Models;
+using Ataena.Data;
+using Ataena.Models;
 
-namespace InkStudio.ViewModels;
+namespace Ataena.ViewModels;
 
 public partial class ClientesViewModel : ViewModelBase
 {
-    private readonly InkStudioDbContext _db = new();
+    private readonly AtaenaDbContext _db = new();
 
     // ═══════════════════════════════════════════════════════════
     // PROPIEDADES (datos que la View puede mostrar)
@@ -364,8 +364,8 @@ public partial class ClientesViewModel : ViewModelBase
 <!-- Views/ClientesView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:InkStudio.ViewModels"
-             x:Class="InkStudio.Views.ClientesView"
+             xmlns:vm="using:Ataena.ViewModels"
+             x:Class="Ataena.Views.ClientesView"
              x:DataType="vm:ClientesViewModel">
 
     <Grid RowDefinitions="Auto,*,Auto" Margin="20">
@@ -440,7 +440,7 @@ public partial class ClientesViewModel : ViewModelBase
 // Views/ClientesView.axaml.cs
 using Avalonia.Controls;
 
-namespace InkStudio.Views;
+namespace Ataena.Views;
 
 public partial class ClientesView : UserControl
 {
@@ -463,10 +463,10 @@ Modifica `MainWindow.axaml` para incluir la nueva View:
 <!-- Views/MainWindow.axaml -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:views="using:InkStudio.Views"
-        xmlns:vm="using:InkStudio.ViewModels"
-        x:Class="InkStudio.Views.MainWindow"
-        Title="InkStudio CRM">
+        xmlns:views="using:Ataena.Views"
+        xmlns:vm="using:Ataena.ViewModels"
+        x:Class="Ataena.Views.MainWindow"
+        Title="Ataena CRM">
 
     <!-- Incluir la vista de clientes -->
     <views:ClientesView DataContext="{Binding ClientesVM}"/>
@@ -478,7 +478,7 @@ Modifica `MainWindow.axaml` para incluir la nueva View:
 
 ```csharp
 // ViewModels/MainWindowViewModel.cs
-namespace InkStudio.ViewModels;
+namespace Ataena.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -489,7 +489,7 @@ public partial class MainWindowViewModel : ViewModelBase
 ### Probar:
 
 ```powershell
-dotnet run --project InkStudio
+dotnet run --project Ataena
 ```
 
 ---
@@ -504,7 +504,7 @@ dotnet run --project InkStudio
 │  □ 1. Crear Model en Models/                                    │
 │       └── Define los datos que quieres guardar                  │
 │                                                                 │
-│  □ 2. Añadir DbSet en Data/InkStudioDbContext.cs                │
+│  □ 2. Añadir DbSet en Data/AtaenaDbContext.cs                │
 │       └── public DbSet<MiModelo> MisModelos => Set<MiModelo>(); │
 │                                                                 │
 │  □ 3. Crear migración                                           │
@@ -523,7 +523,7 @@ dotnet run --project InkStudio
 │       └── DataContext en XAML o en código                       │
 │                                                                 │
 │  □ 7. Probar                                                    │
-│       └── dotnet run --project InkStudio                        │
+│       └── dotnet run --project Ataena                        │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```

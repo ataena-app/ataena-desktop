@@ -25,7 +25,7 @@
 | Término | Significado | Ejemplo |
 |---------|-------------|---------|
 | **Entidad** | Clase que representa una tabla | `Cliente`, `Cita` |
-| **DbContext** | Conexión a la base de datos | `InkStudioDbContext` |
+| **DbContext** | Conexión a la base de datos | `AtaenaDbContext` |
 | **DbSet** | Representa una tabla | `DbSet<Cliente>` |
 | **Migración** | Script que modifica la BD | Añadir columna `Email` |
 | **LINQ** | Lenguaje de consultas en C# | `.Where()`, `.Select()` |
@@ -57,7 +57,7 @@
 
 ```csharp
 // Models/Cliente.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Cliente
 {
@@ -133,13 +133,13 @@ public class clientes          // No usar minúsculas ni plural
 ### Archivo básico
 
 ```csharp
-// Data/InkStudioDbContext.cs
+// Data/AtaenaDbContext.cs
 using Microsoft.EntityFrameworkCore;
-using InkStudio.Models;
+using Ataena.Models;
 
-namespace InkStudio.Data;
+namespace Ataena.Data;
 
-public class InkStudioDbContext : DbContext
+public class AtaenaDbContext : DbContext
 {
     // ══════════════════════════════════════════════
     // TABLAS (una línea por cada entidad)
@@ -157,7 +157,7 @@ public class InkStudioDbContext : DbContext
         // Ruta donde se guarda el archivo .db
         var appData = Environment.GetFolderPath(
             Environment.SpecialFolder.LocalApplicationData);
-        var folder = Path.Combine(appData, "InkStudio");
+        var folder = Path.Combine(appData, "Ataena");
         var dbPath = Path.Combine(folder, "data.db");
         
         // Crear carpeta si no existe
@@ -186,7 +186,7 @@ public class InkStudioDbContext : DbContext
 // 1. Crear la entidad en Models/
 public class Producto { ... }
 
-// 2. Añadir DbSet en InkStudioDbContext
+// 2. Añadir DbSet en AtaenaDbContext
 public DbSet<Producto> Productos => Set<Producto>();
 
 // 3. Crear migración
@@ -206,7 +206,7 @@ Las migraciones son "versiones" de tu base de datos. Cada vez que cambias un Mod
 
 ```powershell
 # Navegar al proyecto
-cd InkStudio
+cd Ataena
 
 # Crear migración
 dotnet ef migrations add NombreDescriptivo
@@ -266,7 +266,7 @@ En `App.axaml.cs`:
 public override void OnFrameworkInitializationCompleted()
 {
     // Aplicar migraciones al iniciar la app
-    using var db = new InkStudioDbContext();
+    using var db = new AtaenaDbContext();
     db.Database.Migrate();
     
     // Resto del código...
@@ -534,7 +534,7 @@ dotnet tool install --global dotnet-ef
 
 ```powershell
 # Asegúrate de estar en la carpeta del proyecto
-cd InkStudio
+cd Ataena
 dotnet ef migrations add Nombre
 ```
 
@@ -543,7 +543,7 @@ dotnet ef migrations add Nombre
 ```powershell
 # Elimina la BD y vuelve a aplicar migraciones
 # (solo en desarrollo, perderás datos)
-del $env:LOCALAPPDATA\InkStudio\data.db
+del $env:LOCALAPPDATA\Ataena\data.db
 dotnet ef database update
 ```
 
@@ -566,8 +566,8 @@ if (cliente != null)
 
 ```csharp
 // ❌ MAL: múltiples DbContext
-var db1 = new InkStudioDbContext();
-var db2 = new InkStudioDbContext();
+var db1 = new AtaenaDbContext();
+var db2 = new AtaenaDbContext();
 var cliente = await db1.Clientes.FindAsync(5);
 db2.Clientes.Update(cliente);  // Error!
 

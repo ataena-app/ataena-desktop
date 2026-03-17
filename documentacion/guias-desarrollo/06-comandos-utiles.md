@@ -24,7 +24,7 @@
 
 ```powershell
 # 1. Navegar a la carpeta del proyecto
-cd "C:\Users\Jose Vallejo\Documents\MYO_DESK\InkStudio"
+cd "C:\Users\Jose Vallejo\Documents\MYO_DESK\Ataena"
 
 # 2. Ejecutar
 dotnet run
@@ -34,7 +34,7 @@ dotnet run
 
 ```powershell
 # Usando --project (desde MYO_DESK)
-dotnet run --project "InkStudio\InkStudio.csproj"
+dotnet run --project "Ataena\Ataena.csproj"
 ```
 
 ### Ejecutar en modo Release
@@ -70,7 +70,7 @@ stderr (2) = Errores
 
 ```powershell
 # 1. Navegar al proyecto
-cd InkStudio
+cd Ataena
 
 # 2. Compilar primero (ver errores de compilación)
 dotnet build
@@ -95,7 +95,7 @@ PS> dotnet run 2>&1
 
 Unhandled exception. System.NotSupportedException: SQLite does not 
 support expressions of type 'TimeSpan' in ORDER BY clauses...
-   at InkStudio.ViewModels.DashboardViewModel.CargarCitasHoy()
+   at Ataena.ViewModels.DashboardViewModel.CargarCitasHoy()
    ...
 ```
 
@@ -139,7 +139,7 @@ dotnet --info
 
 ```powershell
 # Navegar al proyecto
-cd InkStudio
+cd Ataena
 
 # Compilar
 dotnet build
@@ -151,7 +151,7 @@ dotnet build -c Release
 dotnet run
 
 # Ejecutar desde la raíz (sin navegar)
-dotnet run --project InkStudio
+dotnet run --project Ataena
 
 # Compilar y ejecutar (limpia antes)
 dotnet build
@@ -189,7 +189,7 @@ dotnet ef --version
 
 ```powershell
 # IMPORTANTE: Ejecutar desde la carpeta del proyecto
-cd InkStudio
+cd Ataena
 
 # Crear nueva migración
 dotnet ef migrations add NombreDescriptivo
@@ -307,8 +307,8 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 ### Ubicación del resultado
 
 ```
-InkStudio/bin/Release/net9.0/win-x64/publish/
-    └── InkStudio.exe    ← Tu aplicación
+Ataena/bin/Release/net9.0/win-x64/publish/
+    └── Ataena.exe    ← Tu aplicación
 ```
 
 ---
@@ -432,13 +432,13 @@ dotnet restore
 
 ```powershell
 # Ruta de la BD en Windows
-$dbPath = "$env:LOCALAPPDATA\InkStudio\data.db"
+$dbPath = "$env:LOCALAPPDATA\Ataena\data.db"
 
 # Eliminar
 Remove-Item $dbPath -Force
 
 # Eliminar carpeta completa
-Remove-Item "$env:LOCALAPPDATA\InkStudio" -Recurse -Force
+Remove-Item "$env:LOCALAPPDATA\Ataena" -Recurse -Force
 ```
 
 ### Ver errores detallados
@@ -461,7 +461,7 @@ dotnet run --verbosity detailed
 # ════════════════════════════════════════════
 
 # Compilar y ejecutar
-dotnet run --project InkStudio
+dotnet run --project Ataena
 
 # Añadir nueva entidad → crear migración
 dotnet ef migrations add NombreDescriptivo

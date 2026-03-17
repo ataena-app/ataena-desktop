@@ -1,0 +1,239 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Ataena.ViewModels"
+        xmlns:views="using:Ataena.Views"
+        xmlns:converters="using:Ataena.Converters"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+        x:Class="Ataena.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Estudio Erzulie"
+        Width="1200"
+        Height="700"
+        MinWidth="900"
+        MinHeight="600"
+        WindowState="Maximized"
+        Background="#12121a">
+
+    <Window.Styles>
+        <!-- Estilo para botones de navegación -->
+        <Style Selector="Button.nav-btn">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#a0a0a0"/>
+            <Setter Property="Padding" Value="15,12"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="8,2"/>
+        </Style>
+        <Style Selector="Button.nav-btn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2a2a3e"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="220,*">
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 0: BARRA DE NAVEGACIÓN LATERAL                          -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0" Background="#16161e">
+            <DockPanel>
+                
+                <!-- Logo / Título -->
+                <Border DockPanel.Dock="Top" Padding="20" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="🖋️ Ataena" 
+                                   FontSize="22" 
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="CRM" 
+                                   FontSize="12" 
+                                   Opacity="0.5"
+                                   Margin="28,0,0,0"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Menú de navegación -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+                    
+                    <Button Classes="nav-btn" Command="{Binding IrADashboardCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="🏠" FontSize="18"/>
+                            <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <Button Classes="nav-btn" Command="{Binding IrAClientesCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="👥" FontSize="18"/>
+                            <TextBlock Text="Clientes" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <Button Classes="nav-btn" Command="{Binding IrAAgendaCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📅" FontSize="18"/>
+                            <TextBlock Text="Agenda" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <Button Classes="nav-btn" Command="{Binding IrATrabajosCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="💼" FontSize="18"/>
+                            <TextBlock Text="Trabajos" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                </StackPanel>
+                
+                <!-- Separador -->
+                <Border DockPanel.Dock="Top" 
+                        Height="1" 
+                        Background="#2a2a3e" 
+                        Margin="20,20"/>
+                
+                <!-- Configuración y utilidades (abajo) -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,20">
+                    <Button Classes="nav-btn" Command="{Binding IrAConsentimientosCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📝" FontSize="18"/>
+                            <TextBlock Text="Consentimientos" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="nav-btn" 
+                            Command="{Binding IrAConfiguracionCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="⚙️" FontSize="18"/>
+                            <TextBlock Text="Configuración" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav-btn" 
+                            Command="{Binding IrABackupCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="💾" FontSize="18"/>
+                            <TextBlock Text="Backup" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav-btn" 
+                            Command="{Binding IrALogsCommand}"
+                            ToolTip.Tip="Ver logs del sistema para diagnóstico">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📋" FontSize="18"/>
+                            <TextBlock Text="Logs" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                
+                <!-- Espaciador -->
+                <Border/>
+                
+            </DockPanel>
+        </Border>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 1: CONTENIDO PRINCIPAL (cambia según navegación)        -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="1" Background="#12121a">
+            <Panel>
+                <!-- Dashboard -->
+                <views:DashboardView DataContext="{Binding DashboardVM}"
+                                     IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Dashboard}"/>
+                
+                <!-- Clientes -->
+                <views:ClientesView DataContext="{Binding ClientesVM}"
+                                    IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Clientes}"/>
+                
+                <!-- Logs -->
+                <views:LogsView DataContext="{Binding LogsVM}"
+                                IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Logs}"/>
+                
+                <!-- Agenda -->
+                <views:AgendaView DataContext="{Binding AgendaVM}"
+                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Agenda}"/>
+                
+                <!-- Trabajos -->
+                <!-- Se muestra cuando estamos en la vista de Trabajos O cuando el modal está abierto (overlay) -->
+                <views:TrabajosView DataContext="{Binding TrabajosVM}"
+                                     ZIndex="10">
+                    <views:TrabajosView.IsVisible>
+                        <MultiBinding Converter="{StaticResource OrConverter}">
+                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual" Converter="{StaticResource EqualConverter}" ConverterParameter="Trabajos"/>
+                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).TrabajosVM.MostrarFormulario"/>
+                        </MultiBinding>
+                    </views:TrabajosView.IsVisible>
+                </views:TrabajosView>
+
+                <!-- Consentimientos -->
+                <views:ConsentimientosView DataContext="{Binding ConsentimientosVM}"
+                                           IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Consentimientos}"/>
+
+                <!-- Configuración -->
+                <views:ConfiguracionView DataContext="{Binding ConfiguracionVM}"
+                                         IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Configuracion}"/>
+
+                <!-- Backup -->
+                <views:BackupView DataContext="{Binding BackupVM}"
+                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VistaActual, Converter={StaticResource EqualConverter}, ConverterParameter=Backup}"/>
+            </Panel>
+        </Border>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- OVERLAY: DIÁLOGO DE CONFIRMACIÓN GLOBAL                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.ColumnSpan="2"
+                IsVisible="{Binding MostrarDialogoConfirmacion}"
+                Background="#E0000000"
+                ZIndex="1000">
+            <Border Background="#1e1e2e"
+                    CornerRadius="16"
+                    Padding="32"
+                    MaxWidth="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BorderBrush="#374151"
+                    BorderThickness="1">
+                <StackPanel Spacing="20">
+                    <!-- Título -->
+                    <TextBlock Text="{Binding DialogoTitulo}"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"/>
+                    
+                    <!-- Mensaje -->
+                    <TextBlock Text="{Binding DialogoMensaje}"
+                               FontSize="14"
+                               Opacity="0.85"
+                               TextWrapping="Wrap"
+                               MaxWidth="380"/>
+                    
+                    <!-- Botones -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12"
+                                Margin="0,12,0,0">
+                        <Button Content="Cancelar"
+                                Classes="btn-secondary"
+                                Command="{Binding CancelarDialogoCommand}"
+                                MinWidth="120"
+                                Height="42"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                        <Button Content="{Binding DialogoBotonConfirmar}"
+                                Classes="btn-danger"
+                                Command="{Binding ConfirmarDialogoCommand}"
+                                MinWidth="120"
+                                Height="42"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+        
+    </Grid>
+
+</Window>

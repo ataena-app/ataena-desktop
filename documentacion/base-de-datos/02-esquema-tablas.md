@@ -133,7 +133,7 @@ Almacena los datos personales de cada cliente del estudio.
 
 ```csharp
 // Models/Cliente.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Cliente
 {
@@ -205,7 +205,7 @@ Almacena las citas programadas en la agenda del estudio.
 
 ```csharp
 // Models/Cita.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Cita
 {
@@ -274,7 +274,7 @@ Almacena los tatuajes y piercings realizados.
 
 ```csharp
 // Models/Trabajo.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Trabajo
 {
@@ -364,7 +364,7 @@ Almacena los consentimientos firmados por los clientes.
 
 ```csharp
 // Models/Consentimiento.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Consentimiento
 {
@@ -416,7 +416,7 @@ Almacena la configuración del estudio. Solo existe 1 registro.
 
 ```csharp
 // Models/Configuracion.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Configuracion
 {
@@ -454,7 +454,7 @@ public class Configuracion
 
 ```csharp
 // Models/Enums.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 /// <summary>
 /// Tipo de cita
@@ -507,13 +507,13 @@ public enum TipoConsentimiento
 ### DbContext
 
 ```csharp
-// Data/InkStudioDbContext.cs
+// Data/AtaenaDbContext.cs
 using Microsoft.EntityFrameworkCore;
-using InkStudio.Models;
+using Ataena.Models;
 
-namespace InkStudio.Data;
+namespace Ataena.Data;
 
-public class InkStudioDbContext : DbContext
+public class AtaenaDbContext : DbContext
 {
     // ══════════════════════════════════════════════════════════════
     // TABLAS
@@ -533,7 +533,7 @@ public class InkStudioDbContext : DbContext
     {
         var appData = Environment.GetFolderPath(
             Environment.SpecialFolder.LocalApplicationData);
-        var folder = Path.Combine(appData, "InkStudio");
+        var folder = Path.Combine(appData, "Ataena");
         var dbPath = Path.Combine(folder, "data.db");
         
         Directory.CreateDirectory(folder);
@@ -601,7 +601,7 @@ public class InkStudioDbContext : DbContext
         modelBuilder.Entity<Configuracion>().HasData(new Configuracion
         {
             Id = 1,
-            NombreEstudio = "InkStudio",
+            NombreEstudio = "Ataena",
             TemaOscuro = true,
             IdiomaApp = "es"
         });
@@ -615,7 +615,7 @@ public class InkStudioDbContext : DbContext
 
 ```powershell
 # 1. Navegar al proyecto
-cd InkStudio
+cd Ataena
 
 # 2. Crear la migración inicial
 dotnet ef migrations add Inicial

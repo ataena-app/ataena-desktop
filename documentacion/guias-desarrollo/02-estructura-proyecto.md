@@ -22,7 +22,7 @@
 ## 🗂️ Vista General
 
 ```
-InkStudio/
+Ataena/
 │
 ├── 📁 Assets/                    # Recursos (iconos, imágenes, fuentes)
 │
@@ -41,7 +41,7 @@ InkStudio/
 ├── 📄 App.axaml                  # Configuración visual global
 ├── 📄 App.axaml.cs               # Código de inicio de la app
 ├── 📄 Program.cs                 # Punto de entrada (Main)
-└── 📄 InkStudio.csproj           # Configuración del proyecto
+└── 📄 Ataena.csproj           # Configuración del proyecto
 ```
 
 ---
@@ -54,7 +54,7 @@ Las **entidades de datos**. Clases que representan los objetos de tu negocio.
 
 ### Ubicación:
 ```
-InkStudio/Models/
+Ataena/Models/
 ```
 
 ### Archivos típicos:
@@ -71,7 +71,7 @@ Models/
 
 ```csharp
 // Models/Cliente.cs
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 public class Cliente
 {
@@ -108,7 +108,7 @@ La **lógica de cada pantalla**. Cada pantalla (View) tiene su ViewModel corresp
 
 ### Ubicación:
 ```
-InkStudio/ViewModels/
+Ataena/ViewModels/
 ```
 
 ### Archivos típicos:
@@ -134,11 +134,11 @@ ViewModel:      ClientesViewModel.cs
 
 ```csharp
 // ViewModels/ClientesViewModel.cs
-namespace InkStudio.ViewModels;
+namespace Ataena.ViewModels;
 
 public partial class ClientesViewModel : ViewModelBase
 {
-    private readonly InkStudioDbContext _db = new();
+    private readonly AtaenaDbContext _db = new();
 
     // Propiedades que la View puede mostrar
     [ObservableProperty]
@@ -181,7 +181,7 @@ Las **pantallas** de la aplicación. Archivos XAML que definen cómo se ve cada 
 
 ### Ubicación:
 ```
-InkStudio/Views/
+Ataena/Views/
 ```
 
 ### Archivos típicos:
@@ -210,8 +210,8 @@ ClientesView.axaml.cs    ← Código behind (C#, mínimo)
 <!-- Views/ClientesView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:InkStudio.ViewModels"
-             x:Class="InkStudio.Views.ClientesView"
+             xmlns:vm="using:Ataena.ViewModels"
+             x:Class="Ataena.Views.ClientesView"
              x:DataType="vm:ClientesViewModel">
     
     <DockPanel>
@@ -238,7 +238,7 @@ ClientesView.axaml.cs    ← Código behind (C#, mínimo)
 
 ```csharp
 // Views/ClientesView.axaml.cs
-namespace InkStudio.Views;
+namespace Ataena.Views;
 
 public partial class ClientesView : UserControl
 {
@@ -264,13 +264,13 @@ Todo lo relacionado con la **base de datos**: DbContext, configuraciones, migrac
 
 ### Ubicación:
 ```
-InkStudio/Data/
+Ataena/Data/
 ```
 
 ### Archivos típicos:
 ```
 Data/
-├── InkStudioDbContext.cs     # Conexión a la BD
+├── AtaenaDbContext.cs     # Conexión a la BD
 ├── Migrations/               # Migraciones (generadas automáticamente)
 │   ├── 20251205_Initial.cs
 │   └── ...
@@ -281,10 +281,10 @@ Data/
 ### Ejemplo de DbContext:
 
 ```csharp
-// Data/InkStudioDbContext.cs
-namespace InkStudio.Data;
+// Data/AtaenaDbContext.cs
+namespace Ataena.Data;
 
-public class InkStudioDbContext : DbContext
+public class AtaenaDbContext : DbContext
 {
     // Cada DbSet es una tabla
     public DbSet<Cliente> Clientes => Set<Cliente>();
@@ -297,7 +297,7 @@ public class InkStudioDbContext : DbContext
     {
         var appData = Environment.GetFolderPath(
             Environment.SpecialFolder.LocalApplicationData);
-        var dbPath = Path.Combine(appData, "InkStudio", "data.db");
+        var dbPath = Path.Combine(appData, "Ataena", "data.db");
         
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
         options.UseSqlite($"Data Source={dbPath}");
@@ -320,7 +320,7 @@ public class InkStudioDbContext : DbContext
 
 ### Ubicación:
 ```
-InkStudio/Services/
+Ataena/Services/
 ```
 
 ### Archivos típicos:
@@ -336,7 +336,7 @@ Services/
 
 ```csharp
 // Services/DialogService.cs
-namespace InkStudio.Services;
+namespace Ataena.Services;
 
 public class DialogService
 {
@@ -369,7 +369,7 @@ public class DialogService
 
 ### Ubicación:
 ```
-InkStudio/Assets/
+Ataena/Assets/
 ```
 
 ### Estructura típica:
@@ -421,7 +421,7 @@ public class Program
 <!-- App.axaml -->
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="InkStudio.App">
+             x:Class="Ataena.App">
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
@@ -450,7 +450,7 @@ public partial class App : Application
 }
 ```
 
-### InkStudio.csproj
+### Ataena.csproj
 
 **Configuración del proyecto**: versión de .NET, paquetes NuGet, etc.
 

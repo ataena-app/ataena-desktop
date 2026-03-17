@@ -1,4 +1,4 @@
-# Diario de Desarrollo - InkStudio CRM
+# Diario de Desarrollo - Ataena CRM
 
 > Registro cronológico de avances, decisiones y cambios del proyecto.
 

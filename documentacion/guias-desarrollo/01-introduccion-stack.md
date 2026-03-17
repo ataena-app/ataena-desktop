@@ -218,7 +218,7 @@ await _db.SaveChangesAsync();
 
 | Concepto | Qué es | Ejemplo |
 |----------|--------|---------|
-| **DbContext** | Conexión a la BD | `InkStudioDbContext` |
+| **DbContext** | Conexión a la BD | `AtaenaDbContext` |
 | **DbSet** | Una tabla | `DbSet<Cliente> Clientes` |
 | **Entidad** | Una fila de la tabla | `Cliente` |
 | **Migración** | Cambio en la estructura | Añadir campo `Email` |
@@ -261,7 +261,7 @@ var cliente = await _db.Clientes
 ### Ubicación del archivo:
 
 ```
-C:\Users\{Tu Usuario}\AppData\Local\InkStudio\data.db
+C:\Users\{Tu Usuario}\AppData\Local\Ataena\data.db
 ```
 
 ### Ver el contenido:

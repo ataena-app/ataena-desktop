@@ -1,7 +1,7 @@
 # Guía de Documentación de Código
 
 > **Nivel:** Todos  
-> **Objetivo:** Estándares para documentar código en InkStudio
+> **Objetivo:** Estándares para documentar código en Ataena
 
 ---
 
@@ -101,7 +101,7 @@ En C#, la documentación se hace con comentarios que empiezan con `///`.
 ### Modelos (Models/)
 
 ```csharp
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 /// <summary>
 /// Entidad que representa a un cliente del estudio.
@@ -150,7 +150,7 @@ public class Cliente
 ### ViewModels (ViewModels/)
 
 ```csharp
-namespace InkStudio.ViewModels;
+namespace Ataena.ViewModels;
 
 /// <summary>
 /// ViewModel para la gestión de clientes.
@@ -163,7 +163,7 @@ public partial class ClientesViewModel : ViewModelBase
     /// <summary>
     /// Contexto de base de datos.
     /// </summary>
-    private readonly InkStudioDbContext _db = new();
+    private readonly AtaenaDbContext _db = new();
 
     #endregion
 
@@ -199,7 +199,7 @@ public partial class ClientesViewModel : ViewModelBase
 ### Enums
 
 ```csharp
-namespace InkStudio.Models;
+namespace Ataena.Models;
 
 /// <summary>
 /// Estado del ciclo de vida de una cita.
@@ -226,7 +226,7 @@ public enum EstadoCita
 ### Conversores (Converters/)
 
 ```csharp
-namespace InkStudio.Converters;
+namespace Ataena.Converters;
 
 /// <summary>
 /// Convierte <see cref="EstadoCita"/> a color para la UI.
@@ -262,7 +262,7 @@ public class EstadoCitaToColorConverter : IValueConverter
 ### Code-behind (Views/*.axaml.cs)
 
 ```csharp
-namespace InkStudio.Views;
+namespace Ataena.Views;
 
 /// <summary>
 /// Vista principal del Dashboard.

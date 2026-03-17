@@ -1,4 +1,4 @@
-# InkStudio CRM - Documento de Idea General
+# Ataena CRM - Documento de Idea General
 
 > **Versión:** 3.0  
 > **Fecha:** Diciembre 2025  
@@ -24,7 +24,7 @@
 
 ## 📝 Descripción del Proyecto
 
-**InkStudio CRM** es una aplicación de escritorio para Windows diseñada específicamente para la gestión de clientes en **estudios de tatuajes**.
+**Ataena CRM** es una aplicación de escritorio para Windows diseñada específicamente para la gestión de clientes en **estudios de tatuajes**.
 
 ### Características principales:
 
@@ -35,7 +35,7 @@
 
 ### Problema que resuelve:
 
-Muchos estudios de tatuajes gestionan sus clientes con libretas, Excel, o herramientas genéricas no adaptadas a sus necesidades. InkStudio CRM ofrece una solución simple, profesional y específica para tatuadores.
+Muchos estudios de tatuajes gestionan sus clientes con libretas, Excel, o herramientas genéricas no adaptadas a sus necesidades. Ataena CRM ofrece una solución simple, profesional y específica para tatuadores.
 
 ---
 
@@ -143,7 +143,7 @@ Se eligió una arquitectura **simple y directa**, evitando sobre-ingeniería com
 ## 📁 Estructura del Proyecto
 
 ```
-InkStudio/
+Ataena/
 │
 ├── 📁 Assets/                    # Recursos estáticos
 │   ├── 📁 Fonts/                 # Fuentes personalizadas
@@ -333,7 +333,7 @@ public enum EstadoCita
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  🖋️ InkStudio CRM - [Nombre del estudio]                         _ □ ✕     │
+│  🖋️ Ataena CRM - [Nombre del estudio]                         _ □ ✕     │
 ├─────────────┬───────────────────────────────────────────────────────┤
 │             │                                                       │
 │  🏠 Dashboard│                                                       │
@@ -396,7 +396,7 @@ dotnet --version
 dotnet new install Avalonia.Templates
 
 # Crear proyecto (cuando empecemos)
-dotnet new avalonia.app -n InkStudio -o InkStudio
+dotnet new avalonia.app -n Ataena -o Ataena
 ```
 
 ### Extensiones recomendadas para Cursor:

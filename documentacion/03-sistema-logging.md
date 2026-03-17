@@ -18,7 +18,7 @@
 
 ## 🎯 Resumen
 
-InkStudio CRM utiliza **Serilog** para registrar todos los eventos y errores de la aplicación. Los logs se guardan automáticamente en archivos de texto que pueden ser consultados para diagnosticar problemas.
+Ataena CRM utiliza **Serilog** para registrar todos los eventos y errores de la aplicación. Los logs se guardan automáticamente en archivos de texto que pueden ser consultados para diagnosticar problemas.
 
 ### Características
 
@@ -35,24 +35,24 @@ InkStudio CRM utiliza **Serilog** para registrar todos los eventos y errores de 
 Los logs se guardan en:
 
 ```
-%LOCALAPPDATA%\InkStudio\logs\
+%LOCALAPPDATA%\Ataena\logs\
 ```
 
 **Ejemplo en Windows:**
 ```
-C:\Users\[TuUsuario]\AppData\Local\InkStudio\logs\
+C:\Users\[TuUsuario]\AppData\Local\Ataena\logs\
 ```
 
 ### Formato de archivos
 
 Los archivos siguen el formato:
 ```
-inkstudio-YYYYMMDD.log
+ataena-YYYYMMDD.log
 ```
 
 **Ejemplo:**
-- `inkstudio-20251205.log` (log del 5 de diciembre de 2025)
-- `inkstudio-20251206.log` (log del 6 de diciembre de 2025)
+- `ataena-20251205.log` (log del 5 de diciembre de 2025)
+- `ataena-20251206.log` (log del 6 de diciembre de 2025)
 
 ---
 
@@ -60,14 +60,14 @@ inkstudio-YYYYMMDD.log
 
 ### Opción 1: Desde la aplicación (Recomendado)
 
-1. Abre InkStudio CRM
+1. Abre Ataena CRM
 2. En el menú lateral, haz clic en **"📋 Logs"**
 3. Selecciona el archivo de log que quieres ver (por defecto se muestra el más reciente)
 4. Haz clic en **"🔄 Cargar"** si no se carga automáticamente
 
 ### Opción 2: Desde el explorador de archivos
 
-1. Abre InkStudio CRM
+1. Abre Ataena CRM
 2. En el menú lateral, haz clic en **"📋 Logs"**
 3. Haz clic en **"📁 Abrir Carpeta"**
 4. Se abrirá la carpeta de logs en el explorador
@@ -84,7 +84,7 @@ inkstudio-YYYYMMDD.log
 3. Haz clic en **"💾 Exportar"**
 4. El log se guardará en tu carpeta de Documentos con el nombre:
    ```
-   inkstudio-log-export-YYYYMMDDHHmmss.txt
+   ataena-log-export-YYYYMMDDHHmmss.txt
    ```
 5. Envía ese archivo al soporte técnico
 
@@ -112,14 +112,14 @@ El sistema registra diferentes niveles de eventos:
 ### Ejemplo de log
 
 ```
-2025-12-05 14:30:15.123 +01:00 [INF] InkStudio CRM iniciado - Sistema de logging activado
-2025-12-05 14:30:15.456 +01:00 [INF] Carpeta de logs: C:\Users\Usuario\AppData\Local\InkStudio\logs
+2025-12-05 14:30:15.123 +01:00 [INF] Ataena CRM iniciado - Sistema de logging activado
+2025-12-05 14:30:15.456 +01:00 [INF] Carpeta de logs: C:\Users\Usuario\AppData\Local\Ataena\logs
 2025-12-05 14:30:20.789 +01:00 [DBG] Cargando datos del Dashboard
 2025-12-05 14:30:21.012 +01:00 [DBG] Citas de hoy cargadas: 3 citas
 2025-12-05 14:30:21.234 +01:00 [INF] Clientes cargados: 25 clientes activos
 2025-12-05 14:35:10.567 +01:00 [ERR] Error al cargar clientes desde la base de datos
 System.Exception: SQLite error: database is locked
-   at InkStudio.ViewModels.ClientesViewModel.CargarClientes()
+   at Ataena.ViewModels.ClientesViewModel.CargarClientes()
 ```
 
 ---
@@ -129,7 +129,7 @@ System.Exception: SQLite error: database is locked
 ### Estructura del sistema
 
 ```
-InkStudio/
+Ataena/
 ├── Services/
 │   └── LoggingService.cs      ← Configuración de Serilog
 ├── ViewModels/
@@ -188,7 +188,7 @@ Log.Logger = new LoggerConfiguration()
 
 1. Verifica que la aplicación tenga permisos de escritura en:
    ```
-   %LOCALAPPDATA%\InkStudio\logs\
+   %LOCALAPPDATA%\Ataena\logs\
    ```
 2. Revisa si hay errores en el log de la aplicación (consola)
 3. Verifica que Serilog esté correctamente inicializado en `Program.cs`
@@ -197,11 +197,11 @@ Log.Logger = new LoggerConfiguration()
 
 1. Navega manualmente a:
    ```
-   %LOCALAPPDATA%\InkStudio\logs\
+   %LOCALAPPDATA%\Ataena\logs\
    ```
 2. O usa la tecla Windows + R y escribe:
    ```
-   %LOCALAPPDATA%\InkStudio\logs
+   %LOCALAPPDATA%\Ataena\logs
    ```
 
 ### El log es muy grande

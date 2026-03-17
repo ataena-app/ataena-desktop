@@ -53,13 +53,13 @@ La base de datos se almacena en la carpeta de datos de la aplicación del usuari
 
 ```
 Windows:
-C:\Users\{Usuario}\AppData\Local\InkStudio\data.db
+C:\Users\{Usuario}\AppData\Local\Ataena\data.db
 ```
 
 ### Estructura de carpetas de la aplicación:
 
 ```
-C:\Users\{Usuario}\AppData\Local\InkStudio\
+C:\Users\{Usuario}\AppData\Local\Ataena\
 │
 ├── data.db                 ← Base de datos principal
 ├── data.db-wal             ← Write-Ahead Log (rendimiento)
@@ -90,7 +90,7 @@ C:\Users\{Usuario}\AppData\Local\InkStudio\
 ```csharp
 var appDataPath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "InkStudio"
+    "Ataena"
 );
 
 var dbPath = Path.Combine(appDataPath, "data.db");
@@ -279,7 +279,7 @@ Cuando la app se instala en el PC del usuario, las migraciones se aplican autom�
 
 ```csharp
 // En Program.cs o App.axaml.cs
-using var db = new InkStudioDbContext();
+using var db = new AtaenaDbContext();
 db.Database.Migrate(); // Aplica migraciones pendientes
 ```
 

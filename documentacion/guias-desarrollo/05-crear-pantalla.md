@@ -68,8 +68,8 @@
 <!-- Views/ClientesView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:InkStudio.ViewModels"
-             x:Class="InkStudio.Views.ClientesView"
+             xmlns:vm="using:Ataena.ViewModels"
+             x:Class="Ataena.Views.ClientesView"
              x:DataType="vm:ClientesViewModel">
     
     <!-- Contenido de la vista -->
@@ -85,8 +85,8 @@
 ```xml
 xmlns="https://github.com/avaloniaui"     <!-- Controles de Avalonia -->
 xmlns:x="http://schemas.microsoft.com/..." <!-- Funciones XAML -->
-xmlns:vm="using:InkStudio.ViewModels"      <!-- Tus ViewModels -->
-x:Class="InkStudio.Views.ClientesView"     <!-- Clase C# asociada -->
+xmlns:vm="using:Ataena.ViewModels"      <!-- Tus ViewModels -->
+x:Class="Ataena.Views.ClientesView"     <!-- Clase C# asociada -->
 x:DataType="vm:ClientesViewModel"          <!-- Tipo del DataContext -->
 ```
 
@@ -96,7 +96,7 @@ x:DataType="vm:ClientesViewModel"          <!-- Tipo del DataContext -->
 // Views/ClientesView.axaml.cs
 using Avalonia.Controls;
 
-namespace InkStudio.Views;
+namespace Ataena.Views;
 
 public partial class ClientesView : UserControl
 {
@@ -587,8 +587,8 @@ private bool PuedeEliminar => ClienteSeleccionado != null;
 <!-- Views/ClientesView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:InkStudio.ViewModels"
-             x:Class="InkStudio.Views.ClientesView"
+             xmlns:vm="using:Ataena.ViewModels"
+             x:Class="Ataena.Views.ClientesView"
              x:DataType="vm:ClientesViewModel">
 
     <Grid RowDefinitions="Auto,*,Auto" Margin="20">
