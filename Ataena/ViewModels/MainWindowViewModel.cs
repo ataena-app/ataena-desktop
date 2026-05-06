@@ -57,6 +57,20 @@ public partial class MainWindowViewModel : ViewModelBase
     public BackupViewModel BackupVM { get; } = new();
 
     /// <summary>
+    /// Versión actual de la aplicación (leída del ensamblado), formateada como "v1.0.2".
+    /// Se usa como etiqueta visible en la ventana principal.
+    /// </summary>
+    public string VersionApp
+    {
+        get
+        {
+            var v = ActualizacionService.ObtenerVersionActual();
+            // El ensamblado siempre tiene 4 segmentos; mostramos solo X.Y.Z para limpieza.
+            return $"v{v.Major}.{v.Minor}.{v.Build}";
+        }
+    }
+
+    /// <summary>
     /// Constructor que inicializa las referencias entre ViewModels.
     /// </summary>
     public MainWindowViewModel()

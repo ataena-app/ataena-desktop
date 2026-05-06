@@ -41,4 +41,4 @@ Write-Host "`n[2/2] Compilando instalador con Inno Setup..." -ForegroundColor Ye
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 Write-Host "`n=== Listo ===" -ForegroundColor Green
-Write-Host "Instalador generado en: .\Releases\Ataena-Setup-1.0.2.exe" -ForegroundColor Cyan
+Write-Host "Instalador generado en: .\Releases\Ataena-Setup-1.0.3.exe" -ForegroundColor Cyan
