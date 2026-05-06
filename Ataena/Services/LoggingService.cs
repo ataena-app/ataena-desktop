@@ -23,6 +23,31 @@ public static class LoggingService
     public static string LogsFolder { get; private set; } = string.Empty;
 
     /// <summary>
+    /// Ruta del archivo de diagnóstico de arranque (siempre se escribe, para depurar fallos).
+    /// </summary>
+    private static string? _diagnosticoPath;
+
+    /// <summary>
+    /// Escribe una línea en el log de diagnóstico. Se usa para rastrear el arranque cuando algo falla.
+    /// </summary>
+    public static void EscribirDiagnostico(string mensaje)
+    {
+        try
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var logsFolder = Path.Combine(appData, "Ataena", "logs");
+            Directory.CreateDirectory(logsFolder);
+            _diagnosticoPath ??= Path.Combine(logsFolder, "arranque-diag.txt");
+            var linea = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} | {mensaje}{Environment.NewLine}";
+            File.AppendAllText(_diagnosticoPath, linea);
+        }
+        catch
+        {
+            // Ignorar si no podemos escribir (ej. permisos)
+        }
+    }
+
+    /// <summary>
     /// Inicializa el sistema de logging.
     /// Debe llamarse al inicio de la aplicación.
     /// </summary>

@@ -180,6 +180,61 @@
         </Border>
         
         <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BANNER DE ACTUALIZACIÓN DISPONIBLE (esquina superior derecha)   -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="1"
+                IsVisible="{Binding HayActualizacionDisponible}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,16,16,0"
+                Background="#1e293b"
+                BorderBrush="#38bdf8"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="16,12"
+                MaxWidth="360"
+                ZIndex="500">
+            <StackPanel Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="⬆" FontSize="18" Foreground="#38bdf8" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding TextoActualizacion}"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Barra de progreso visible solo al descargar -->
+                <ProgressBar IsVisible="{Binding DescargandoActualizacion}"
+                             Minimum="0" Maximum="1"
+                             Value="{Binding ProgresoActualizacion}"
+                             Height="6"/>
+
+                <StackPanel Orientation="Horizontal"
+                            Spacing="8"
+                            HorizontalAlignment="Right"
+                            IsVisible="{Binding !DescargandoActualizacion}">
+                    <Button Content="Más tarde"
+                            Command="{Binding PosponerActualizacionCommand}"
+                            Background="Transparent"
+                            Foreground="#94a3b8"
+                            Padding="10,6"/>
+                    <Button Content="Instalar ahora"
+                            Command="{Binding InstalarActualizacionCommand}"
+                            Background="#38bdf8"
+                            Foreground="#0b1220"
+                            FontWeight="SemiBold"
+                            Padding="12,6"
+                            CornerRadius="6"/>
+                </StackPanel>
+
+                <TextBlock IsVisible="{Binding DescargandoActualizacion}"
+                           Text="Descargando instalador..."
+                           Foreground="#94a3b8"
+                           FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- OVERLAY: DIÁLOGO DE CONFIRMACIÓN GLOBAL                         -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <Border Grid.ColumnSpan="2"

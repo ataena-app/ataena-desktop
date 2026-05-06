@@ -4,6 +4,7 @@ using Ataena.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Ataena;
@@ -18,13 +19,16 @@ sealed class Program
     /// </summary>
     /// <param name="args">Argumentos de línea de comandos.</param>
     /// <remarks>
-    /// Inicializa el sistema de logging antes de iniciar Avalonia.
+    /// Logging se inicializa primero para diagnosticar problemas.
+    /// La instalación se hace con Inno Setup. Las actualizaciones las gestiona ActualizacionService.
     /// </remarks>
     [STAThread]
     public static void Main(string[] args)
     {
-        // Inicializar logging ANTES de todo
+        // Si la app se lanza con --update-completed, es porque viene de reinstalarse
+        // (Inno Setup /VERYSILENT) y debe seguir su flujo normal.
         LoggingService.Inicializar();
+        LoggingService.EscribirDiagnostico("Main: Inicio");
 
         try
         {
@@ -53,6 +57,8 @@ sealed class Program
                     }
                 }
                 
+                LoggingService.EscribirDiagnostico("Main: Base de datos migrada OK");
+
                 if (!migrado)
                 {
                     throw new InvalidOperationException(
@@ -65,13 +71,16 @@ sealed class Program
 
                 // Asegurar también la estructura base de ficheros (%LOCALAPPDATA%\Ataena\ficheros\)
                 ConsentimientoPathService.ObtenerRutaBaseFicheros();
+                LoggingService.EscribirDiagnostico("Main: Iniciando Avalonia");
             }
             catch (Exception exDb)
             {
+                LoggingService.EscribirDiagnostico($"Main: ERROR BD - {exDb.Message}");
                 Serilog.Log.Fatal(exDb, "Error al inicializar la base de datos o la estructura de ficheros al iniciar la aplicación");
                 throw;
             }
 
+            LoggingService.EscribirDiagnostico("Main: BuildAvaloniaApp.StartWithClassicDesktopLifetime");
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }

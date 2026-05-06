@@ -1,0 +1,178 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Ataena.ViewModels"
+        x:Class="Ataena.Views.SetupInicialView"
+        x:DataType="vm:SetupInicialViewModel"
+        Title="Bienvenido a Ataena"
+        Width="700"
+        Height="580"
+        WindowStartupLocation="CenterScreen"
+        Background="#0a0a0f"
+        CanResize="False"
+        SystemDecorations="Full"
+        ShowInTaskbar="True"
+        Topmost="True">
+
+    <Grid>
+        <!-- Fondo con gradiente -->
+        <Border CornerRadius="0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Color="#0a0a0f" Offset="0"/>
+                    <GradientStop Color="#1a1a2e" Offset="0.5"/>
+                    <GradientStop Color="#0f0f1a" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+
+        <StackPanel VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    Spacing="32"
+                    Margin="48">
+
+            <!-- Paso 1: Opciones Crear / Importar -->
+            <StackPanel Spacing="20" IsVisible="{Binding !MostrarFormularioDatos}">
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock Text="🎨" FontSize="56" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Bienvenido a Ataena"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="¿Cómo quieres empezar?"
+                               FontSize="16"
+                               Foreground="#9ca3af"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Spacing="20" MaxWidth="480">
+                    <Button Classes="btn-setup-option"
+                            Command="{Binding CrearNuevoEstudioCommand}"
+                            IsEnabled="{Binding !Cargando}">
+                        <StackPanel Spacing="8" HorizontalAlignment="Left">
+                            <TextBlock Text="📁 Crear nuevo estudio"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Empezar con datos vacíos y configurar tu estudio desde cero"
+                                       FontSize="13"
+                                       Foreground="#9ca3af"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="btn-setup-option"
+                            Command="{Binding ImportarDatosCommand}"
+                            IsEnabled="{Binding !Cargando}">
+                        <StackPanel Spacing="8" HorizontalAlignment="Left">
+                            <TextBlock Text="📥 Importar datos existentes"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Restaurar desde un archivo de backup (.zip)"
+                                       FontSize="13"
+                                       Foreground="#9ca3af"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Paso 2: Formulario de datos del estudio -->
+            <StackPanel Spacing="16" MaxWidth="400" IsVisible="{Binding MostrarFormularioDatos}">
+                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                    <TextBlock Text="🏢 Datos de tu estudio"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Configura los datos básicos (puedes cambiarlos más tarde)"
+                               FontSize="13"
+                               Foreground="#9ca3af"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Spacing="12">
+                    <StackPanel>
+                        <TextBlock Text="Nombre del estudio *" Foreground="#9ca3af" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding NombreEstudio}"
+                                 Watermark="Ej: Mi Tattoo Studio"
+                                 Background="#1f2937"
+                                 Foreground="White"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Nombre de la empresa / Razón social" Foreground="#9ca3af" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding NombreEmpresa}"
+                                 Watermark="Ej: Alfredo Y Rebeca C.B"
+                                 Background="#1f2937"
+                                 Foreground="White"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Dirección" Foreground="#9ca3af" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Direccion}"
+                                 Watermark="Calle, número, ciudad"
+                                 Background="#1f2937"
+                                 Foreground="White"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel Width="180">
+                            <TextBlock Text="Teléfono" Foreground="#9ca3af" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Telefono}"
+                                     Background="#1f2937"
+                                     Foreground="White"/>
+                        </StackPanel>
+                        <StackPanel Width="200">
+                            <TextBlock Text="Email" Foreground="#9ca3af" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Email}"
+                                     Background="#1f2937"
+                                     Foreground="White"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <Button Content="← Volver"
+                            Command="{Binding VolverCommand}"
+                            Classes="btn-secondary"
+                            Height="40"
+                            MinWidth="120"
+                            Padding="16,0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"/>
+                    <Button Content="Continuar →"
+                            Command="{Binding GuardarDatosYContinuarCommand}"
+                            Classes="btn-primary"
+                            Height="40"
+                            MinWidth="140"
+                            Padding="24,0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            IsEnabled="{Binding !Cargando}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Estado / Error -->
+            <StackPanel Spacing="8" HorizontalAlignment="Center" IsVisible="{Binding TieneMensaje}">
+                <TextBlock Text="{Binding MensajeEstado}"
+                           FontSize="13"
+                           Foreground="#34d399"
+                           HorizontalAlignment="Center"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding MensajeEstado, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <TextBlock Text="{Binding MensajeError}"
+                           FontSize="13"
+                           Foreground="#ef4444"
+                           HorizontalAlignment="Center"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+
+            <!-- Progreso -->
+            <ProgressBar IsIndeterminate="True"
+                         Width="200"
+                         Height="4"
+                         Foreground="#a855f7"
+                         IsVisible="{Binding Cargando}"/>
+        </StackPanel>
+    </Grid>
+</Window>

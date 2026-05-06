@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Ataena</AssemblyName>
     <RootNamespace>Ataena</RootNamespace>
+    <Version>1.0.2</Version>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>

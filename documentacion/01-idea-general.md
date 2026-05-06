@@ -1,9 +1,9 @@
 # Ataena CRM - Documento de Idea General
 
-> **Versión:** 3.0  
-> **Fecha:** Diciembre 2025  
+> **Versión:** 3.1  
+> **Fecha:** Febrero 2026  
 > **Autor:** Jose Vallejo  
-> **Estado:** En Desarrollo - Fase 3 Avanzada (75% del proyecto)
+> **Estado:** En Desarrollo - Fase 4 en progreso (~90% del proyecto)
 
 ---
 
@@ -71,8 +71,8 @@ Muchos estudios de tatuajes gestionan sus clientes con libretas, Excel, o herram
 | **Patrón arquitectura** | MVVM | Simple, probado, fácil de mantener |
 | **MVVM Toolkit** | CommunityToolkit.Mvvm | Source Generators, poco boilerplate |
 | **Base de datos** | SQLite | Local, sin servidor, empaquetable |
-| **ORM** | Entity Framework Core 8 | Maduro, migraciones automáticas |
-| **Lenguaje** | C# 12 / .NET 8 | Moderno, rendimiento nativo |
+| **ORM** | Entity Framework Core 9 | Maduro, migraciones automáticas |
+| **Lenguaje** | C# 12 / .NET 9 | Moderno, rendimiento nativo |
 | **IDE** | Cursor | Desarrollo completo sin Visual Studio |
 
 ### Paquetes NuGet principales:
@@ -88,8 +88,8 @@ Muchos estudios de tatuajes gestionan sus clientes con libretas, Excel, o herram
 <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
 
 <!-- Base de datos -->
-<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
 ```
 
 ---
@@ -158,7 +158,7 @@ Ataena/
 │   └── Usuario.cs
 │
 ├── 📁 Data/                      # Capa de datos
-│   ├── CrmDbContext.cs           # Contexto de EF Core
+│   ├── AtaenaDbContext.cs        # Contexto de EF Core
 │   └── 📁 Migrations/            # Migraciones de BD
 │
 ├── 📁 ViewModels/                # Lógica de presentación
@@ -188,7 +188,7 @@ Ataena/
 ├── App.axaml                     # Configuración de la app
 ├── App.axaml.cs                  # Código de inicio
 ├── Program.cs                    # Entry point
-└── MiCRM.csproj                  # Archivo de proyecto
+└── Ataena.csproj                 # Archivo de proyecto
 ```
 
 ---
@@ -382,7 +382,7 @@ public enum EstadoCita
 
 | Requisito | Versión |
 |-----------|---------|
-| .NET SDK | 8.0 o superior |
+| .NET SDK | 9.0 o superior |
 | IDE | Cursor / VS Code |
 | Sistema operativo | Windows 10/11 |
 
@@ -468,12 +468,17 @@ dotnet ef database update
   - ✅ Rotación automática de backups
   - ✅ Configuración de frecuencia y retención
 
+### Completado recientemente ✅
+- [x] Configuración SMTP y sistema de emails (recordatorio de citas)
+- [x] Escáner de DNI (WIA) e Impresora de consentimientos
+- [x] Renombrado del proyecto a Ataena
+
 ### Pendiente ⏳
-- [ ] Configuración SMTP para emails
-- [ ] Sistema de emails (confirmación de citas)
+- [ ] Crear instalador (Inno Setup o Velopack)
+- [ ] Icono de aplicación profesional
+- [ ] Testing manual completo
 - [ ] Tema claro/oscuro
 - [ ] Implementar seguridad (login, cifrado)
-- [ ] Crear instalador
 
 ---
 

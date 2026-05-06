@@ -293,6 +293,26 @@
             <Setter Property="Background" Value="#374151"/>
         </Style>
 
+        <!-- Botón opción setup inicial (pantalla de bienvenida) -->
+        <Style Selector="Button.btn-setup-option">
+            <Setter Property="Background" Value="#1f2937"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="24,20"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#374151"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.btn-setup-option:pointerover">
+            <Setter Property="Background" Value="#374151"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+        <Style Selector="Button.btn-setup-option:pressed">
+            <Setter Property="Background" Value="#4b5563"/>
+        </Style>
+
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- ESTILOS PARA DATEPICKER - FINES DE SEMANA                       -->
         <!-- ═══════════════════════════════════════════════════════════════ -->

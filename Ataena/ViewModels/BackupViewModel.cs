@@ -512,20 +512,49 @@ public partial class BackupViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Restaura un backup desde un archivo seleccionado.
+    /// Restaura un backup desde un archivo .zip seleccionado por el usuario.
     /// </summary>
     [RelayCommand]
     private async Task RestaurarDesdeArchivo()
     {
-        // TODO: Implementar selector de archivo
-        // Por ahora, usar el backup seleccionado si existe
-        if (BackupSeleccionado != null)
+        var topLevel = Avalonia.Application.Current?.ApplicationLifetime is
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
+
+        if (topLevel == null)
         {
-            await RestaurarBackupCommand.ExecuteAsync(BackupSeleccionado);
+            MensajeError = "No se pudo abrir el selector de archivos.";
+            return;
         }
-        else
+
+        try
         {
-            MensajeError = "Por favor, selecciona un backup o proporciona la ruta al archivo";
+            var archivos = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Seleccionar archivo de backup",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("Backup Ataena")
+                    {
+                        Patterns = new[] { "*.zip" }
+                    }
+                }
+            });
+
+            if (archivos == null || archivos.Count == 0)
+                return;
+
+            var rutaZip = archivos[0].Path.LocalPath;
+            var infoBackup = InfoBackup.DesdeArchivo(rutaZip);
+
+            await RestaurarBackupCommand.ExecuteAsync(infoBackup);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al seleccionar archivo de backup");
+            MensajeError = $"Error: {ex.Message}";
         }
     }
 

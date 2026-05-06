@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ataena.Services;
@@ -69,6 +71,117 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Registrar handler para diálogos de confirmación
         DialogService.OnConfirmacionRequerida += ProcesarSolicitudConfirmacion;
+
+        // Comprobar actualizaciones en segundo plano (no bloquea el arranque)
+        _ = Task.Run(ComprobarActualizacionesAsync);
+    }
+
+    #endregion
+
+    #region Actualizaciones
+
+    /// <summary>
+    /// Indica si hay una actualización disponible y debe mostrarse el banner.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hayActualizacionDisponible;
+
+    /// <summary>
+    /// Texto informativo de la nueva versión (p.ej. "Nueva versión 1.1.0 disponible").
+    /// </summary>
+    [ObservableProperty]
+    private string _textoActualizacion = string.Empty;
+
+    /// <summary>
+    /// Indica si se está descargando el instalador.
+    /// </summary>
+    [ObservableProperty]
+    private bool _descargandoActualizacion;
+
+    /// <summary>
+    /// Progreso de descarga (0..1) para mostrar barra.
+    /// </summary>
+    [ObservableProperty]
+    private double _progresoActualizacion;
+
+    private ActualizacionService.ResultadoComprobacion? _ultimaComprobacion;
+
+    /// <summary>
+    /// Comprueba si hay versión nueva en GitHub Releases y muestra el banner si procede.
+    /// </summary>
+    private async Task ComprobarActualizacionesAsync()
+    {
+        try
+        {
+            var info = await ActualizacionService.ComprobarAsync();
+            _ultimaComprobacion = info;
+            if (info.HayActualizacion && info.VersionDisponible is not null)
+            {
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    TextoActualizacion = $"Nueva versión {info.VersionDisponible} disponible";
+                    HayActualizacionDisponible = true;
+                });
+                Serilog.Log.Information("Actualización disponible: {Version}", info.VersionDisponible);
+            }
+            else
+            {
+                Serilog.Log.Information("Aplicación actualizada (versión {Version})", info.VersionActual);
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Error al comprobar actualizaciones");
+        }
+    }
+
+    /// <summary>
+    /// Descarga el instalador y lo ejecuta. Cierra la aplicación al terminar.
+    /// </summary>
+    [RelayCommand]
+    private async Task InstalarActualizacion()
+    {
+        if (_ultimaComprobacion is null || !_ultimaComprobacion.HayActualizacion)
+            return;
+
+        try
+        {
+            DescargandoActualizacion = true;
+            ProgresoActualizacion = 0;
+
+            var progreso = new Progress<double>(p =>
+            {
+                ProgresoActualizacion = p;
+            });
+
+            var ruta = await ActualizacionService.DescargarAsync(_ultimaComprobacion, progreso);
+
+            ActualizacionService.EjecutarInstalador(ruta, cerrarApp: () =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Shutdown();
+                    }
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error(ex, "Error instalando actualización");
+            DescargandoActualizacion = false;
+            TextoActualizacion = "Error al descargar. Inténtalo de nuevo.";
+        }
+    }
+
+    /// <summary>
+    /// Oculta el banner de actualización (el usuario la pospone).
+    /// </summary>
+    [RelayCommand]
+    private void PosponerActualizacion()
+    {
+        HayActualizacionDisponible = false;
     }
 
     #endregion

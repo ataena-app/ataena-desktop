@@ -6,7 +6,7 @@
 
 ## Febrero 2026
 
-### 21 Febrero
+### 21 Febrero (actualizado)
 - **Emails de recordatorio:** Sistema completo implementado
   - EmailService con SMTP, plantilla HTML RecordatorioCita.html
   - Botón "Recordar" en tarjetas de cita (vista día)
@@ -14,6 +14,17 @@
   - Botón "Probar conexión SMTP" en Configuración
 - **UI:** Botón Guardar configuración con MinWidth y Padding (texto centrado)
 - **Documentación:** Roadmap actualizado, ruta completa de lo pendiente
+
+### 21 Febrero (sesión tarde) - Renombrado del proyecto
+- **InkStudio → Ataena:** Renombrado completo en todo el proyecto
+  - Código: namespaces, AtaenaDbContext, rutas %LOCALAPPDATA%\Ataena\
+  - Carpeta del proyecto, Ataena.csproj, AssemblyName
+  - Documentación actualizada
+  - Commit y push a GitHub
+
+### Actualización documentación (estado del proyecto)
+- **Roadmap:** Actualizado con estado ~90%, Escáner/Impresora documentados
+- **Pendientes clarificados:** Instalador, icono y testing manual como prioridad para distribución
 
 ---
 
