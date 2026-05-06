@@ -36,9 +36,56 @@ No hay dependencia de Velopack. Los datos del usuario (`%LOCALAPPDATA%\Ataena\`)
 
 ---
 
-## 2. Publicar una nueva versión (paso a paso)
+## 2. Requisitos previos (una sola vez)
 
-### 2.1. Subir la versión
+### 2.1. Instalar GitHub CLI
+
+```powershell
+winget install --id GitHub.cli --silent --accept-source-agreements --accept-package-agreements
+```
+
+Cierra y reabre PowerShell para que `gh` quede en el PATH. Verifica con:
+
+```powershell
+gh --version
+```
+
+### 2.2. Autenticar `gh`
+
+```powershell
+gh auth login --hostname github.com --web --git-protocol https --skip-ssh-key
+```
+
+Te dará un código `XXXX-XXXX` y te abrirá `https://github.com/login/device`. Pega el código → Continue → autoriza con la cuenta `Jvalfdev`. El token queda guardado en el keyring de Windows.
+
+Para confirmar:
+
+```powershell
+gh auth status
+```
+
+### 2.3. El repositorio debe ser público
+
+El `ActualizacionService` consulta `https://api.github.com/repos/Jvalfdev/desktop-myos-app/releases/latest` **sin autenticación** desde el PC del cliente. Si el repo es privado, GitHub responde 404 y el banner nunca aparece.
+
+Para hacerlo público (ya está hecho a partir de v1.0.2):
+
+```powershell
+gh repo edit Jvalfdev/desktop-myos-app --visibility public --accept-visibility-change-consequences
+```
+
+Para verificarlo:
+
+```powershell
+gh repo view Jvalfdev/desktop-myos-app --json visibility
+# {"visibility":"PUBLIC"}
+```
+
+---
+
+## 3. Publicar una nueva versión (paso a paso)
+
+### 3.1. Subir la versión
 
 Edita `Ataena/Ataena.csproj`:
 
@@ -54,7 +101,9 @@ Y `Ataena/Installer/Ataena.iss`:
 
 > Las dos versiones **deben coincidir**. El comparador usa la del ensamblado; el nombre del archivo usa la del `.iss`.
 
-### 2.2. Generar el instalador
+(Opcional) actualiza también la línea final de `Ataena/build-installer.ps1` para que el mensaje al final del build muestre la versión correcta.
+
+### 3.2. Generar el instalador
 
 ```powershell
 cd Ataena
@@ -63,30 +112,63 @@ cd Ataena
 
 Esto produce `Releases/Ataena-Setup-1.1.0.exe`.
 
-### 2.3. Crear la release en GitHub
+### 3.3. Commit + push de los cambios
 
 ```powershell
-# Tag y push
-git tag v1.1.0
-git push origin v1.1.0
+cd ..
+git add .
+git commit -m "release: v1.1.0 - <resumen breve>"
+git push origin main
 ```
 
-Luego, en GitHub (web o `gh` CLI):
+### 3.4. Crear el tag y la release con `gh`
+
+Comando en bloque (PowerShell):
 
 ```powershell
-gh release create v1.1.0 `
-  "Releases/Ataena-Setup-1.1.0.exe" `
-  --title "Ataena CRM 1.1.0" `
-  --notes "Cambios de esta versión..."
+$version = "1.1.0"
+$exe     = "Ataena/Releases/Ataena-Setup-$version.exe"
+$notes = @"
+## Cambios
+
+- Bullet 1
+- Bullet 2
+"@
+
+git tag "v$version"
+git push origin "v$version"
+
+gh release create "v$version" $exe `
+  --title "Ataena CRM $version" `
+  --notes $notes `
+  --latest
 ```
 
-**Requisitos del release:**
+Lo que hace `gh release create`:
 
-1. Tag **exactamente** `v1.1.0` o `1.1.0` (se acepta el prefijo `v`).
+1. Crea la release asociada al tag `v1.1.0`.
+2. Sube el `.exe` como asset (el nombre se mantiene → será `Ataena-Setup-1.1.0.exe`).
+3. La marca como **Latest** (`--latest`), que es lo que mira `/releases/latest`.
+
+**Requisitos del release** (los cumple el comando de arriba pero conviene tenerlos presentes):
+
+1. Tag `vX.Y.Z` o `X.Y.Z` (ambos válidos para el comparador).
 2. Un asset cuyo nombre empiece por `Ataena-Setup` y termine en `.exe`.
-3. Que **no** sea `draft` ni `prerelease` (si lo es, el endpoint `/releases/latest` lo ignora).
+3. Que **no** sea `draft` ni `prerelease` (el endpoint `/releases/latest` los ignora).
 
-### 2.4. Verificar desde el cliente
+### 3.5. Verificar que la API pública responde
+
+Desde cualquier PowerShell (no necesita estar autenticado):
+
+```powershell
+$resp = Invoke-RestMethod -Uri "https://api.github.com/repos/Jvalfdev/desktop-myos-app/releases/latest" -Headers @{ "User-Agent" = "Ataena-test" }
+$resp | Select-Object tag_name, name, draft, prerelease
+$resp.assets | Select-Object name, size
+```
+
+Debe devolver el `tag_name` correcto y al menos un asset `Ataena-Setup-X.Y.Z.exe`.
+
+### 3.6. Verificar desde el cliente
 
 - Abre cualquier instalación anterior de Ataena.
 - A los pocos segundos debe aparecer el banner "Nueva versión 1.1.0 disponible".
@@ -143,9 +225,21 @@ El endpoint `/releases/latest` ignora prereleases, así que puedes subir `v1.1.0
 
 ## 6. Checklist rápido para publicar
 
-- [ ] Subir `<Version>` en `Ataena.csproj`.
-- [ ] Subir `MyAppVersion` en `Ataena.iss`.
-- [ ] `./build-installer.ps1`.
-- [ ] `git tag vX.Y.Z && git push origin vX.Y.Z`.
-- [ ] `gh release create vX.Y.Z Releases/Ataena-Setup-X.Y.Z.exe --title ... --notes ...`.
-- [ ] Comprobar banner en una instalación antigua.
+- [ ] `<Version>X.Y.Z</Version>` en `Ataena/Ataena.csproj`.
+- [ ] `#define MyAppVersion "X.Y.Z"` en `Ataena/Installer/Ataena.iss`.
+- [ ] `cd Ataena; ./build-installer.ps1`.
+- [ ] `git add . ; git commit -m "release: vX.Y.Z - ..." ; git push origin main`.
+- [ ] `git tag vX.Y.Z ; git push origin vX.Y.Z`.
+- [ ] `gh release create vX.Y.Z Ataena/Releases/Ataena-Setup-X.Y.Z.exe --title "Ataena CRM X.Y.Z" --notes "..." --latest`.
+- [ ] `Invoke-RestMethod https://api.github.com/repos/Jvalfdev/desktop-myos-app/releases/latest -Headers @{"User-Agent"="t"} | Select tag_name, name` devuelve el tag correcto.
+- [ ] El banner aparece en una instalación previa al abrir la app.
+
+---
+
+## 7. Historial verificado
+
+| Versión | Tag    | Fecha        | Notas                                                                                  |
+| ------- | ------ | ------------ | -------------------------------------------------------------------------------------- |
+| 1.0.0   | v1.0.0 | 17 abr 2026  | Primera versión "tester" con instalador Inno Setup.                                    |
+| 1.0.1   | v1.0.1 | 21 abr 2026  | Fix transición Setup inicial → MainWindow (crashe).                                    |
+| 1.0.2   | v1.0.2 | 6 may 2026   | Botones del setup centrados, consentimiento completo en móvil, refresh ficha cliente. Repo pasado a público; primera release verificada con `gh` y `gh repo edit --visibility public`. |
