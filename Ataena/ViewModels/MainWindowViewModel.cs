@@ -1,7 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ataena.Services;
@@ -170,16 +168,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
             var ruta = await ActualizacionService.DescargarAsync(_ultimaComprobacion, progreso);
 
-            ActualizacionService.EjecutarInstalador(ruta, cerrarApp: () =>
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                    {
-                        desktop.Shutdown();
-                    }
-                });
-            });
+            // Mensaje claro: el usuario va a ver la app cerrarse y reabrirse sola.
+            TextoActualizacion = "Instalando... La app se cerrará y volverá a abrirse en unos segundos.";
+            ProgresoActualizacion = 1.0;
+
+            ActualizacionService.EjecutarInstalador(ruta);
+            // No cerramos la app aquí: Inno Setup la cerrará vía Restart Manager
+            // (/CLOSEAPPLICATIONS) y la relanzará al terminar (/RESTARTAPPLICATIONS).
         }
         catch (Exception ex)
         {

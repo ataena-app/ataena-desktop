@@ -169,19 +169,23 @@ public static class ActualizacionService
     }
 
     /// <summary>
-    /// Lanza el instalador descargado en modo silencioso y solicita cerrar la aplicación actual.
+    /// Lanza el instalador descargado en modo silencioso. NO cierra Ataena por nuestra cuenta:
+    /// dejamos que Inno Setup la detecte vía Restart Manager (/CLOSEAPPLICATIONS) y la relance
+    /// automáticamente al terminar (/RESTARTAPPLICATIONS). Si fuésemos nosotros los que matamos
+    /// el proceso, Inno Setup no la registraría y al terminar el install no habría nada que
+    /// reabrir, dando la sensación al usuario de que la app crasheó.
     /// </summary>
     /// <param name="rutaInstalador">Ruta al .exe descargado.</param>
-    /// <param name="cerrarApp">Acción que cierra la aplicación tras lanzar el instalador.</param>
-    public static void EjecutarInstalador(string rutaInstalador, Action? cerrarApp = null)
+    public static void EjecutarInstalador(string rutaInstalador)
     {
         if (!File.Exists(rutaInstalador))
             throw new FileNotFoundException("No se encuentra el instalador descargado.", rutaInstalador);
 
-        // /VERYSILENT      → sin diálogos
-        // /SUPPRESSMSGBOXES→ auto-OK a mensajes
-        // /NORESTART       → no reiniciar Windows si no es imprescindible
-        // /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS → cierra y relanza Ataena automáticamente
+        // /VERYSILENT          → sin diálogos
+        // /SUPPRESSMSGBOXES    → auto-OK a mensajes
+        // /NORESTART           → no reiniciar Windows si no es imprescindible
+        // /CLOSEAPPLICATIONS   → Inno detecta y cierra Ataena vía Restart Manager
+        // /RESTARTAPPLICATIONS → la relanza al terminar la instalación
         var psi = new ProcessStartInfo
         {
             FileName = rutaInstalador,
@@ -190,11 +194,8 @@ public static class ActualizacionService
         };
 
         Process.Start(psi);
-        Serilog.Log.Information("ActualizacionService: instalador lanzado, cerrando app para aplicar actualización");
-
-        // Dar un pequeño margen para que el instalador arranque antes de cerrarnos.
-        Thread.Sleep(500);
-        cerrarApp?.Invoke();
+        Serilog.Log.Information(
+            "ActualizacionService: instalador lanzado en silencioso. Inno Setup cerrará y relanzará Ataena.");
     }
 
     // ---------- DTOs para la API de GitHub ----------

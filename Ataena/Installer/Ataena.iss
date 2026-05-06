@@ -2,7 +2,7 @@
 ; Crea un instalador con asistente completo (Bienvenida, elegir carpeta, accesos directos, etc.)
 
 #define MyAppName "Ataena CRM"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "Ataena"
 #define MyAppURL "https://github.com/Jvalfdev/desktop-myos-app"
 #define MyAppExeName "Ataena.exe"
@@ -34,6 +34,14 @@ DisableWelcomePage=no
 DisableProgramGroupPage=yes
 ; Crear desinstalador
 UninstallDisplayName={#MyAppName}
+
+; Restart Manager: cuando se reinstala sobre una version anterior con la app
+; abierta, Inno Setup detecta Ataena.exe y lo cierra de forma limpia, y al
+; terminar lo relanza automaticamente. Esto es lo que permite que el flujo
+; de auto-update (lanzado con /VERYSILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS)
+; vuelva a abrir la app por si solo.
+CloseApplications=yes
+RestartApplications=yes
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
