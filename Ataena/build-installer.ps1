@@ -41,4 +41,13 @@ Write-Host "`n[2/2] Compilando instalador con Inno Setup..." -ForegroundColor Ye
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 Write-Host "`n=== Listo ===" -ForegroundColor Green
-Write-Host "Instalador generado en: .\Releases\Ataena-Setup-1.0.5.exe" -ForegroundColor Cyan
+$releasesDir = Join-Path $scriptDir "Releases"
+$exe = Get-ChildItem -Path $releasesDir -Filter "Ataena-Setup-*.exe" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($exe) {
+    Write-Host "Instalador generado:" -ForegroundColor Cyan
+    Write-Host "  $($exe.FullName)" -ForegroundColor White
+}
+else {
+    Write-Host "Revisa la carpeta Releases\ (debería aparecer Ataena-Setup-<versión>.exe)." -ForegroundColor Cyan
+}
