@@ -257,7 +257,7 @@ public class BackupService
                 var metadata = new BackupMetadata
                 {
                     FechaCreacion = fecha,
-                    VersionApp = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0",
+                    VersionApp = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.5.0",
                     TamañoTotalBytes = tamañoTotal,
                     NumeroClientes = numClientes,
                     NumeroCitas = numCitas,

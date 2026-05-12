@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -55,15 +56,20 @@ public partial class MainWindowViewModel : ViewModelBase
     public BackupViewModel BackupVM { get; } = new();
 
     /// <summary>
-    /// Versión actual de la aplicación (leída del ensamblado), formateada como "v1.0.2".
-    /// Se usa como etiqueta visible en la ventana principal.
+    /// Versión actual de la aplicación (leída del ensamblado).
+    /// Con sufijo prerelease tipo <c>-beta</c> en <see cref="AssemblyInformationalVersionAttribute"/> muestra "vX.Y Beta".
+    /// En release estable muestra vX.Y.Z.
     /// </summary>
     public string VersionApp
     {
         get
         {
+            var asm = Assembly.GetExecutingAssembly();
+            var informational = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             var v = ActualizacionService.ObtenerVersionActual();
-            // El ensamblado siempre tiene 4 segmentos; mostramos solo X.Y.Z para limpieza.
+            if (!string.IsNullOrEmpty(informational)
+                && informational.Contains("-beta", StringComparison.OrdinalIgnoreCase))
+                return $"v{v.Major}.{v.Minor} Beta";
             return $"v{v.Major}.{v.Minor}.{v.Build}";
         }
     }
