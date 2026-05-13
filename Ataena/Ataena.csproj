@@ -5,8 +5,8 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Ataena</AssemblyName>
     <RootNamespace>Ataena</RootNamespace>
-    <Version>0.5.3</Version>
-    <InformationalVersion>0.5.3-beta</InformationalVersion>
+    <Version>0.5.4</Version>
+    <InformationalVersion>0.5.4-beta</InformationalVersion>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\favicon.ico</ApplicationIcon>

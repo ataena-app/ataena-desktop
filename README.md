@@ -2,7 +2,7 @@
 
 > CRM de escritorio para estudios de tatuaje y piercing. Gestiona clientes, agenda, trabajos y consentimientos RGPD desde una sola aplicación nativa para Windows.
 
-![Version](https://img.shields.io/badge/version-0.5.3--beta-a855f7)
+![Version](https://img.shields.io/badge/version-0.5.4--beta-a855f7)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078d4)
 ![Framework](https://img.shields.io/badge/.NET-9.0-512bd4)
 ![UI](https://img.shields.io/badge/UI-Avalonia%2011-purple)

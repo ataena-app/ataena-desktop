@@ -5,6 +5,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.4] - 2026-05-13
+
+### Cambiado
+- Icono de marca unificado (`Assets/favicon.ico`): ventana principal, ejecutable y asistente de instalación (Inno Setup).
+
+---
+
 ## [0.5.3] - 2026-05-13
 
 ### Arreglado
@@ -62,6 +69,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+[0.5.4]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.4
 [0.5.3]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.3
 [0.5.2]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.2
 [0.5.1]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.1
