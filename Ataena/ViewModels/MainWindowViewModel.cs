@@ -69,7 +69,7 @@ public partial class MainWindowViewModel : ViewModelBase
             var v = ActualizacionService.ObtenerVersionActual();
             if (!string.IsNullOrEmpty(informational)
                 && informational.Contains("-beta", StringComparison.OrdinalIgnoreCase))
-                return $"v{v.Major}.{v.Minor} Beta";
+                return $"v{v.Major}.{v.Minor}.{v.Build} Beta";
             return $"v{v.Major}.{v.Minor}.{v.Build}";
         }
     }
