@@ -1,0 +1,26 @@
+CONSENTIMIENTO PARA EL USO DE IMÁGENES
+
+Yo, {NOMBRE_CLIENTE}, con DNI/NIE {DNI_CLIENTE}, doy mi consentimiento expreso y voluntario para que {NOMBRE_ESTUDIO} (en adelante, "el Estudio"), con domicilio en {DIRECCION_ESTUDIO}, pueda capturar, almacenar, reproducir y utilizar fotografías y/o vídeos de mi imagen, tanto del estado inicial como del resultado de los tratamientos realizados.
+
+1. FINALIDAD DEL USO DE IMÁGENES:
+   - Documentación del estado inicial y resultado de los tratamientos
+   - Uso interno del Estudio para seguimiento y evaluación de resultados
+   - Publicidad y promoción del Estudio (solo si se ha marcado la opción correspondiente)
+   - Publicación en redes sociales, página web o material promocional (solo si se ha marcado la opción correspondiente)
+
+2. ALCANCE DEL CONSENTIMIENTO:
+   Este consentimiento es VOLUNTARIO y puede ser revocado en cualquier momento mediante comunicación escrita al Estudio.
+
+3. IDENTIFICACIÓN:
+   Las imágenes podrán ser utilizadas de forma anónima o con identificación, según lo acordado. En caso de uso público, se respetará la privacidad del cliente.
+
+4. DERECHO DE REVOCACIÓN:
+   Usted tiene derecho a revocar este consentimiento en cualquier momento, sin que ello afecte a la licitud del tratamiento basado en el consentimiento previo a su revocación.
+
+5. CONSERVACIÓN:
+   Las imágenes se conservarán durante el tiempo necesario para cumplir con la finalidad para la que fueron capturadas, salvo que solicite su eliminación.
+
+He leído y comprendido la información anterior y doy mi consentimiento para el uso de mis imágenes conforme a lo descrito.
+
+Fecha: {FECHA_FIRMA}
+Hora: {HORA_FIRMA}

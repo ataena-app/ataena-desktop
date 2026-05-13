@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Ataena.ViewModels"
+             x:Class="Ataena.Views.FotoDniView"
+             x:DataType="vm:FotoDniViewModel">
+  <Grid IsVisible="{Binding EsVisible, FallbackValue=False}"
+        Background="#80000000"
+        ZIndex="2000">
+    <Border Width="600"
+            MaxHeight="550"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="#020617"
+            CornerRadius="18"
+            Padding="28">
+      <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+        <!-- Cabecera -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              Margin="0,0,0,16">
+          <TextBlock Grid.Column="0"
+                     Text="{Binding TituloModal}"
+                     FontSize="22"
+                     FontWeight="Bold"
+                     VerticalAlignment="Center"/>
+          <Button Grid.Column="1"
+                  Content="✖"
+                  Command="{Binding CerrarCommand}"
+                  Classes="btn-icon"
+                  Width="32"
+                  Height="32"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"/>
+        </Grid>
+
+        <!-- Instrucciones -->
+        <Border Grid.Row="1"
+                Background="#1e293b"
+                CornerRadius="8"
+                Padding="12"
+                Margin="0,0,0,16">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="📋" FontSize="18" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding Instrucciones}"
+                       FontSize="14"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Contenido principal -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,Auto"
+              ColumnSpacing="24">
+          <!-- Lado QR -->
+          <StackPanel Grid.Column="0"
+                      Spacing="10">
+            <TextBlock Text="Escanea este código QR con tu móvil para subir la foto del DNI"
+                       FontSize="14"
+                       Opacity="0.8"
+                       TextWrapping="Wrap"/>
+            <Border Width="240"
+                    Height="240"
+                    Margin="0,8,0,8"
+                    Background="#0f172a"
+                    CornerRadius="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+              <Image Source="{Binding QrCodeImage}"
+                     Stretch="Uniform"
+                     Margin="8"/>
+            </Border>
+            <TextBlock Text="{Binding UrlFoto}"
+                       FontSize="11"
+                       Opacity="0.6"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding EstadoConexion}"
+                       FontSize="13"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0"/>
+          </StackPanel>
+
+          <!-- Lado preview -->
+          <StackPanel Grid.Column="1"
+                      Spacing="10"
+                      MinWidth="220">
+            <TextBlock Text="Foto actual"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,4"/>
+            <Border Width="200"
+                    Height="200"
+                    Background="#0f172a"
+                    CornerRadius="10"
+                    BorderBrush="#334155"
+                    BorderThickness="1">
+              <Grid>
+                <!-- Placeholder cuando no hay foto -->
+                <StackPanel VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Spacing="8"
+                            IsVisible="{Binding PreviewFotoDni, Converter={x:Static ObjectConverters.IsNull}}">
+                  <TextBlock Text="🪪" FontSize="48" HorizontalAlignment="Center" Opacity="0.4"/>
+                  <TextBlock Text="Sin foto" FontSize="12" Opacity="0.5" HorizontalAlignment="Center"/>
+                </StackPanel>
+                <!-- Imagen actual -->
+                <Image Source="{Binding PreviewFotoDni}"
+                       Stretch="UniformToFill"
+                       ClipToBounds="True"/>
+              </Grid>
+            </Border>
+            
+            <!-- Botones de acción -->
+            <StackPanel Spacing="8">
+              <Button Command="{Binding SubirDesdeOrdenadorCommand}"
+                      Classes="btn-secondary"
+                      Height="38"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center"
+                      Padding="8,0">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="📁" FontSize="14"/>
+                  <TextBlock Text="Subir desde PC" FontSize="12"/>
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding EscanearCommand}"
+                      IsVisible="{Binding UsarEscanner}"
+                      Classes="btn-secondary"
+                      Height="38"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center"
+                      Padding="8,0">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="🖨️" FontSize="14"/>
+                  <TextBlock Text="Escanear" FontSize="12"/>
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding RefrescarQrCommand}"
+                      Classes="btn-secondary"
+                      Height="34"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center"
+                      Padding="8,0">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="🔄" FontSize="12"/>
+                  <TextBlock Text="Refrescar QR" FontSize="11"/>
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+
+        <!-- Mensaje de error -->
+        <Border Grid.Row="3"
+                IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#3d2a2a"
+                CornerRadius="6"
+                Padding="12"
+                Margin="0,16,0,0">
+          <TextBlock Text="{Binding MensajeError}"
+                     Foreground="#ef5350"
+                     TextWrapping="Wrap"/>
+        </Border>
+
+        <!-- Botones -->
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="12"
+                    Margin="0,20,0,0">
+          <Button Content="Cerrar"
+                  Classes="btn-secondary"
+                  Command="{Binding CerrarCommand}"
+                  MinWidth="120"
+                  Height="40"
+                  Padding="16,0"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

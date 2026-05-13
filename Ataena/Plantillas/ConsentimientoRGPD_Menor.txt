@@ -1,0 +1,47 @@
+{NOMBRE_EMPRESA}
+
+CONSENTIMIENTO EXPLÍCITO PARA EL TRATAMIENTO DE DATOS PERSONALES DE MENOR DE EDAD
+
+Guadalajara, a fecha {FECHA_FIRMA}
+
+{NOMBRE_EMPRESA} es el Responsable del tratamiento de los datos personales del interesado y le informa que estos datos serán tratados de conformidad con lo dispuesto en el Reglamento (UE) 2016/679 de 27 de Abril de 2016 (GDPR) y la Ley Orgánica 3/2018 de Protección de Datos Personales, por lo que se le facilita la siguiente información del tratamiento:
+
+FINALIDAD DEL TRATAMIENTO:
+Mantener una relación comercial mediante la gestión de citas, servicios de tatuaje y piercing, facturación, y comunicaciones relacionadas con nuestros productos o servicios.
+
+CRITERIOS DE CONSERVACIÓN DE LOS DATOS:
+Se conservarán mientras exista un interés mutuo para mantener el fin del tratamiento y cuando ya no sea necesario para tal fin, se suprimirán con medidas de seguridad adecuadas para garantizar la seudonimización de los datos o la destrucción total de los mismos.
+
+COMUNICACIÓN DE LOS DATOS:
+No se comunicarán los datos a terceros, salvo obligación legal.
+
+NOTA SOBRE PROTECCIÓN DE MENORES:
+De acuerdo con la normativa vigente, NO se autoriza el tratamiento de imágenes del menor. Al cumplir la mayoría de edad, se solicitará un nuevo consentimiento al titular de los datos.
+
+DERECHOS QUE ASISTEN AL INTERESADO Y SU REPRESENTANTE:
+- Derecho a retirar el consentimiento en cualquier momento.
+- Derecho de acceso, rectificación, portabilidad y supresión de sus datos y la limitación u oposición al tratamiento.
+- Derecho a presentar una reclamación ante la Autoridad de control (aepd.es) si considera que el tratamiento no se ajusta a la normativa vigente.
+
+DATOS DE CONTACTO PARA EJERCER SUS DERECHOS:
+{NOMBRE_EMPRESA}
+{DIRECCION_ESTUDIO}
+Email: {EMAIL_ESTUDIO}
+
+Para realizar el tratamiento de datos descrito, el Responsable del tratamiento necesita el consentimiento explícito del representante legal del menor.
+
+EL REPRESENTANTE LEGAL CONSIENTE EL TRATAMIENTO DE LOS DATOS DEL MENOR EN LOS TÉRMINOS EXPUESTOS:
+
+DATOS DEL MENOR:
+Nombre: {NOMBRE_CLIENTE}
+DNI/NIE: {DNI_CLIENTE}
+Fecha de nacimiento: {FECHA_NACIMIENTO_CLIENTE}
+
+DATOS DEL REPRESENTANTE LEGAL/TUTOR:
+Nombre: {NOMBRE_TUTOR}
+DNI/NIE: {DNI_TUTOR}
+
+Este documento requiere la firma del menor y la firma del tutor/representante legal.
+
+Fecha: {FECHA_FIRMA}
+Hora: {HORA_FIRMA}

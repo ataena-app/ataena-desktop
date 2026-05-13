@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recordatorio de Cita</title>
+</head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.3);">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px; color: white;">📅 Recordatorio de Cita</h1>
+            <p style="margin: 10px 0 0; opacity: 0.9; color: white;">{NOMBRE_ESTUDIO}</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 30px;">
+            <p style="font-size: 18px; margin-bottom: 25px;">
+                ¡Hola <strong>{NOMBRE_CLIENTE}</strong>! 👋
+            </p>
+            
+            <p style="margin-bottom: 25px; line-height: 1.6;">
+                Te recordamos que tienes una cita programada con nosotros:
+            </p>
+            
+            <!-- Cita Card -->
+            <div style="background-color: #334155; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="vertical-align: top; width: 50px;">
+                            <span style="font-size: 32px;">{ICONO_TIPO}</span>
+                        </td>
+                        <td style="vertical-align: top;">
+                            <div style="font-size: 20px; font-weight: bold; color: #a78bfa;">{TIPO_CITA}</div>
+                            <div style="opacity: 0.7; font-size: 14px;">{DESCRIPCION}</div>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div style="border-top: 1px solid #475569; margin-top: 15px; padding-top: 15px;">
+                    <p style="margin: 8px 0;"><strong>📆 Fecha:</strong> {FECHA_CITA}</p>
+                    <p style="margin: 8px 0;"><strong>⏰ Hora:</strong> {HORA_CITA}</p>
+                    <p style="margin: 8px 0;"><strong>⏱️ Duración estimada:</strong> {DURACION}</p>
+                </div>
+            </div>
+            
+            <!-- Ubicación -->
+            <div style="background-color: #334155; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                <p style="margin: 0 0 10px; font-weight: bold;">📍 Dónde encontrarnos:</p>
+                <p style="margin: 0; opacity: 0.9;">{DIRECCION_ESTUDIO}</p>
+            </div>
+            
+            <!-- Recordatorio -->
+            <div style="background-color: #1e3a5f; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+                <p style="margin: 0; font-size: 14px;">
+                    💡 <strong>Recuerda:</strong> Si necesitas modificar o cancelar tu cita, 
+                    avísanos con al menos 24 horas de antelación.
+                </p>
+            </div>
+            
+            <!-- Contacto -->
+            <div style="text-align: center; padding: 20px; background-color: #0f172a; border-radius: 12px;">
+                <p style="margin: 0 0 10px; font-size: 14px; opacity: 0.7;">
+                    ¿Necesitas contactarnos?
+                </p>
+                <p style="margin: 0;">
+                    📞 <a href="tel:{TELEFONO_ESTUDIO}" style="color: #a78bfa; text-decoration: none;">{TELEFONO_ESTUDIO}</a>
+                </p>
+                <p style="margin: 8px 0 0;">
+                    ✉️ <a href="mailto:{EMAIL_ESTUDIO}" style="color: #a78bfa; text-decoration: none;">{EMAIL_ESTUDIO}</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; opacity: 0.6;">
+            <p style="margin: 0;">
+                Este es un recordatorio automático de {NOMBRE_ESTUDIO}.<br>
+                Por favor, no respondas a este correo.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

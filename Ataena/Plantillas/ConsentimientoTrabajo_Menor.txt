@@ -1,0 +1,65 @@
+CONSENTIMIENTO INFORMADO PARA TRATAMIENTO DE MENOR DE EDAD
+
+DATOS DEL MENOR:
+Nombre: {NOMBRE_CLIENTE}
+DNI/NIE: {DNI_CLIENTE}
+Fecha de nacimiento: {FECHA_NACIMIENTO_CLIENTE}
+
+DATOS DEL TUTOR/REPRESENTANTE LEGAL:
+Nombre: {NOMBRE_TUTOR}
+DNI/NIE: {DNI_TUTOR}
+
+Yo, {NOMBRE_TUTOR}, con DNI/NIE {DNI_TUTOR}, en calidad de representante legal del menor arriba indicado, doy mi consentimiento informado para la realización del siguiente tratamiento al menor:
+
+TIPO DE TRATAMIENTO: {TIPO_TRABAJO}
+DESCRIPCIÓN: {DESCRIPCION_TRABAJO}
+ZONA DEL CUERPO: {ZONA_CUERPO}
+DURACIÓN ESTIMADA: {DURACION_MINUTOS} minutos
+PRECIO: {PRECIO} €
+
+1. INFORMACIÓN RECIBIDA:
+   Como representante legal del menor, he sido informado/a sobre:
+   - La naturaleza del tratamiento a realizar
+   - Los resultados esperados
+   - Los posibles efectos secundarios o complicaciones
+   - Las contraindicaciones
+   - Los cuidados post-tratamiento necesarios
+   - El precio del tratamiento
+   - Las consideraciones especiales para menores de edad
+
+2. RIESGOS Y COMPLICACIONES:
+   He sido informado/a de los posibles riesgos asociados al tratamiento, incluyendo pero no limitándose a:
+   - Reacciones alérgicas
+   - Infecciones
+   - Cicatrices
+   - Cambios en la pigmentación
+   - Resultados no deseados
+   - Necesidad de tratamientos adicionales
+
+3. ALTERNATIVAS:
+   He sido informado/a de las alternativas disponibles y he elegido este tratamiento para el menor de forma libre y voluntaria.
+
+4. RESULTADOS:
+   Comprendo que los resultados pueden variar según las características individuales y que no se pueden garantizar resultados específicos. También comprendo que al tratarse de un menor en desarrollo, los resultados pueden cambiar con el tiempo.
+
+5. CUIDADOS POST-TRATAMIENTO:
+   Me comprometo, como representante legal, a supervisar y asegurar que el menor siga las instrucciones de cuidados post-tratamiento proporcionadas por el profesional.
+
+6. PREGUNTAS:
+   He tenido la oportunidad de hacer todas las preguntas que he considerado necesarias y todas han sido respondidas de forma satisfactoria.
+
+7. CONSENTIMIENTO VOLUNTARIO:
+   Como representante legal del menor, doy mi consentimiento de forma libre, voluntaria y sin coacción alguna, después de haber recibido toda la información necesaria.
+
+8. DERECHO DE REVOCACIÓN:
+   Comprendo que puedo revocar este consentimiento en cualquier momento antes de la realización del tratamiento.
+
+9. ACOMPAÑAMIENTO:
+   Declaro que acompañaré al menor durante la realización del tratamiento o, en su defecto, autorizo expresamente su realización en mi ausencia.
+
+He leído y comprendido toda la información proporcionada. Todas mis preguntas han sido respondidas satisfactoriamente. Doy mi consentimiento informado para la realización del tratamiento descrito al menor del que soy representante legal.
+
+Este documento requiere la firma del menor y la firma del tutor/representante legal.
+
+Fecha: {FECHA_FIRMA}
+Hora: {HORA_FIRMA}

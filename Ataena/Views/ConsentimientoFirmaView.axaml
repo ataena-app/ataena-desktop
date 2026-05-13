@@ -1,0 +1,241 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ataena.ViewModels"
+             x:Class="Ataena.Views.ConsentimientoFirmaView"
+             x:DataType="vm:ConsentimientoFirmaViewModel">
+
+    <!-- Modal overlay -->
+    <Border IsVisible="{Binding EsVisible, FallbackValue=False}"
+            Background="#80000000"
+            ZIndex="1000">
+        
+        <Border Background="#1e1e2e"
+                CornerRadius="18"
+                Padding="40"
+                MaxWidth="800"
+                MaxHeight="700"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 0 30 5 #a855f7, 0 0 50 8 #f97316">
+            
+            <Grid RowDefinitions="Auto,*,Auto">
+                
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="#2a2a3e"
+                        Padding="24,20"
+                        CornerRadius="18,18,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding TituloModal}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                FontSize="16"
+                                Width="36"
+                                Height="36"
+                                Background="Transparent"
+                                Foreground="#9ca3af"
+                                BorderThickness="0"
+                                CornerRadius="18"
+                                Command="{Binding CancelarFirmaCommand}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Aviso de datos del tutor faltantes (para menores) -->
+                <Border Grid.Row="1"
+                        IsVisible="{Binding FaltanDatosTutor}"
+                        Background="#7f1d1d"
+                        BorderBrush="#ef4444"
+                        BorderThickness="2"
+                        CornerRadius="12"
+                        Padding="24"
+                        Margin="24,24,24,0"
+                        VerticalAlignment="Top">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="⚠️"
+                                       FontSize="28"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="FALTAN DATOS DEL TUTOR"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="#fca5a5"/>
+                                <TextBlock Text="No se puede firmar consentimiento de menor sin datos del tutor"
+                                           FontSize="13"
+                                           Opacity="0.9"
+                                           Foreground="White"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Border Height="1" Background="#ef4444" Opacity="0.3"/>
+                        <TextBlock TextWrapping="Wrap"
+                                   FontSize="13"
+                                   Foreground="#fecaca"
+                                   LineHeight="20">
+                            <Run Text="Para firmar el consentimiento de un menor de edad, primero debes rellenar los datos del tutor o representante legal en la ficha del cliente:"/>
+                        </TextBlock>
+                        <StackPanel Spacing="4" Margin="12,0,0,0">
+                            <TextBlock Text="• Nombre del tutor" FontSize="12" Foreground="#fecaca"/>
+                            <TextBlock Text="• Apellidos del tutor" FontSize="12" Foreground="#fecaca"/>
+                            <TextBlock Text="• DNI del tutor" FontSize="12" Foreground="#fecaca"/>
+                            <TextBlock Text="• Teléfono del tutor" FontSize="12" Foreground="#fecaca"/>
+                        </StackPanel>
+                        <Border Height="1" Background="#ef4444" Opacity="0.3" Margin="0,4,0,0"/>
+                        <TextBlock Text="👉 Cierra esta ventanita, edita el cliente y rellena los datos del tutor."
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Contenido scrollable (oculto si faltan datos del tutor) -->
+                <ScrollViewer Grid.Row="1"
+                              IsVisible="{Binding !FaltanDatosTutor}"
+                              Padding="28,24,40,24"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="20">
+                        
+                        <!-- Texto del consentimiento -->
+                        <Border Background="#2a2a3e"
+                                CornerRadius="12"
+                                Padding="20">
+                            <TextBlock Text="{Binding TextoConsentimiento}"
+                                       TextWrapping="Wrap"
+                                       LineHeight="24"
+                                       LineSpacing="4"
+                                       FontSize="13"/>
+                        </Border>
+
+                        <!-- Checkbox aceptar términos -->
+                        <CheckBox Content="☑ Acepto los términos y condiciones"
+                                  IsChecked="{Binding AceptaTerminos}"
+                                  FontSize="14"
+                                  FontWeight="SemiBold"/>
+
+                        <!-- Separador -->
+                        <Border Height="1"
+                                Background="#3a3a4e"
+                                Margin="0,10"/>
+
+                        <!-- Sección de firma móvil -->
+                        <StackPanel Spacing="15">
+                            <TextBlock Text="📱 FIRMA EN MÓVIL:"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,5"/>
+                            
+                            <!-- QR Code -->
+                            <Border Background="White"
+                                    CornerRadius="12"
+                                    Padding="20"
+                                    HorizontalAlignment="Center">
+                                <Image Source="{Binding QrCodeImage}"
+                                       Width="250"
+                                       Height="250"
+                                       Stretch="Uniform"/>
+                            </Border>
+
+                            <!-- URL -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="O abre esta URL en tu móvil:"
+                                           FontSize="12"
+                                           Opacity="0.7"/>
+                                <Border Background="#2a2a3e"
+                                        CornerRadius="8"
+                                        Padding="12">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding UrlFirma}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="11"
+                                                   FontFamily="Consolas"
+                                                   Opacity="0.9"/>
+                                        <Button Grid.Column="1"
+                                                Content="📋"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{Binding CopiarUrlCommand}"
+                                                Margin="10,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Estado de conexión -->
+                            <Border Background="#2a2a3e"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                <TextBlock Text="{Binding EstadoConexion}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Preview de firma recibida -->
+                            <Border IsVisible="{Binding FirmaRecibida}"
+                                    Background="#1a4d2e"
+                                    CornerRadius="12"
+                                    Padding="15"
+                                    BorderBrush="#10b981"
+                                    BorderThickness="2">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="✅ Firma recibida:"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="#10b981"/>
+                                    <Border Background="White"
+                                            CornerRadius="8"
+                                            Padding="10"
+                                            HorizontalAlignment="Center">
+                                        <Image Source="{Binding ImagenFirmaBase64}"
+                                               MaxWidth="300"
+                                               MaxHeight="150"
+                                               Stretch="Uniform"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer con botones -->
+                <Border Grid.Row="2"
+                        Background="#2a2a3e"
+                        Padding="24,20"
+                        CornerRadius="0,0,18,18">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                        <!-- Botones antes de generar -->
+                        <Button Grid.Column="1"
+                                Content="Cancelar"
+                                Classes="btn-secondary"
+                                Command="{Binding CancelarFirmaCommand}"
+                                IsEnabled="{Binding !EstaProcesando}"
+                                IsVisible="{Binding !PdfGenerado}"/>
+                        <Button Grid.Column="2"
+                                Content="Generar PDF"
+                                Classes="btn-primary"
+                                Command="{Binding ConfirmarFirmaCommand}"
+                                IsEnabled="{Binding FirmaRecibida}"
+                                IsVisible="{Binding !PdfGenerado}"/>
+                        <!-- Botones después de generar -->
+                        <Button Grid.Column="1"
+                                Content="🖨️ Imprimir"
+                                Classes="btn-secondary"
+                                Command="{Binding ImprimirPdfCommand}"
+                                IsEnabled="{Binding !EstaProcesando}"
+                                IsVisible="{Binding MostrarImprimir}"/>
+                        <Button Grid.Column="2"
+                                Content="Cerrar"
+                                Classes="btn-primary"
+                                Command="{Binding CancelarFirmaCommand}"
+                                IsVisible="{Binding PdfGenerado}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>
+

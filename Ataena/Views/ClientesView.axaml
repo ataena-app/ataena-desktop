@@ -1,0 +1,1041 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ataena.ViewModels"
+             xmlns:models="using:Ataena.Models"
+             xmlns:views="using:Ataena.Views"
+             xmlns:converters="using:Ataena.Converters"
+             x:Class="Ataena.Views.ClientesView"
+             x:DataType="vm:ClientesViewModel"
+             Loaded="OnLoaded">
+
+    <UserControl.Styles>
+        <!-- Fila de cliente (estilo lista) -->
+        <Style Selector="Border.cliente-card">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#272738"/>
+        </Style>
+        <Style Selector="Border.cliente-card:pointerover">
+            <Setter Property="Background" Value="#202032"/>
+        </Style>
+        
+        <!-- Formulario -->
+        <Style Selector="Border.form-container">
+            <Setter Property="Background" Value="#1e1e2e"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="25"/>
+        </Style>
+        
+        <!-- Campo de formulario -->
+        <Style Selector="TextBox.form-field">
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+        
+        <!-- Los estilos de botones están definidos globalmente en App.axaml -->
+        
+        <!-- Botón peligro -->
+        <Style Selector="Button.btn-danger">
+            <Setter Property="Background" Value="#f44336"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COLUMNA 0: LISTA DE CLIENTES                                    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*,Auto" Margin="30">
+            
+            <!-- Cabecera -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="👥 Clientes" FontSize="28" FontWeight="Bold"/>
+                <TextBlock Opacity="0.6" Margin="0,5,0,0">
+                    <Run Text="Total: "/>
+                    <Run Text="{Binding TotalClientes}"/>
+                    <Run Text=" clientes"/>
+                </TextBlock>
+            </StackPanel>
+            
+            <!-- Barra de búsqueda y acciones -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,20">
+                <TextBox Grid.Column="0"
+                         Text="{Binding TextoBusqueda}"
+                         Watermark="🔍 Buscar por nombre, teléfono o email..."
+                         Margin="0,0,10,0"/>
+                <Button Grid.Column="1"
+                        Content="Buscar"
+                        Command="{Binding BuscarCommand}"
+                        Margin="0,0,10,0"/>
+                <Button Grid.Column="2"
+                        Content="⚠️ Sin RGPD"
+                        Classes="btn-secondary"
+                        Command="{Binding FiltrarSinConsentimientoCommand}"
+                        ToolTip.Tip="Mostrar solo clientes sin consentimiento RGPD firmado"
+                        Margin="0,0,10,0"/>
+                <Button Grid.Column="3"
+                        Content="➕ Nuevo Cliente"
+                        Classes="btn-primary"
+                        Command="{Binding NuevoClienteCommand}"/>
+            </Grid>
+            
+            <!-- Lista de clientes (altura fija, sin scroll) -->
+            <Border Grid.Row="2" 
+                    BorderBrush="#272738" 
+                    BorderThickness="0,1,0,1"
+                    Background="Transparent">
+                <ItemsControl ItemsSource="{Binding Clientes}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Cliente">
+                            <Border Classes="cliente-card"
+                                    PointerPressed="OnClienteClick"
+                                    Tag="{Binding}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    
+                                    <!-- Info -->
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding NombreCompleto}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"/>
+                                            <!-- Indicador de menor de edad -->
+                                            <Border Grid.Column="1"
+                                                    IsVisible="{Binding EsMenorDeEdad}"
+                                                    Background="#f59e0b"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="🔞 Menor"
+                                                           FontSize="10"
+                                                           FontWeight="Bold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                            <!-- Indicador de consentimiento RGPD -->
+                                            <Border Grid.Column="2"
+                                                    IsVisible="{Binding !TieneConsentimientoRGPD}"
+                                                    Background="#ef5350"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="⚠️ Sin RGPD"
+                                                           FontSize="10"
+                                                           FontWeight="Bold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                            <Border Grid.Column="2"
+                                                    IsVisible="{Binding TieneConsentimientoRGPD}"
+                                                    Background="#10b981"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="✅ RGPD"
+                                                           FontSize="10"
+                                                           FontWeight="Bold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Spacing="15" Opacity="0.7">
+                                            <TextBlock Text="{Binding Telefono}"/>
+                                            <TextBlock Text="{Binding Email}" 
+                                                       IsVisible="{Binding Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                            <TextBlock Text="{Binding Dni}" 
+                                                       IsVisible="{Binding Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding FechaNacimientoConEdad}"
+                                                   FontSize="12"
+                                                   Opacity="0.6"
+                                                   Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Sin botones de acción: solo fila clicable -->
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+            
+            <!-- Controles de paginación -->
+            <Border Grid.Row="3"
+                    Background="Transparent"
+                    Padding="0,15,0,0"
+                    IsVisible="{Binding TotalPaginas, Converter={x:Static converters:GreaterThanConverter.One}}">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                    <!-- Botón página anterior -->
+                    <Button Grid.Column="0"
+                            Content="◀ Anterior"
+                            Command="{Binding PaginaAnteriorCommand}"
+                            Classes="btn-secondary"
+                            Margin="0,0,15,0"
+                            MinWidth="130"
+                            Height="36"
+                            Padding="20,0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"/>
+                    
+                    <!-- Información de página -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8">
+                        <TextBlock Text="Página"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding PaginaActual}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="de"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalPaginas}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="("
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalClientes}"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="clientes)"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <!-- Botón página siguiente -->
+                    <Button Grid.Column="2"
+                            Content="Siguiente ▶"
+                            Command="{Binding PaginaSiguienteCommand}"
+                            Classes="btn-secondary"
+                            Margin="15,0,0,0"
+                            MinWidth="130"
+                            Height="36"
+                            Padding="20,0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"/>
+                </Grid>
+            </Border>
+            
+            <!-- Mensaje de error -->
+            <Border Grid.Row="3"
+                    IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#3d2a2a"
+                    CornerRadius="6"
+                    Padding="15"
+                    Margin="0,10,0,0">
+                <TextBlock Text="{Binding MensajeError}" Foreground="#ef5350"/>
+            </Border>
+            
+        </Grid>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- MODAL: FORMULARIO DE CREACIÓN/EDICIÓN DE CLIENTE               -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0"
+                Grid.ColumnSpan="1"
+                IsVisible="{Binding MostrarFormulario}"
+                Background="#B0000000"
+                Padding="40">
+            <!-- Modal centrado con glow suave -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinWidth="540"
+                    MaxWidth="660"
+                    MaxHeight="800"
+                    Background="#020617"
+                    CornerRadius="18"
+                    BoxShadow="0 0 80 0 #50d946ef, 0 0 120 0 #40ec4899">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Cabecera del modal -->
+                    <Border Grid.Row="0"
+                            Background="#111827"
+                            Padding="28,22"
+                            CornerRadius="18,18,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding TituloFormulario}"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="1"
+                                    Content="✕"
+                                    FontSize="16"
+                                    Width="36"
+                                    Height="36"
+                                    Background="Transparent"
+                                    Foreground="#9ca3af"
+                                    BorderThickness="0"
+                                    CornerRadius="18"
+                                    Command="{Binding CancelarEdicionCommand}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Contenido scrollable -->
+                    <ScrollViewer Grid.Row="1"
+                                  Padding="28,24,40,24"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <!-- Margen inferior generoso para que los últimos campos (checkboxes) no queden ocultos tras el footer -->
+                        <StackPanel Margin="0,0,0,80">
+                            <!-- Nombre -->
+                            <TextBlock Text="Nombre *" Opacity="0.7" Margin="0,0,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Nombre}"
+                                     Watermark="Nombre"/>
+
+                            <!-- Apellidos -->
+                            <TextBlock Text="Apellidos *" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Apellidos}"
+                                     Watermark="Apellidos (obligatorio)"/>
+
+                            <!-- Teléfono -->
+                            <TextBlock Text="Teléfono" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Telefono}"
+                                     Watermark="612 345 678 (opcional)"/>
+
+                            <!-- Email -->
+                            <TextBlock Text="Email" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Email}"
+                                     Watermark="cliente@email.com"/>
+
+                            <!-- DNI/NIE/Pasaporte -->
+                            <TextBlock Text="DNI/NIE/Pasaporte *" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Dni}"
+                                     Watermark="12345678A, X1234567L o número de pasaporte (obligatorio)"/>
+
+                            <!-- Fecha nacimiento -->
+                            <TextBlock Text="Fecha de nacimiento (DD/MM/YYYY)" Opacity="0.7" Margin="16,16,0,5"/>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,15">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding FechaNacimientoTexto, Mode=TwoWay}"
+                                         Watermark="DDMMYYYY (ej: 15031990)"
+                                         Classes="form-field"
+                                         HorizontalAlignment="Stretch"
+                                         Name="FechaNacimientoTextBox"
+                                         TextChanged="OnFechaNacimientoTextChanged"/>
+                                <Button Grid.Column="1"
+                                        Content="📅"
+                                        Width="44"
+                                        Height="44"
+                                        Margin="8,0,0,0"
+                                        Padding="0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        FontSize="18"
+                                        Background="#1f2937"
+                                        BorderBrush="#374151"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Click="OnAbrirCalendarioFechaNacimiento">
+                                    <Button.Styles>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="#374151"/>
+                                        </Style>
+                                    </Button.Styles>
+                                </Button>
+                            </Grid>
+                            <!-- Popup con DatePicker -->
+                            <Popup Name="FechaNacimientoPopup"
+                                   PlacementTarget="{Binding #FechaNacimientoTextBox}"
+                                   Placement="Bottom"
+                                   IsLightDismissEnabled="True"
+                                   Width="320">
+                                <Border Background="#1e1e2e"
+                                        CornerRadius="8"
+                                        Padding="0"
+                                        BorderBrush="#374151"
+                                        BorderThickness="1">
+                                    <StackPanel>
+                                        <!-- Header con mes y año -->
+                                        <Border Background="#111827"
+                                                CornerRadius="8,8,0,0"
+                                                Padding="16,12">
+                                            <TextBlock Name="MesAnioHeader"
+                                                       FontSize="16"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="White"/>
+                                        </Border>
+                                        <!-- DatePicker -->
+                                        <DatePicker SelectedDate="{Binding FechaNacimiento}"
+                                                     HorizontalAlignment="Stretch"
+                                                     Padding="10"
+                                                     Name="FechaNacimientoDatePicker"
+                                                     SelectedDateChanged="OnFechaNacimientoSelectedDateChanged"/>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+
+                            <!-- Alergias -->
+                            <TextBlock Text="Alergias (importante para tintas)" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Alergias}"
+                                     Watermark="Ninguna conocida"
+                                     AcceptsReturn="True"
+                                     Height="60"
+                                     TextWrapping="Wrap"/>
+
+                            <!-- Notas -->
+                            <TextBlock Text="Notas" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBox Classes="form-field"
+                                     Text="{Binding Notas}"
+                                     Watermark="Notas adicionales..."
+                                     AcceptsReturn="True"
+                                     Height="80"
+                                     TextWrapping="Wrap"/>
+
+                            <!-- Datos del Tutor (visible si es menor de edad) -->
+                            <Border Background="#1f2937"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="16,16,16,0"
+                                    IsVisible="{Binding EsMenorFormulario}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="👨‍👩‍👧 Datos del Tutor/Representante Legal"
+                                                   FontSize="14"
+                                                   FontWeight="Bold"
+                                                   Foreground="#f59e0b"/>
+                                        <TextBlock Text="(requerido para menores)"
+                                                   FontSize="11"
+                                                   Opacity="0.6"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Nombre del tutor *" Opacity="0.7" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding NombreTutor}"
+                                                     Watermark="Nombre"
+                                                     Height="36"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Apellidos del tutor *" Opacity="0.7" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding ApellidosTutor}"
+                                                     Watermark="Apellidos"
+                                                     Height="36"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="DNI del tutor *" Opacity="0.7" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding DniTutor}"
+                                                     Watermark="12345678A"
+                                                     Height="36"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Teléfono del tutor" Opacity="0.7" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding TelefonoTutor}"
+                                                     Watermark="600123456"
+                                                     Height="36"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Consentimiento RGPD (solo para nuevos clientes) -->
+                            <CheckBox IsVisible="{Binding !EsEdicion}"
+                                      IsChecked="{Binding FirmarConsentimientoRGPD}"
+                                      Content="📝 Firmar consentimiento RGPD (opcional)"
+                                      Margin="16,20,0,8"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"/>
+                            
+                            <!-- Consentimiento de imágenes (solo para nuevos clientes) -->
+                            <CheckBox IsVisible="{Binding !EsEdicion}"
+                                      IsChecked="{Binding SolicitarConsentimientoImagenes}"
+                                      Content="📸 Solicitar consentimiento de uso de imágenes (opcional)"
+                                      Margin="16,8,0,20"
+                                      FontSize="13"/>
+
+                            <!-- Mensaje de error -->
+                            <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Background="#3d2a2a"
+                                    CornerRadius="6"
+                                    Padding="10"
+                                    Margin="0,0,0,15">
+                                <TextBlock Text="{Binding MensajeError}" 
+                                           Foreground="#ef5350"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+
+                            <!-- Espaciador final para indicar el final del contenido -->
+                            <Border Height="60"
+                                    Background="Transparent"
+                                    Margin="0,24,0,0">
+                                <Border Height="1"
+                                        Background="#1f2937"
+                                        Opacity="0.3"
+                                        VerticalAlignment="Top"
+                                        Margin="0,20,0,0"/>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer botones -->
+                    <Border Grid.Row="2"
+                            Background="#111827"
+                            Padding="28,20"
+                            CornerRadius="0,0,18,18">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Button Grid.Column="0"
+                                    Content="🗑️ Eliminar cliente"
+                                    Classes="btn-danger"
+                                    Command="{Binding EliminarClienteCommand}"
+                                    IsVisible="{Binding EsEdicion}"
+                                    MinWidth="150"
+                                    Height="42"
+                                    Padding="12,0"
+                                    HorizontalAlignment="Left"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"/>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Spacing="12">
+                                <Button Content="Cancelar"
+                                        Classes="btn-secondary"
+                                        Command="{Binding CancelarEdicionCommand}"
+                                        MinWidth="130"
+                                        Height="42"
+                                        Padding="12,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"/>
+                                <Button Content="💾 Guardar"
+                                        Classes="btn-primary"
+                                        Command="{Binding GuardarClienteCommand}"
+                                        MinWidth="130"
+                                        Height="42"
+                                        Padding="12,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
+        
+        <!-- Overlay de carga -->
+        <Border Grid.ColumnSpan="2"
+                IsVisible="{Binding Cargando}"
+                Background="#80000000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="⏳" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="Cargando..." Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- MODAL: FICHA DEL CLIENTE                                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0"
+                Grid.ColumnSpan="1"
+                IsVisible="{Binding MostrarFicha}"
+                Background="#B0000000"
+                Padding="40">
+            <!-- Modal centrado con glow suave (altura completa para permitir scroll interno) -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    MinWidth="700"
+                    MaxWidth="900"
+                    Margin="0,40,0,40"
+                    Background="#020617"
+                    CornerRadius="18"
+                    BoxShadow="0 0 80 0 #50d946ef, 0 0 120 0 #40ec4899">
+                <Grid RowDefinitions="Auto,*,Auto" MinHeight="600" MaxHeight="1200">
+                    <!-- Cabecera del modal -->
+                    <Border Grid.Row="0"
+                            Background="#111827"
+                            Padding="28,22"
+                            CornerRadius="18,18,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="{Binding ClienteSeleccionado.NombreCompleto, TargetNullValue='Ficha del Cliente'}"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                    <!-- Badge de menor de edad -->
+                                    <Border IsVisible="{Binding ClienteSeleccionado.EsMenorDeEdad}"
+                                            Background="#f59e0b"
+                                            CornerRadius="6"
+                                            Padding="8,4"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="🔞 MENOR DE EDAD"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </Border>
+                                    <!-- Badge de renovación pendiente -->
+                                    <Border IsVisible="{Binding ClienteSeleccionado.TieneConsentimientosPendientesRenovacion}"
+                                            Background="#ef5350"
+                                            CornerRadius="6"
+                                            Padding="8,4"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="⚠️ Renovar consentimientos"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{Binding ClienteSeleccionado.Telefono}"
+                                           FontSize="13"
+                                           Opacity="0.7"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Content="✏️ Editar"
+                                        Classes="btn-secondary"
+                                        Command="{Binding EditarClienteCommand}"
+                                        MinWidth="120"
+                                        Height="40"
+                                        Padding="16,0"
+                                        FontSize="12"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"/>
+                                <Button Content="✕"
+                                        FontSize="16"
+                                        Width="36"
+                                        Height="36"
+                                        Background="Transparent"
+                                        Foreground="#9ca3af"
+                                        BorderThickness="0"
+                                        CornerRadius="18"
+                                        Command="{Binding CerrarFichaCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Contenido scrollable -->
+                    <ScrollViewer Grid.Row="1"
+                                  Padding="28,24,28,24"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="24" Margin="0,0,0,40">
+                            
+                            <!-- Información del Cliente -->
+                            <Border Background="#111827"
+                                    CornerRadius="12"
+                                    Padding="20">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="📋 Información del Cliente"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Margin="0,0,0,8"/>
+                                    
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Nombre:" Opacity="0.7" Margin="0,0,12,8"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ClienteSeleccionado.NombreCompleto}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Teléfono:" Opacity="0.7" Margin="0,0,12,8"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ClienteSeleccionado.Telefono}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Email:" Opacity="0.7" Margin="0,0,12,8"
+                                                   IsVisible="{Binding ClienteSeleccionado.Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ClienteSeleccionado.Email}" Margin="0,0,0,8"
+                                                   IsVisible="{Binding ClienteSeleccionado.Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="DNI/NIE/Pasaporte:" Opacity="0.7" Margin="0,0,12,8"
+                                                   IsVisible="{Binding ClienteSeleccionado.Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ClienteSeleccionado.Dni}" Margin="0,0,0,8"
+                                                   IsVisible="{Binding ClienteSeleccionado.Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Fecha Nacimiento:" Opacity="0.7" Margin="0,0,12,8"
+                                                   IsVisible="{Binding ClienteSeleccionado.FechaNacimiento, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ClienteSeleccionado.FechaNacimientoConEdad}" Margin="0,0,0,8"
+                                                   IsVisible="{Binding ClienteSeleccionado.FechaNacimiento, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Alergias:" Opacity="0.7" Margin="0,0,12,0"
+                                                   IsVisible="{Binding ClienteSeleccionado.Alergias, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ClienteSeleccionado.Alergias}" TextWrapping="Wrap"
+                                                   IsVisible="{Binding ClienteSeleccionado.Alergias, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </Grid>
+                                    
+                                    <!-- Foto del DNI del cliente -->
+                                    <Border Background="#1e293b" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="🪪" FontSize="18" VerticalAlignment="Center"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="Foto del DNI" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Text="{Binding ClienteSeleccionado.TieneFotoDni, Converter={StaticResource BoolToTextConverter}, ConverterParameter='✅ Guardada|⚠️ Sin foto'}"
+                                                               FontSize="11" Opacity="0.7"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="2"
+                                                    Content="📷 Subir foto"
+                                                    Command="{Binding SubirFotoDniClienteCommand}"
+                                                    CommandParameter="{Binding ClienteSeleccionado}"
+                                                    Classes="btn-secondary"
+                                                    Height="32"
+                                                    Padding="12,0"
+                                                    FontSize="12"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Datos del Tutor (solo visible si es menor de edad) -->
+                            <Border Background="#111827"
+                                    CornerRadius="12"
+                                    Padding="20"
+                                    IsVisible="{Binding ClienteSeleccionado.EsMenorDeEdad}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBlock Text="👨‍👩‍👧 Datos del Tutor/Representante Legal"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"/>
+                                        <!-- Indicador de datos faltantes -->
+                                        <Border IsVisible="{Binding ClienteSeleccionado.RequiereDatosTutor}"
+                                                Background="#ef5350"
+                                                CornerRadius="6"
+                                                Padding="8,4"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="⚠️ Datos incompletos"
+                                                       FontSize="11"
+                                                       FontWeight="Bold"
+                                                       Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
+                                    
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Nombre:" Opacity="0.7"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" 
+                                                   Text="{Binding ClienteSeleccionado.NombreCompletoTutor, TargetNullValue='No especificado'}"
+                                                   FontWeight="SemiBold"/>
+                                        
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="DNI:" Opacity="0.7"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" 
+                                                   Text="{Binding ClienteSeleccionado.DniTutor, TargetNullValue='No especificado'}"/>
+                                        
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Teléfono:" Opacity="0.7"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" 
+                                                   Text="{Binding ClienteSeleccionado.TelefonoTutor, TargetNullValue='No especificado'}"/>
+                                    </Grid>
+                                    
+                                    <!-- Foto del DNI del tutor -->
+                                    <Border Background="#1e293b" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="🪪" FontSize="18" VerticalAlignment="Center"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="Foto del DNI del tutor" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Text="{Binding ClienteSeleccionado.TieneFotoDniTutor, Converter={StaticResource BoolToTextConverter}, ConverterParameter='✅ Guardada|⚠️ Sin foto'}"
+                                                               FontSize="11" Opacity="0.7"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="2"
+                                                    Content="📷 Subir foto"
+                                                    Command="{Binding SubirFotoDniTutorCommand}"
+                                                    CommandParameter="{Binding ClienteSeleccionado}"
+                                                    Classes="btn-secondary"
+                                                    Height="32"
+                                                    Padding="12,0"
+                                                    FontSize="12"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Consentimientos -->
+                            <Border Background="#111827"
+                                    CornerRadius="12"
+                                    Padding="20">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                                        <TextBlock Text="📝 Consentimientos"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Margin="0,0,0,8"/>
+                                        <!-- Chips de estado RGPD / Imágenes -->
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Border Background="{Binding ClienteSeleccionado.TieneConsentimientoRGPD, Converter={StaticResource BoolToTextConverter}, ConverterParameter='#10b981|#ef5350'}"
+                                                    CornerRadius="12"
+                                                    Padding="8,2">
+                                                <TextBlock Text="{Binding ClienteSeleccionado.TieneConsentimientoRGPD, Converter={StaticResource BoolToTextConverter}, ConverterParameter='✅ RGPD|⚠️ Sin RGPD'}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                            <Border Background="{Binding ClienteSeleccionado.TieneConsentimientoImagenes, Converter={StaticResource BoolToTextConverter}, ConverterParameter='#10b981|#f97316'}"
+                                                    CornerRadius="12"
+                                                    Padding="8,2">
+                                                <TextBlock Text="{Binding ClienteSeleccionado.TieneConsentimientoImagenes, Converter={StaticResource BoolToTextConverter}, ConverterParameter='📸 Imágenes OK|📸 Sin imágenes'}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    
+                                    <ItemsControl ItemsSource="{Binding ConsentimientosCliente}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Consentimiento">
+                                                <Border CornerRadius="8"
+                                                        Padding="16"
+                                                        Margin="0,0,0,12">
+                                                    <Border.Background>
+                                                        <Binding Path="NecesitaRenovacion" 
+                                                                 Converter="{StaticResource BoolToTextConverter}" 
+                                                                 ConverterParameter="#5a2d2d|#1a1a2e"/>
+                                                    </Border.Background>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <TextBlock Text="{Binding NombreTipo}"
+                                                                           FontSize="15"
+                                                                           FontWeight="SemiBold"/>
+                                                                <!-- Badge de antigüedad -->
+                                                                <Border Background="#374151"
+                                                                        CornerRadius="4"
+                                                                        Padding="6,2"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding AntiguedadTexto}"
+                                                                               FontSize="10"
+                                                                               Opacity="0.9"/>
+                                                                </Border>
+                                                                <!-- Badge de renovación necesaria -->
+                                                                <Border IsVisible="{Binding NecesitaRenovacion}"
+                                                                        Background="#ef5350"
+                                                                        CornerRadius="4"
+                                                                        Padding="6,2"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock Text="⚠️ Renovar"
+                                                                               FontSize="10"
+                                                                               FontWeight="Bold"
+                                                                               Foreground="White"/>
+                                                                </Border>
+                                                                <!-- Badge de consentimiento de menor -->
+                                                                <Border IsVisible="{Binding EsConsentimientoMenor}"
+                                                                        Background="#f59e0b"
+                                                                        CornerRadius="4"
+                                                                        Padding="6,2"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock Text="Menor"
+                                                                               FontSize="10"
+                                                                               FontWeight="Bold"
+                                                                               Foreground="White"/>
+                                                                </Border>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding FechaFirma, StringFormat='Firmado el {0:dd/MM/yyyy} a las {0:HH:mm}'}"
+                                                                       FontSize="12"
+                                                                       Opacity="0.7"
+                                                                       Margin="0,4,0,0"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1"
+                                                                    Orientation="Horizontal"
+                                                                    Spacing="8"
+                                                                    IsVisible="{Binding Firmado}">
+                                                            <Button Content="📄"
+                                                                    Classes="btn-secondary"
+                                                                    Command="{Binding $parent[UserControl].DataContext.AbrirConsentimientoCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Ver PDF"
+                                                                    Width="36"
+                                                                    Height="36"
+                                                                    Padding="0"
+                                                                    FontSize="18"
+                                                                    HorizontalContentAlignment="Center"
+                                                                    VerticalContentAlignment="Center"/>
+                                                            <Button Content="💾"
+                                                                    Classes="btn-secondary"
+                                                                    Command="{Binding $parent[UserControl].DataContext.ExportarConsentimientoCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Exportar PDF"
+                                                                    Width="36"
+                                                                    Height="36"
+                                                                    Padding="0"
+                                                                    FontSize="18"
+                                                                    HorizontalContentAlignment="Center"
+                                                                    VerticalContentAlignment="Center"/>
+                                                            <Button Content="📧"
+                                                                    Classes="btn-secondary"
+                                                                    Command="{Binding $parent[UserControl].DataContext.EnviarConsentimientoPorCorreoCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Enviar por correo"
+                                                                    Width="36"
+                                                                    Height="36"
+                                                                    Padding="0"
+                                                                    FontSize="18"
+                                                                    HorizontalContentAlignment="Center"
+                                                                    VerticalContentAlignment="Center"/>
+                                                            <Button Content="🔄"
+                                                                    Classes="btn-secondary"
+                                                                    IsVisible="{Binding NecesitaRenovacion}"
+                                                                    Command="{Binding $parent[UserControl].DataContext.RenovarConsentimientoCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Renovar consentimiento"
+                                                                    Width="36"
+                                                                    Height="36"
+                                                                    Padding="0"
+                                                                    FontSize="18"
+                                                                    HorizontalContentAlignment="Center"
+                                                                    VerticalContentAlignment="Center"
+                                                                    Background="#10b981"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                Spacing="8"
+                                                Margin="0,8,0,0">
+                                        <Button Content="📝 Firmar RGPD"
+                                                Classes="btn-secondary"
+                                                IsVisible="{Binding !ClienteSeleccionado.TieneConsentimientoRGPD}"
+                                                Command="{Binding FirmarConsentimientoRGPDDesdeFichaCommand}"
+                                                CommandParameter="{Binding ClienteSeleccionado}"
+                                                Height="32"
+                                                Padding="10,0"/>
+                                        <Button Content="📸 Firmar imágenes"
+                                                Classes="btn-secondary"
+                                                IsVisible="{Binding !ClienteSeleccionado.TieneConsentimientoImagenes}"
+                                                Command="{Binding FirmarConsentimientoImagenesDesdeFichaCommand}"
+                                                CommandParameter="{Binding ClienteSeleccionado}"
+                                                Height="32"
+                                                Padding="10,0"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="No hay consentimientos firmados"
+                                               IsVisible="{Binding !ConsentimientosCliente.Count}"
+                                               Opacity="0.5"
+                                               FontStyle="Italic"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Trabajos -->
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="🎨 Historial de Trabajos"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,8"/>
+                                
+                                <!-- Lista de trabajos (solo si hay alguno) -->
+                                <Border Background="#111827"
+                                        CornerRadius="12"
+                                        Padding="20"
+                                        IsVisible="{Binding TrabajosCliente.Count}">
+                                    <ItemsControl ItemsSource="{Binding TrabajosCliente}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Trabajo">
+                                                <Border Background="#1a1a2e"
+                                                        CornerRadius="8"
+                                                        Padding="16"
+                                                        Margin="0,0,0,12"
+                                                        Cursor="Hand"
+                                                        Classes="hover-border"
+                                                        PointerPressed="OnTrabajoClick">
+                                                    <Border.Styles>
+                                                        <Style Selector="Border.hover-border:pointerover">
+                                                            <Setter Property="Background" Value="#252547"/>
+                                                        </Style>
+                                                    </Border.Styles>
+                                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding IconoTipo}"
+                                                                   FontSize="24"
+                                                                   Margin="0,0,16,0"
+                                                                   VerticalAlignment="Center"/>
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="{Binding Descripcion}"
+                                                                       FontSize="15"
+                                                                       FontWeight="SemiBold"
+                                                                       Margin="0,0,0,4"/>
+                                                            <StackPanel Orientation="Horizontal" Spacing="12" Opacity="0.7">
+                                                                <TextBlock Text="{Binding ZonaCuerpo}"/>
+                                                                <TextBlock Text="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy}'}"/>
+                                                                <TextBlock Text="{Binding Precio, StringFormat='{}{0:F2} €'}"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding Tipo}"
+                                                                   FontSize="12"
+                                                                   Opacity="0.6"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                                
+                                <!-- Mensaje cuando no hay trabajos -->
+                                <TextBlock Text="No hay trabajos registrados"
+                                           IsVisible="{Binding !TrabajosCliente.Count}"
+                                           Opacity="0.5"
+                                           FontStyle="Italic"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,8,0,0"/>
+                            </StackPanel>
+
+                            <!-- Espaciador final para indicar el final del contenido -->
+                            <Border Height="60"
+                                    Background="Transparent"
+                                    Margin="0,24,0,0">
+                                <Border Height="1"
+                                        Background="#1f2937"
+                                        Opacity="0.3"
+                                        VerticalAlignment="Top"
+                                        Margin="0,20,0,0"/>
+                            </Border>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Background="#111827"
+                            Padding="28,20"
+                            CornerRadius="0,0,18,18">
+                        <Button Content="Cerrar"
+                                Classes="btn-secondary"
+                                Command="{Binding CerrarFichaCommand}"
+                                HorizontalAlignment="Right"
+                                MinWidth="120"
+                                Height="42"
+                                Padding="12,0"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- Modal de firma de consentimientos (ZIndex alto para estar sobre todo) -->
+        <views:ConsentimientoFirmaView Grid.Row="0"
+                                        Grid.RowSpan="99"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="99"
+                                        ZIndex="2000"
+                                        DataContext="{Binding ConsentimientoFirmaVM}"/>
+        
+        <!-- Modal de foto de DNI -->
+        <views:FotoDniView Grid.Row="0"
+                            Grid.RowSpan="99"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="99"
+                            ZIndex="2000"
+                            DataContext="{Binding FotoDniVM}"/>
+        
+    </Grid>
+
+</UserControl>
+

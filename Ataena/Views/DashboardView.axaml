@@ -1,0 +1,402 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ataena.ViewModels"
+             xmlns:models="using:Ataena.Models"
+             x:Class="Ataena.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel"
+             Loaded="OnLoaded">
+
+    <UserControl.Styles>
+
+        <Style Selector="Border.stat-card">
+            <Setter Property="Background" Value="#1a1a2e"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="22,18"/>
+            <Setter Property="MinWidth" Value="150"/>
+        </Style>
+
+        <Style Selector="Border.content-card">
+            <Setter Property="Background" Value="#1a1a2e"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="24"/>
+        </Style>
+
+        <Style Selector="Border.cita-item">
+            <Setter Property="Background" Value="#22223a"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <Style Selector="Border.alerta-item">
+            <Setter Property="Background" Value="#2a1e1e"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style Selector="Button.quick-action">
+            <Setter Property="Background" Value="#22223a"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="18,12"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style Selector="Button.quick-action:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2e2e4e"/>
+        </Style>
+
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="30,28,30,30" Spacing="0">
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- CABECERA                                                    -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,26">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding Saludo}"
+                               FontSize="30"
+                               FontWeight="Bold"
+                               Foreground="White"/>
+                    <TextBlock Text="{Binding NombreEstudio}"
+                               FontSize="14"
+                               Foreground="#9999bb"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Background="#1a1a2e"
+                        CornerRadius="10"
+                        Padding="16,10"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding FechaHoy}"
+                               FontSize="13"
+                               Foreground="#9999bb"/>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- ACCIONES RÁPIDAS                                            -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <StackPanel Orientation="Horizontal"
+                        Spacing="10"
+                        Margin="0,0,0,24"
+                        IsVisible="{Binding MostrarAccionesRapidas}">
+                <Button Classes="quick-action"
+                        MinWidth="175"
+                        Command="{Binding NuevoClienteRapidoCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="👤" FontSize="15"/>
+                        <TextBlock Text="Nuevo cliente" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="quick-action"
+                        MinWidth="175"
+                        Command="{Binding NuevaCitaRapidaCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="📅" FontSize="15"/>
+                        <TextBlock Text="Nueva cita" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="quick-action"
+                        MinWidth="175"
+                        Command="{Binding NuevoTrabajoRapidoCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="🎨" FontSize="15"/>
+                        <TextBlock Text="Nuevo trabajo" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- TARJETAS DE ESTADÍSTICAS                                    -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <StackPanel Orientation="Horizontal"
+                        Spacing="14"
+                        Margin="0,0,0,24"
+                        IsVisible="{Binding MostrarEstadisticas}">
+
+                <!-- Clientes -->
+                <Border Classes="stat-card">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Barra de acento superior -->
+                        <Border Grid.Row="0"
+                                Height="3"
+                                CornerRadius="2"
+                                Background="#7c6cf0"
+                                HorizontalAlignment="Left"
+                                Width="36"
+                                Margin="0,0,0,14"/>
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding TotalClientes}"
+                                   FontSize="40"
+                                   FontWeight="Bold"
+                                   Foreground="#7c6cf0"/>
+                        <TextBlock Grid.Row="2"
+                                   Text="Clientes activos"
+                                   FontSize="12"
+                                   Foreground="#9999bb"
+                                   Margin="0,6,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Citas hoy -->
+                <Border Classes="stat-card">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0"
+                                Height="3"
+                                CornerRadius="2"
+                                Background="#4ade80"
+                                HorizontalAlignment="Left"
+                                Width="36"
+                                Margin="0,0,0,14"/>
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding CitasHoyCount}"
+                                   FontSize="40"
+                                   FontWeight="Bold"
+                                   Foreground="#4ade80"/>
+                        <TextBlock Grid.Row="2"
+                                   Text="Citas hoy"
+                                   FontSize="12"
+                                   Foreground="#9999bb"
+                                   Margin="0,6,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Por confirmar -->
+                <Border Classes="stat-card">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0"
+                                Height="3"
+                                CornerRadius="2"
+                                Background="#f87171"
+                                HorizontalAlignment="Left"
+                                Width="36"
+                                Margin="0,0,0,14"/>
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding CitasPendientesConfirmar}"
+                                   FontSize="40"
+                                   FontWeight="Bold"
+                                   Foreground="#f87171"/>
+                        <TextBlock Grid.Row="2"
+                                   Text="Por confirmar"
+                                   FontSize="12"
+                                   Foreground="#9999bb"
+                                   Margin="0,6,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Económica (opcional) -->
+                <Border Classes="stat-card"
+                        IsVisible="{Binding MostrarEconomia}">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0"
+                                Height="3"
+                                CornerRadius="2"
+                                Background="#fbbf24"
+                                HorizontalAlignment="Left"
+                                Width="36"
+                                Margin="0,0,0,14"/>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <TextBlock Text="{Binding IngresosSemana, StringFormat='{}{0:N0}'}"
+                                       FontSize="38"
+                                       FontWeight="Bold"
+                                       Foreground="#fbbf24"/>
+                            <TextBlock Text="€"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       Foreground="#fbbf24"
+                                       VerticalAlignment="Bottom"
+                                       Margin="4,0,0,5"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="2"
+                                   Text="Esta semana"
+                                   FontSize="12"
+                                   Foreground="#9999bb"
+                                   Margin="0,6,0,0"/>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- CONTENIDO PRINCIPAL: CITAS + ALERTAS                       -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <Grid ColumnDefinitions="2*,*">
+                <Grid.Styles>
+                    <Style Selector="Grid">
+                        <Setter Property="MinHeight" Value="300"/>
+                    </Style>
+                </Grid.Styles>
+
+                <!-- Citas de hoy -->
+                <Border Classes="content-card"
+                        Grid.Column="0"
+                        Margin="0,0,14,0">
+                    <DockPanel>
+                        <!-- Cabecera de la sección -->
+                        <Grid DockPanel.Dock="Top"
+                              ColumnDefinitions="*,Auto"
+                              Margin="0,0,0,18">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="📅"
+                                           FontSize="18"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="Citas de hoy"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Border Grid.Column="1"
+                                    Background="#22223a"
+                                    CornerRadius="20"
+                                    Padding="12,4"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CitasHoyCount}"
+                                           FontSize="13"
+                                           Foreground="#4ade80"
+                                           FontWeight="SemiBold"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Sin citas -->
+                        <StackPanel IsVisible="{Binding !CitasHoy.Count}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="0,30,0,0">
+                            <TextBlock Text="🎉"
+                                       FontSize="44"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Sin citas para hoy"
+                                       FontSize="15"
+                                       Foreground="#9999bb"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,10,0,0"/>
+                        </StackPanel>
+
+                        <!-- Lista de citas -->
+                        <ScrollViewer IsVisible="{Binding CitasHoy.Count}">
+                            <ItemsControl ItemsSource="{Binding CitasHoy}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Cita">
+                                        <Border Classes="cita-item">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+
+                                                <!-- Indicador hora -->
+                                                <Border Grid.Column="0"
+                                                        Background="#2e2e4e"
+                                                        CornerRadius="8"
+                                                        Padding="10,6"
+                                                        VerticalAlignment="Center"
+                                                        Margin="0,0,14,0">
+                                                    <TextBlock Text="{Binding HoraInicio, StringFormat='{}{0:hh\\:mm}'}"
+                                                               FontSize="16"
+                                                               FontWeight="Bold"
+                                                               Foreground="#7c6cf0"/>
+                                                </Border>
+
+                                                <!-- Cliente y descripción -->
+                                                <StackPanel Grid.Column="1"
+                                                            VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Cliente.NombreCompleto}"
+                                                               FontSize="15"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="White"/>
+                                                    <TextBlock Text="{Binding Descripcion}"
+                                                               FontSize="12"
+                                                               Foreground="#9999bb"
+                                                               Margin="0,2,0,0"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+
+                                                <!-- Duración -->
+                                                <Border Grid.Column="2"
+                                                        Background="#1e1e30"
+                                                        CornerRadius="6"
+                                                        Padding="8,4"
+                                                        VerticalAlignment="Center"
+                                                        Margin="0,0,12,0">
+                                                    <TextBlock Text="{Binding DuracionMinutos, StringFormat='{}{0} min'}"
+                                                               FontSize="12"
+                                                               Foreground="#9999bb"/>
+                                                </Border>
+
+                                                <!-- Dot de estado -->
+                                                <Border Grid.Column="3"
+                                                        Width="10"
+                                                        Height="10"
+                                                        CornerRadius="5"
+                                                        VerticalAlignment="Center"
+                                                        Background="#4ade80"/>
+
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <!-- Alertas / Pendientes -->
+                <Border Classes="content-card"
+                        Grid.Column="1"
+                        IsVisible="{Binding MostrarAlertas}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top"
+                                    Orientation="Horizontal"
+                                    Spacing="10"
+                                    Margin="0,0,0,18">
+                            <TextBlock Text="⚠️"
+                                       FontSize="18"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="Pendientes"
+                                       FontSize="17"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Sin alertas -->
+                        <StackPanel IsVisible="{Binding !Alertas.Count}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="0,20,0,0">
+                            <TextBlock Text="✅"
+                                       FontSize="44"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Todo al día"
+                                       FontSize="15"
+                                       Foreground="#9999bb"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,10,0,0"/>
+                        </StackPanel>
+
+                        <!-- Lista de alertas -->
+                        <ScrollViewer IsVisible="{Binding Alertas.Count}">
+                            <ItemsControl ItemsSource="{Binding Alertas}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="alerta-item">
+                                            <TextBlock Text="{Binding}"
+                                                       TextWrapping="Wrap"
+                                                       FontSize="13"
+                                                       Foreground="#f87171"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <!-- Si alertas desactivadas, citas ocupa todo el ancho -->
+                <!-- (Se gestiona con el Grid.ColumnDefinitions dinámico vía IsVisible) -->
+
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

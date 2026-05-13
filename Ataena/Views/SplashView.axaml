@@ -1,0 +1,94 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Ataena.Views.SplashView"
+        Title="Cargando..."
+        Width="500"
+        Height="400"
+        WindowStartupLocation="CenterScreen"
+        SystemDecorations="None"
+        Background="#0a0a0f"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True">
+
+    <Grid>
+        <!-- Fondo con gradiente -->
+        <Border CornerRadius="12">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Color="#0a0a0f" Offset="0"/>
+                    <GradientStop Color="#1a1a2e" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+
+        <!-- Contenido -->
+        <StackPanel VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    Spacing="24">
+            
+            <!-- Logo del estudio -->
+            <Border x:Name="LogoContainer"
+                    Width="200"
+                    Height="200"
+                    CornerRadius="16"
+                    Background="#1e1e2e"
+                    HorizontalAlignment="Center">
+                <Grid>
+                    <!-- Placeholder si no hay logo -->
+                    <StackPanel x:Name="PlaceholderLogo"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Spacing="8">
+                        <TextBlock Text="🎨" 
+                                   FontSize="64" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Ataena"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="#a855f7"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <!-- Logo real -->
+                    <Image x:Name="LogoImage"
+                           Stretch="Uniform"
+                           Margin="16"
+                           IsVisible="False"/>
+                </Grid>
+            </Border>
+
+            <!-- Nombre del estudio -->
+            <TextBlock x:Name="NombreEstudioText"
+                       Text="Cargando..."
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"/>
+
+            <!-- Indicador de carga -->
+            <StackPanel Spacing="12" HorizontalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                             Width="200"
+                             Height="4"
+                             Foreground="#a855f7"
+                             Background="#374151"/>
+                <TextBlock x:Name="EstadoCargaText"
+                           Text="Iniciando aplicación..."
+                           FontSize="12"
+                           Opacity="0.7"
+                           Foreground="White"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Versión en la esquina -->
+        <TextBlock Text="v1.0.0"
+                   FontSize="10"
+                   Opacity="0.4"
+                   Foreground="White"
+                   VerticalAlignment="Bottom"
+                   HorizontalAlignment="Right"
+                   Margin="0,0,16,12"/>
+    </Grid>
+</Window>
