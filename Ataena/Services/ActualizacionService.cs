@@ -86,7 +86,8 @@ public static class ActualizacionService
         var actual = ObtenerVersionActual();
         try
         {
-            var url = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
+            // Usamos /releases (no /releases/latest) para incluir también prereleases.
+            var url = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases?per_page=10";
             using var resp = await _http.GetAsync(url, ct).ConfigureAwait(false);
             if (!resp.IsSuccessStatusCode)
             {
@@ -95,7 +96,13 @@ public static class ActualizacionService
             }
 
             var json = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var release = JsonSerializer.Deserialize<GitHubRelease>(json);
+            var releases = JsonSerializer.Deserialize<GitHubRelease[]>(json);
+
+            // Tomamos el release no-draft más reciente con tag parseable (el primero del array)
+            var release = releases?
+                .Where(r => !r.Draft && !string.IsNullOrWhiteSpace(r.TagName))
+                .FirstOrDefault();
+
             if (release is null || string.IsNullOrWhiteSpace(release.TagName))
                 return new ResultadoComprobacion { VersionActual = actual };
 
