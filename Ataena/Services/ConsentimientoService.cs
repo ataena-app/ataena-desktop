@@ -416,28 +416,42 @@ public static class ConsentimientoService
     }
 
     /// <summary>
+    /// Lee consentimientos del cliente desde BD (sin caché del ChangeTracker de otras pantallas).
+    /// </summary>
+    public static async Task<List<Consentimiento>> ObtenerConsentimientosClienteAsync(int clienteId)
+    {
+        await using var context = new AtaenaDbContext();
+        return await context.Consentimientos
+            .AsNoTracking()
+            .Where(c => c.ClienteId == clienteId)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Comprueba RGPD vigente consultando la BD directamente (incluye RGPD_Menor).
+    /// </summary>
+    public static async Task<bool> ClienteTieneRgpdVigenteAsync(int clienteId)
+    {
+        try
+        {
+            var todos = await ObtenerConsentimientosClienteAsync(clienteId);
+            return Consentimiento.TieneConsentimientoRgpdVigente(todos);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al comprobar RGPD vigente del cliente {ClienteId}", clienteId);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Valida si un cliente tiene los consentimientos requeridos.
     /// </summary>
     /// <param name="clienteId">ID del cliente.</param>
     /// <returns>True si tiene RGPD firmado, False en caso contrario.</returns>
     public static async Task<bool> ValidarConsentimientosRequeridos(int clienteId)
     {
-        try
-        {
-            using var context = new AtaenaDbContext();
-            
-            var tieneRGPD = await context.Consentimientos
-                .AnyAsync(c => c.ClienteId == clienteId && 
-                              c.Tipo == TipoConsentimiento.RGPD && 
-                              c.Firmado);
-
-            return tieneRGPD;
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error al validar consentimientos del cliente: {ClienteId}", clienteId);
-            return false;
-        }
+        return await ClienteTieneRgpdVigenteAsync(clienteId);
     }
 
     /// <summary>

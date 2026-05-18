@@ -2078,9 +2078,6 @@ public partial class AgendaViewModel : ViewModelBase
             await _db.Entry(trabajoAFirmar).Reference(t => t.Cliente).LoadAsync();
             await _db.Entry(trabajoAFirmar).Reference(t => t.Consentimiento).LoadAsync();
             
-            // Cargar consentimientos del cliente para verificar RGPD
-            await _db.Entry(trabajoAFirmar.Cliente).Collection(c => c.Consentimientos).LoadAsync();
-            
             // Verificar si ya tiene consentimiento firmado
             if (trabajoAFirmar.Consentimiento != null && trabajoAFirmar.Consentimiento.Firmado)
             {
@@ -2089,8 +2086,7 @@ public partial class AgendaViewModel : ViewModelBase
                 return;
             }
 
-            // Verificar que el cliente tenga RGPD (ahora con consentimientos cargados)
-            if (!trabajoAFirmar.Cliente.TieneConsentimientoRGPD)
+            if (!await ConsentimientoService.ClienteTieneRgpdVigenteAsync(trabajoAFirmar.ClienteId))
             {
                 MensajeError = "El cliente debe tener RGPD firmado antes de firmar el consentimiento de trabajo";
                 return;

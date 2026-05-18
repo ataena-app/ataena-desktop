@@ -499,6 +499,9 @@ public partial class ClientesViewModel : ViewModelBase
             return;
 
         await VerFichaCliente(clienteEnLista);
+
+        if (_trabajosVM != null)
+            await _trabajosVM.RefrescarTrasConsentimientoClienteAsync(clienteId);
     }
 
     /// <summary>
@@ -506,12 +509,11 @@ public partial class ClientesViewModel : ViewModelBase
     /// </summary>
     private async Task RefrescarTrabajosTrasClienteAsync()
     {
-        if (_trabajosVM == null)
+        if (_trabajosVM == null || ClienteSeleccionado == null)
             return;
 
         var trabajoSeleccionadoId = _trabajosVM.TrabajoSeleccionado?.Id;
-        await _trabajosVM.CargarTrabajosCommand.ExecuteAsync(null);
-        await _trabajosVM.CargarClientesCommand.ExecuteAsync(null);
+        await _trabajosVM.RefrescarTrasConsentimientoClienteAsync(ClienteSeleccionado.Id);
 
         if (trabajoSeleccionadoId.HasValue)
         {

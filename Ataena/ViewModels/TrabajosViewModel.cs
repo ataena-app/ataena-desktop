@@ -32,6 +32,28 @@ public partial class TrabajosViewModel : ViewModelBase
         _clientesVM = clientesViewModel;
     }
 
+    /// <summary>
+    /// Tras firmar un consentimiento en Clientes, el DbContext de trabajos puede tener al cliente
+    /// en caché sin la colección Consentimientos actualizada. Desacopla y recarga listas.
+    /// </summary>
+    public async Task RefrescarTrasConsentimientoClienteAsync(int clienteId)
+    {
+        foreach (var entry in _db.ChangeTracker.Entries().ToList())
+        {
+            var desacoplar = entry.Entity switch
+            {
+                Cliente c => c.Id == clienteId,
+                Trabajo t => t.ClienteId == clienteId,
+                _ => false
+            };
+            if (desacoplar)
+                entry.State = EntityState.Detached;
+        }
+
+        await CargarTrabajosCommand.ExecuteAsync(null);
+        await CargarClientesCommand.ExecuteAsync(null);
+    }
+
     #region Propiedades - Lista y Selección
 
     /// <summary>
@@ -562,11 +584,8 @@ public partial class TrabajosViewModel : ViewModelBase
                 await _db.Entry(trabajoGuardado).Reference(t => t.Cliente).LoadAsync();
                 await _db.Entry(trabajoGuardado).Reference(t => t.Consentimiento).LoadAsync();
                 
-                // Cargar consentimientos del cliente para verificar RGPD
-                await _db.Entry(trabajoGuardado.Cliente).Collection(c => c.Consentimientos).LoadAsync();
-                
-                // Verificar si el cliente tiene RGPD (ahora con consentimientos cargados)
-                var tieneRGPD = trabajoGuardado.Cliente.TieneConsentimientoRGPD;
+                // RGPD: consulta fresca (evita caché EF si el consentimiento se firmó en Clientes)
+                var tieneRGPD = await ConsentimientoService.ClienteTieneRgpdVigenteAsync(trabajoGuardado.ClienteId);
                 
                 if (!tieneRGPD)
                 {
@@ -811,9 +830,6 @@ public partial class TrabajosViewModel : ViewModelBase
             await _db.Entry(trabajoAFirmar).Reference(t => t.Cliente).LoadAsync();
             await _db.Entry(trabajoAFirmar).Reference(t => t.Consentimiento).LoadAsync();
             
-            // Cargar consentimientos del cliente para verificar RGPD
-            await _db.Entry(trabajoAFirmar.Cliente).Collection(c => c.Consentimientos).LoadAsync();
-            
             // Verificar si ya tiene consentimiento firmado
             if (trabajoAFirmar.Consentimiento != null && trabajoAFirmar.Consentimiento.Firmado)
             {
@@ -822,8 +838,8 @@ public partial class TrabajosViewModel : ViewModelBase
                 return;
             }
 
-            // Verificar que el cliente tenga RGPD (ahora con consentimientos cargados)
-            if (!trabajoAFirmar.Cliente.TieneConsentimientoRGPD)
+            // RGPD: consulta fresca a BD (la colección en memoria puede estar desactualizada)
+            if (!await ConsentimientoService.ClienteTieneRgpdVigenteAsync(trabajoAFirmar.ClienteId))
             {
                 MensajeError = "El cliente debe tener RGPD firmado antes de firmar el consentimiento de trabajo";
                 return;
