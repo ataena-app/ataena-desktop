@@ -4,9 +4,6 @@ Yo, {NOMBRE_CLIENTE}, con DNI/NIE {DNI_CLIENTE}, en calidad de paciente, doy mi 
 
 TIPO DE TRATAMIENTO: {TIPO_TRABAJO}
 DESCRIPCIÓN: {DESCRIPCION_TRABAJO}
-ZONA DEL CUERPO: {ZONA_CUERPO}
-DURACIÓN ESTIMADA: {DURACION_MINUTOS} minutos
-PRECIO: {PRECIO} €
 
 1. INFORMACIÓN RECIBIDA:
    He sido informado/a sobre:
@@ -15,7 +12,6 @@ PRECIO: {PRECIO} €
    - Los posibles efectos secundarios o complicaciones
    - Las contraindicaciones
    - Los cuidados post-tratamiento necesarios
-   - El precio del tratamiento
 
 2. RIESGOS Y COMPLICACIONES:
    He sido informado/a de los posibles riesgos asociados al tratamiento, incluyendo pero no limitándose a:

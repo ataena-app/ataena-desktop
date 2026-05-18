@@ -13,9 +13,6 @@ Yo, {NOMBRE_TUTOR}, con DNI/NIE {DNI_TUTOR}, en calidad de representante legal d
 
 TIPO DE TRATAMIENTO: {TIPO_TRABAJO}
 DESCRIPCIÓN: {DESCRIPCION_TRABAJO}
-ZONA DEL CUERPO: {ZONA_CUERPO}
-DURACIÓN ESTIMADA: {DURACION_MINUTOS} minutos
-PRECIO: {PRECIO} €
 
 1. INFORMACIÓN RECIBIDA:
    Como representante legal del menor, he sido informado/a sobre:
@@ -24,7 +21,6 @@ PRECIO: {PRECIO} €
    - Los posibles efectos secundarios o complicaciones
    - Las contraindicaciones
    - Los cuidados post-tratamiento necesarios
-   - El precio del tratamiento
    - Las consideraciones especiales para menores de edad
 
 2. RIESGOS Y COMPLICACIONES:

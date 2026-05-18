@@ -8,6 +8,9 @@
     <title>Firma de Consentimiento - Ataena</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            overscroll-behavior-y: contain;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -15,6 +18,8 @@
             padding: 16px;
             margin: 0;
             color: #333;
+            overscroll-behavior-y: contain;
+            -webkit-overflow-scrolling: touch;
         }
         .container {
             max-width: 700px;
@@ -114,42 +119,79 @@
         }
 
         /* ───────── Firma ───────── */
-        .signature-section.disabled {
-            opacity: 0.45;
-            pointer-events: none;
+        /* No usar pointer-events:none en la sección: en CSS los hijos no reciben toques */
+        .signature-section.disabled .firma-aviso-bloqueo {
+            display: block;
+        }
+        .signature-section:not(.disabled) .firma-aviso-bloqueo {
+            display: none;
+        }
+        .firma-aviso-bloqueo {
+            display: none;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .signature-section.disabled .canvas-container {
+            opacity: 0.55;
+        }
+        .firma-bloque {
+            margin-bottom: 20px;
+        }
+        .firma-bloque h3 {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            color: #111827;
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
         .canvas-container {
             position: relative;
             background: #f8f9fa;
             border: 3px dashed #dee2e6;
             border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            min-height: 220px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            min-height: 160px;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
-        #signatureCanvas {
+        canvas.firma-movil {
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             cursor: crosshair;
             touch-action: none;
             display: block;
+            width: 100%;
             max-width: 100%;
             height: auto;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+            z-index: 2;
         }
         .canvas-overlay {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            left: 12px;
+            right: 12px;
+            top: 12px;
+            bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
             color: #adb5bd;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
+            z-index: 1;
         }
         .buttons {
             display: flex;
@@ -204,7 +246,7 @@
     <div class="container">
         <header>
             <h1 id="consentTitle">📝 {CONSENT_TITLE}</h1>
-            <p class="subtitle">Lee el documento, marca que lo aceptas y firma abajo</p>
+            <p id="consentSubtitle" class="subtitle">{SUBTITLE_MOBILE}</p>
         </header>
 
         <main>
@@ -224,13 +266,14 @@
                 </label>
             </div>
 
-            <!-- Área de firma -->
-            <div id="signatureSection" class="signature-section disabled">
+            <!-- Área de firma (una caja: mayores) -->
+            <div id="signatureSectionSingle" class="signature-section disabled">
+                <p class="firma-aviso-bloqueo">Marca la casilla de aceptacion arriba (y lee el documento hasta el final) para poder firmar.</p>
                 <h2 style="font-size:16px;color:#374151;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
                     ✍️ Firma aquí
                 </h2>
                 <div class="canvas-container">
-                    <canvas id="signatureCanvas"></canvas>
+                    <canvas id="signatureCanvas" class="firma-movil"></canvas>
                     <div class="canvas-overlay" id="canvasOverlay">
                         <p>Firma aquí con tu dedo</p>
                     </div>
@@ -238,7 +281,38 @@
 
                 <div class="buttons">
                     <button id="btnLimpiar" class="btn btn-secondary">🗑️ Limpiar</button>
-                    <button id="btnEnviar" class="btn btn-primary" disabled>✓ Enviar Firma</button>
+                    <button id="btnEnviar" class="btn btn-primary" disabled>✓ Enviar firma</button>
+                </div>
+            </div>
+
+            <!-- Dos cajas: consentimiento de menor (mismo documento, un solo envío) -->
+            <div id="signatureSectionDual" class="signature-section disabled" style="display:none;">
+                <p class="firma-aviso-bloqueo">Marca la casilla de aceptacion arriba (y lee el documento hasta el final) para poder firmar.</p>
+                <h2 style="font-size:16px;color:#374151;margin-bottom:14px;">✍️ Firmas en este documento</h2>
+
+                <div class="firma-bloque">
+                    <h3>Representante legal</h3>
+                    <div class="canvas-container">
+                        <canvas id="signatureCanvasRepresentante" class="firma-movil"></canvas>
+                        <div class="canvas-overlay" id="canvasOverlayRepresentante">
+                            <p>Firma del representante legal</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="firma-bloque">
+                    <h3>Menor</h3>
+                    <div class="canvas-container">
+                        <canvas id="signatureCanvasMenor" class="firma-movil"></canvas>
+                        <div class="canvas-overlay" id="canvasOverlayMenor">
+                            <p>Firma del menor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button id="btnLimpiarDual" class="btn btn-secondary">🗑️ Limpiar ambas</button>
+                    <button id="btnEnviarDual" class="btn btn-primary" disabled>✓ Enviar ambas firmas</button>
                 </div>
             </div>
 
@@ -248,15 +322,22 @@
     </div>
 
     <script>
+        window.__ATAENA_FIRMA_MENOR_DOS_CAJAS__ = {FIRMA_MENOR_DOS_CAJAS};
+        window.__ATAENA_FIRMAS_HABILITADAS__ = false;
         // Habilitar checkbox sólo cuando se haya hecho scroll hasta el final del consentimiento.
         (function () {
             var consent = document.getElementById('consentText');
             var hint = document.getElementById('scrollHint');
             var chk = document.getElementById('chkAccept');
-            var section = document.getElementById('signatureSection');
+            var dual = window.__ATAENA_FIRMA_MENOR_DOS_CAJAS__ === true;
+            var sectionSingle = document.getElementById('signatureSectionSingle');
+            var sectionDual = document.getElementById('signatureSectionDual');
+            if (dual) {
+                sectionSingle.style.display = 'none';
+                sectionDual.style.display = 'block';
+            }
 
             function checkScrolled() {
-                // Si el contenido cabe sin scroll, lo damos por leído.
                 var fits = consent.scrollHeight - consent.clientHeight <= 4;
                 var atBottom = consent.scrollTop + consent.clientHeight >= consent.scrollHeight - 8;
                 if (fits || atBottom) {
@@ -269,15 +350,24 @@
             window.addEventListener('load', checkScrolled);
             window.addEventListener('resize', checkScrolled);
 
-            chk.addEventListener('change', function () {
+            function actualizarFirmaHabilitada() {
+                window.__ATAENA_FIRMAS_HABILITADAS__ = chk.checked;
+                var active = dual ? sectionDual : sectionSingle;
                 if (chk.checked) {
-                    section.classList.remove('disabled');
+                    active.classList.remove('disabled');
                 } else {
-                    section.classList.add('disabled');
+                    active.classList.add('disabled');
                 }
-            });
+                if (chk.checked && typeof window.__ataenaRefrescarCanvasFirma === 'function') {
+                    requestAnimationFrame(function () {
+                        window.__ataenaRefrescarCanvasFirma();
+                    });
+                }
+            }
+
+            chk.addEventListener('change', actualizarFirmaHabilitada);
         })();
     </script>
-    <script src="/signature.js"></script>
+    <script src="/signature.js?v=3"></script>
 </body>
 </html>

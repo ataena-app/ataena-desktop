@@ -64,7 +64,7 @@
             <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,20">
                 <TextBox Grid.Column="0"
                          Text="{Binding TextoBusqueda}"
-                         Watermark="🔍 Buscar por descripción, zona, estilo o cliente..."
+                         Watermark="🔍 Buscar por descripción, zona, cliente o teléfono..."
                          Margin="0,0,10,0"/>
                 <ComboBox Grid.Column="1"
                           ItemsSource="{Binding Clientes}"
@@ -162,22 +162,13 @@
                                             </TextBlock>
                                             <TextBlock>
                                                 <Run Text="📅 "/>
-                                                <Run Text="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy}'}"/>
-                                            </TextBlock>
-                                            <TextBlock>
-                                                <Run Text="⏱️ "/>
-                                                <Run Text="{Binding DuracionEstimadaMinutos}"/>
-                                                <Run Text=" min (estimado)"/>
+                                                <Run Text="{Binding FechaCreacion, StringFormat='{}{0:dd/MM/yyyy}'}"/>
                                             </TextBlock>
                                         </StackPanel>
                                     </StackPanel>
                                     
-                                    <!-- Precio y acciones -->
+                                    <!-- Acciones -->
                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding Precio, StringFormat='{}{0:C}'}"
-                                                   FontSize="18"
-                                                   FontWeight="Bold"
-                                                   Foreground="#4CAF50"/>
                                         <TextBlock IsVisible="{Binding Colores}"
                                                    Text="🎨 Color"
                                                    FontSize="11"
@@ -185,13 +176,22 @@
                                                    Margin="0,5,0,0"/>
                                         <!-- Botón para firmar consentimiento -->
                                         <Button IsVisible="{Binding !TieneConsentimiento}"
-                                                Content="📝 Firmar consentimiento"
-                                                FontSize="11"
-                                                Padding="8,4"
+                                                MinWidth="168"
+                                                MinHeight="40"
+                                                Padding="12,8"
                                                 Margin="0,8,0,0"
                                                 Tag="{Binding}"
                                                 Click="OnFirmarConsentimientoClick"
-                                                Classes="btn-primary"/>
+                                                Classes="btn-primary"
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center"
+                                                ToolTip.Tip="Firmar consentimiento de trabajo">
+                                            <TextBlock Text="📝 Firmar consentimiento"
+                                                       FontSize="11"
+                                                       TextWrapping="Wrap"
+                                                       TextAlignment="Center"
+                                                       MaxWidth="160"/>
+                                        </Button>
                                     </StackPanel>
                                     
                                 </Grid>
@@ -271,24 +271,32 @@
                                     BorderBrush="#ef5350"
                                     BorderThickness="2">
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="⚠️ Trabajo con consentimiento firmado"
+                                    <TextBlock Text="⚠️ Consentimiento de trabajo firmado"
                                                FontSize="15"
                                                FontWeight="Bold"
                                                Foreground="#ef5350"/>
-                                    <TextBlock Text="Este trabajo no se puede modificar porque tiene un consentimiento firmado. El consentimiento está vinculado a los detalles específicos de este trabajo."
+                                    <TextBlock Text="Los datos de arriba ya no se pueden cambiar. Solo puedes ver o enviar el PDF y, más abajo, añadir o quitar fotos del trabajo."
                                                FontSize="12"
                                                Foreground="#ffcdd2"
                                                TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
 
-                            <!-- Cliente -->
+                            <!-- Cliente / tipo / descripción (consentimiento) + notas (solo internas). Desactivado si ya hay consentimiento firmado. -->
+                            <StackPanel IsEnabled="{Binding TrabajoCamposPrincipalesHabilitados}">
+
+                            <!-- Cliente (búsqueda + desplegable) -->
                             <TextBlock Text="Cliente *" Opacity="0.7" Margin="0,0,0,5"/>
-                            <ComboBox ItemsSource="{Binding Clientes}"
+                            <TextBox Name="ClienteBusquedaTrabajoTextBox"
+                                     Text="{Binding TextoBusquedaClienteFormulario, Mode=TwoWay}"
+                                     Watermark="Buscar por nombre o teléfono…"
+                                     Classes="form-field"
+                                     Margin="0,0,0,8"
+                                     TextChanged="OnClienteBusquedaTrabajoTextChanged"/>
+                            <ComboBox Name="ClienteTrabajoComboBox"
+                                      ItemsSource="{Binding ClientesFiltradosFormulario}"
                                       SelectedItem="{Binding ClienteSeleccionado}"
-                                      MinWidth="260"
-                                      IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                      Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Arrow|Arrow'}">
+                                      MinWidth="260">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Spacing="2">
@@ -306,9 +314,7 @@
                             <!-- Tipo -->
                             <TextBlock Text="Tipo *" Opacity="0.7" Margin="16,16,0,5"/>
                             <ComboBox SelectedItem="{Binding TipoTrabajo}"
-                                      Height="40"
-                                      IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                      Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Arrow|Arrow'}">
+                                      Height="40">
                                 <ComboBox.Items>
                                     <x:Static Member="models:TipoTrabajo.Tatuaje"/>
                                     <x:Static Member="models:TipoTrabajo.Piercing"/>
@@ -316,91 +322,20 @@
                             </ComboBox>
 
                             <!-- Descripción -->
-                            <TextBlock Text="Descripción *" Opacity="0.7" Margin="16,16,0,5"/>
+                            <TextBlock Text="Descripción * (aparece en el consentimiento)" Opacity="0.7" Margin="16,16,0,5"/>
                             <TextBox Text="{Binding Descripcion}"
-                                     Watermark="Descripción del trabajo..."
-                                     Classes="form-field"
-                                     IsReadOnly="{Binding TrabajoSeleccionado.TieneConsentimiento}"
-                                     Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Ibeam|Arrow'}"/>
+                                     Watermark="Ej.: tigre en el cuello, piercing ombligo…"
+                                     Classes="form-field"/>
 
-                            <!-- Zona del cuerpo -->
-                            <TextBlock Text="Zona del cuerpo" Opacity="0.7" Margin="16,16,0,5"/>
-                            <TextBox Text="{Binding ZonaCuerpo}"
-                                     Watermark="Brazo, pierna, espalda..."
-                                     Classes="form-field"
-                                     IsReadOnly="{Binding TrabajoSeleccionado.TieneConsentimiento}"
-                                     Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Ibeam|Arrow'}"/>
-
-                            <!-- Estilo y Tamaño -->
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Estilo" Opacity="0.7" Margin="0,0,0,5"/>
-                                    <TextBox Text="{Binding Estilo}"
-                                             Watermark="Realismo, Old School..."
-                                             Classes="form-field"
-                                             IsReadOnly="{Binding TrabajoSeleccionado.TieneConsentimiento}"
-                                             Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Ibeam|Arrow'}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Tamaño" Opacity="0.7" Margin="0,0,0,5"/>
-                                    <TextBox Text="{Binding Tamano}"
-                                             Watermark="10x15cm"
-                                             Classes="form-field"
-                                             IsReadOnly="{Binding TrabajoSeleccionado.TieneConsentimiento}"
-                                             Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Ibeam|Arrow'}"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Colores (solo para tatuajes) -->
-                            <CheckBox Content="Tiene colores 🎨"
-                                      IsChecked="{Binding Colores}"
-                                      IsVisible="{Binding TipoTrabajo, Converter={StaticResource EqualConverter}, ConverterParameter=Tatuaje}"
-                                      IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                      Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Arrow|Arrow'}"
-                                      Margin="0,12,0,15"/>
-
-                            <!-- Precio, Fecha y Duración -->
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Precio (€) *" Opacity="0.7" Margin="0,0,0,5"/>
-                                    <NumericUpDown Value="{Binding Precio}"
-                                                   Minimum="0"
-                                                   Maximum="10000"
-                                                   Increment="10"
-                                                   Height="40"
-                                                   IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                                   Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Arrow|Arrow'}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Fecha *" Opacity="0.7" Margin="0,0,0,5"/>
-                                    <DatePicker SelectedDate="{Binding Fecha}"
-                                                Height="40"
-                                                HorizontalAlignment="Stretch"
-                                                IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                                Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Arrow|Arrow'}"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Duración estimada -->
-                            <TextBlock Text="Duración estimada (min)" Opacity="0.7" Margin="16,16,0,5"/>
-                            <NumericUpDown Value="{Binding DuracionEstimadaMinutos}"
-                                           Minimum="0"
-                                           Maximum="1440"
-                                           Increment="15"
-                                           Height="40"
-                                           IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                           Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Arrow|Arrow'}"/>
-
-                            <!-- Notas -->
-                            <TextBlock Text="Notas" Opacity="0.7" Margin="16,16,0,5"/>
+                            <!-- Notas internas: no van al PDF de consentimiento -->
+                            <TextBlock Text="Notas (solo estudio, no en el consentimiento)" Opacity="0.7" Margin="16,16,0,5"/>
                             <TextBox Text="{Binding Notas}"
-                                     Watermark="Notas adicionales..."
+                                     Watermark="Notas internas…"
                                      AcceptsReturn="True"
-                                     Height="60"
+                                     Height="80"
                                      TextWrapping="Wrap"
-                                     Margin="16,0,0,0"
-                                     IsReadOnly="{Binding TrabajoSeleccionado.TieneConsentimiento}"
-                                     Cursor="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToCursorConverter}, ConverterParameter='Ibeam|Arrow'}"/>
+                                     Margin="16,0,0,0"/>
+                            </StackPanel>
 
                             <!-- Consentimiento de Trabajo (solo para edición) -->
                             <Border IsVisible="{Binding EsEdicion}"
@@ -468,13 +403,19 @@
                                     
                                     <!-- Botón para firmar si no tiene consentimiento -->
                                     <Button IsVisible="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
-                                            Content="📝 Firmar consentimiento de trabajo"
                                             Classes="btn-primary"
                                             Command="{Binding FirmarConsentimientoTrabajoCommand}"
                                             CommandParameter="{Binding TrabajoSeleccionado}"
                                             HorizontalAlignment="Stretch"
-                                            Height="42"
-                                            Margin="0,8,0,0"/>
+                                            MinHeight="48"
+                                            Padding="16,10"
+                                            Margin="0,8,0,0"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center">
+                                        <TextBlock Text="📝 Firmar consentimiento de trabajo"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"/>
+                                    </Button>
                                 </StackPanel>
                             </Border>
 
@@ -489,7 +430,7 @@
                                                FontSize="18"
                                                FontWeight="Bold"
                                                Margin="0,0,0,4"/>
-                                    <TextBlock Text="Solo disponibles si el cliente tiene RGPD e imágenes firmados y el trabajo tiene consentimiento."
+                                    <TextBlock Text="Requiere RGPD y consentimiento de este trabajo. Si el cliente permite fotos, en mayores hace falta también el consentimiento de imágenes. Las fotos se pueden cambiar después de firmar desde esta misma ficha."
                                                FontSize="12"
                                                Opacity="0.7"
                                                TextWrapping="Wrap"/>
@@ -522,7 +463,7 @@
                                                                Opacity="0.5"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
-                                                               IsVisible="{Binding !FotoAntesImagen}"/>
+                                                               IsVisible="{Binding MuestraSinFotoAntes}"/>
                                                 </Grid>
                                             </Border>
                                             
@@ -532,6 +473,7 @@
                                                         Classes="btn-secondary"
                                                         Command="{Binding TomarFotoAntesCommand}"
                                                         CommandParameter="{Binding TrabajoSeleccionado}"
+                                                        IsEnabled="{Binding ClientePermiteFotosEnTrabajo}"
                                                         MinWidth="100"
                                                         Height="36"
                                                         Padding="12,0"
@@ -576,7 +518,7 @@
                                                                Opacity="0.5"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
-                                                               IsVisible="{Binding !FotoDespuesImagen}"/>
+                                                               IsVisible="{Binding MuestraSinFotoDespues}"/>
                                                 </Grid>
                                             </Border>
                                             
@@ -586,6 +528,7 @@
                                                         Classes="btn-secondary"
                                                         Command="{Binding TomarFotoDespuesCommand}"
                                                         CommandParameter="{Binding TrabajoSeleccionado}"
+                                                        IsEnabled="{Binding ClientePermiteFotosEnTrabajo}"
                                                         MinWidth="100"
                                                         Height="36"
                                                         Padding="12,0"
@@ -644,6 +587,7 @@
                                     Classes="btn-danger"
                                     Command="{Binding EliminarTrabajoCommand}"
                                     IsVisible="{Binding EsEdicion}"
+                                    IsEnabled="{Binding TrabajoCamposPrincipalesHabilitados}"
                                     MinWidth="150"
                                     Height="42"
                                     Padding="12,0"
@@ -665,13 +609,13 @@
                                 <Button Content="💾 Guardar"
                                         Classes="btn-primary"
                                         Command="{Binding GuardarTrabajoCommand}"
-                                        IsEnabled="{Binding !TrabajoSeleccionado.TieneConsentimiento}"
+                                        IsEnabled="{Binding TrabajoCamposPrincipalesHabilitados}"
                                         MinWidth="130"
                                         Height="42"
                                         Padding="12,0"
                                         HorizontalContentAlignment="Center"
                                         VerticalContentAlignment="Center"
-                                        ToolTip.Tip="{Binding TrabajoSeleccionado.TieneConsentimiento, Converter={StaticResource BoolToTextConverter}, ConverterParameter='No se puede modificar|Guardar cambios'}"/>
+                                        ToolTip.Tip="{Binding TrabajoFormularioBloqueadoPorConsentimiento, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Consentimiento firmado: no se puede guardar cambios del trabajo|Guardar trabajo'}"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -704,8 +648,8 @@
                 Margin="30,10,30,10"
                 BorderBrush="#4a5568"
                 BorderThickness="2">
-            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                <StackPanel Grid.Column="0">
+            <StackPanel Spacing="14">
+                <StackPanel>
                     <TextBlock Text="{Binding MensajeAvisoConsentimiento}"
                                FontSize="14"
                                FontWeight="SemiBold"
@@ -717,30 +661,31 @@
                                Margin="0,5,0,0"
                                TextWrapping="Wrap"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
+                <StackPanel Orientation="Horizontal"
                             Spacing="10"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center">
-                    <Button Content="📝 Firmar ahora"
-                            Command="{Binding FirmarConsentimientoTrabajoCommand}"
+                            HorizontalAlignment="Right">
+                    <Button Command="{Binding FirmarConsentimientoTrabajoCommand}"
                             CommandParameter="{Binding TrabajoPendienteConsentimiento}"
                             Classes="btn-primary"
                             MinWidth="150"
-                            Height="40"
-                            Padding="16,0"
+                            MinHeight="44"
+                            Padding="16,10"
                             HorizontalContentAlignment="Center"
-                            VerticalContentAlignment="Center"/>
-                    <Button Content="Más tarde"
-                            Command="{Binding CerrarAvisoConsentimientoCommand}"
+                            VerticalContentAlignment="Center">
+                        <TextBlock Text="📝 Firmar ahora"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"/>
+                    </Button>
+                    <Button Command="{Binding CerrarAvisoConsentimientoCommand}"
                             Classes="btn-secondary"
-                            MinWidth="110"
-                            Height="40"
-                            Padding="16,0"
+                            MinWidth="120"
+                            MinHeight="44"
+                            Padding="16,10"
                             HorizontalContentAlignment="Center"
-                            VerticalContentAlignment="Center"/>
+                            VerticalContentAlignment="Center"
+                            Content="Más tarde"/>
                 </StackPanel>
-            </Grid>
+            </StackPanel>
         </Border>
         
     </Grid>

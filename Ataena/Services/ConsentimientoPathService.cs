@@ -163,6 +163,30 @@ public static class ConsentimientoPathService
     }
 
     /// <summary>
+    /// Devuelve la ruta de la foto del DNI del cliente si existe en disco (ruta guardada o ubicación estándar).
+    /// </summary>
+    public static string? RutaFotoDniExistente(int clienteId, string? rutaGuardada)
+    {
+        if (!string.IsNullOrWhiteSpace(rutaGuardada) && File.Exists(rutaGuardada))
+            return rutaGuardada;
+
+        var estandar = ObtenerRutaFotoDni(clienteId);
+        return File.Exists(estandar) ? estandar : null;
+    }
+
+    /// <summary>
+    /// Devuelve la ruta de la foto del DNI del tutor si existe en disco (ruta guardada o ubicación estándar).
+    /// </summary>
+    public static string? RutaFotoDniTutorExistente(int clienteId, string? rutaGuardada)
+    {
+        if (!string.IsNullOrWhiteSpace(rutaGuardada) && File.Exists(rutaGuardada))
+            return rutaGuardada;
+
+        var estandar = ObtenerRutaFotoDniTutor(clienteId);
+        return File.Exists(estandar) ? estandar : null;
+    }
+
+    /// <summary>
     /// Obtiene la ruta de la carpeta para un tipo específico de consentimiento.
     /// DEPRECADO: Usar ObtenerRutaCarpetaCliente en su lugar.
     /// </summary>
@@ -177,6 +201,7 @@ public static class ConsentimientoPathService
             Models.TipoConsentimiento.RGPD => "RGPD",
             Models.TipoConsentimiento.RGPD_Menor => "RGPD",
             Models.TipoConsentimiento.Imagenes => "Imagenes",
+            Models.TipoConsentimiento.Imagenes_Menor => "Imagenes",
             Models.TipoConsentimiento.Trabajo => "Trabajos",
             Models.TipoConsentimiento.Trabajo_Menor => "Trabajos",
             _ => "Otros"
@@ -208,6 +233,7 @@ public static class ConsentimientoPathService
             Models.TipoConsentimiento.RGPD => "rgpd",
             Models.TipoConsentimiento.RGPD_Menor => "rgpd_menor",
             Models.TipoConsentimiento.Imagenes => "imagenes",
+            Models.TipoConsentimiento.Imagenes_Menor => "imagenes_menor",
             Models.TipoConsentimiento.Trabajo => "trabajo",
             Models.TipoConsentimiento.Trabajo_Menor => "trabajo_menor",
             _ => "otro"

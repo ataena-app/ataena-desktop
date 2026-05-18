@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +18,7 @@ namespace Ataena.ViewModels;
 /// </summary>
 public partial class ConsentimientoFirmaViewModel : ViewModelBase
 {
-    private readonly FirmaWebService _firmaWebService = new();
+    private readonly FirmaWebService _firmaWebService = FirmaWebService.InstanciaCompartida;
     private string? _tokenActual;
     private Consentimiento? _consentimiento;
 
@@ -24,6 +26,11 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     /// Evento que se dispara cuando se completa la firma y se guarda el PDF.
     /// </summary>
     public event EventHandler<Cliente>? FirmaCompletada;
+
+    /// <summary>
+    /// El usuario canceló o cerró el modal de firma (sin implicar que <see cref="FirmaCompletada"/> haya tenido lugar).
+    /// </summary>
+    public event EventHandler? ModalSesionFinalizada;
 
     #region Propiedades
 
@@ -47,6 +54,7 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
         TipoConsentimiento.RGPD => "📝 Consentimiento RGPD",
         TipoConsentimiento.RGPD_Menor => "📝 Consentimiento RGPD (Menor)",
         TipoConsentimiento.Imagenes => "📸 Consentimiento de uso de imágenes",
+        TipoConsentimiento.Imagenes_Menor => "📸 Consentimiento de uso de imágenes (Menor)",
         TipoConsentimiento.Trabajo => "📝 Consentimiento de trabajo",
         TipoConsentimiento.Trabajo_Menor => "📝 Consentimiento de trabajo (Menor)",
         _ => "📝 Consentimiento"
@@ -137,37 +145,30 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     private bool _esConsentimientoMenor = false;
 
     /// <summary>
-    /// Indica si estamos en la fase de firma del tutor.
+    /// Data URL de la firma del representante para previsualizar en el modal (consentimiento menor o única firma).
     /// </summary>
     [ObservableProperty]
-    private bool _esperandoFirmaTutor = false;
+    private string? _vistaPreviaRepresentanteDataUrl;
 
     /// <summary>
-    /// Firma del menor en formato Base64 (almacenada mientras se espera la del tutor).
+    /// Data URL de la firma del menor (solo consentimiento de menor con doble firma en el móvil).
+    /// </summary>
+    [ObservableProperty]
+    private string? _vistaPreviaMenorDataUrl;
+
+    /// <summary>
+    /// Firma del menor en Base64 (solo fila en BD / PDF).
     /// </summary>
     [ObservableProperty]
     private string? _firmaMenorBase64;
 
     /// <summary>
-    /// Indica si ya se recibió la firma del menor.
+    /// Fase de firma en móvil: un solo QR con dos cajas si es menor.
     /// </summary>
-    [ObservableProperty]
-    private bool _firmaMenorRecibida = false;
-
-    /// <summary>
-    /// Indica si ya se recibió la firma del tutor.
-    /// </summary>
-    [ObservableProperty]
-    private bool _firmaTutorRecibida = false;
-
-    /// <summary>
-    /// Título de la fase actual de firma.
-    /// </summary>
-    public string TituloFaseFirma => EsperandoFirmaTutor 
-        ? "✍️ Firma del Tutor/Representante Legal" 
-        : EsConsentimientoMenor 
-            ? "✍️ Firma del Menor" 
-            : "✍️ Firma del Cliente";
+    public string TituloFaseFirma =>
+        EsConsentimientoMenor
+            ? "📱 Un solo enlace: REPRESENTANTE LEGAL arriba y MENOR abajo (dos cajas)."
+            : "📱 Escanea el QR o abre la URL en el móvil para firmar.";
 
     /// <summary>
     /// Indica si el cliente es menor y no tiene datos del tutor.
@@ -202,48 +203,56 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
 
         try
         {
-            EstaProcesando = true;
-            EstadoConexion = "🔄 Iniciando servidor...";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstaProcesando = true;
+                EstadoConexion = "🔄 Iniciando servidor...";
+            });
 
-            // Iniciar servidor HTTP
-            var servidorIniciado = await _firmaWebService.IniciarServidor();
+            var servidorIniciado = await _firmaWebService.IniciarServidor().ConfigureAwait(false);
             if (!servidorIniciado)
             {
-                EstadoConexion = "❌ Error al iniciar servidor. Verifica permisos.";
-                EstaProcesando = false;
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    EstadoConexion =
+                        "❌ No se pudo iniciar el servidor local. ¿Puerto ocupado? Prueba ejecutar como admin si el equipo bloquea el enlace.";
+                });
                 return;
             }
 
-            // Generar token único
             _tokenActual = FirmaWebService.GenerarTokenUnico();
 
-            // Pasamos el texto del consentimiento para que el móvil lo muestre íntegro.
-            // En la 2ª fase de menores el título cambia para que el tutor lo entienda.
-            var tituloMovil = EsperandoFirmaTutor
-                ? $"{TituloModal} · Firma del tutor"
-                : TituloModal;
-            _firmaWebService.RegistrarToken(_tokenActual, TextoConsentimiento, tituloMovil);
+            var tituloMovil = TituloModal;
 
-            // Generar URL
-            UrlFirma = _firmaWebService.GenerarUrlFirma(_tokenActual);
+            _firmaWebService.RegistrarToken(_tokenActual!, TextoConsentimiento, tituloMovil,
+                firmaMenorDosCajas: EsConsentimientoMenor);
 
-            // Generar QR Code
-            QrCodeImage = QRCodeService.GenerarQRCode(UrlFirma, 300);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                UrlFirma = _firmaWebService.GenerarUrlFirma(_tokenActual);
+                QrCodeImage = QRCodeService.GenerarQRCode(UrlFirma, 300);
 
-            // Suscribirse al evento de firma recibida
-            _firmaWebService.FirmaRecibida += OnFirmaRecibida;
+                _firmaWebService.FirmaRecibida -= OnFirmaRecibida;
+                _firmaWebService.FirmaRecibida += OnFirmaRecibida;
 
-            // Esperar firma en segundo plano
-            _ = Task.Run(async () => await EsperarFirma());
+                EstadoConexion = EsConsentimientoMenor
+                    ? "✅ Servidor activo — Un solo QR: en el móvil, primero REPRESENTANTE LEGAL y debajo MENOR."
+                    : "✅ Servidor activo - Escanea el código QR con tu móvil";
+            });
 
-            EstadoConexion = "✅ Servidor activo - Escanea el código QR con tu móvil";
-            EstaProcesando = false;
+            _ = Task.Run(async () => await EsperarFirma().ConfigureAwait(false));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error al iniciar proceso de firma");
-            EstadoConexion = "❌ Error al iniciar el proceso de firma";
-            EstaProcesando = false;
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstadoConexion = "❌ Error al iniciar el proceso de firma";
+            });
+        }
+        finally
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => EstaProcesando = false);
         }
     }
 
@@ -253,10 +262,7 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     [RelayCommand]
     private void CancelarFirma()
     {
-        _firmaWebService.FirmaRecibida -= OnFirmaRecibida;
-        _firmaWebService.DetenerServidor();
-        EsVisible = false;
-        LimpiarEstado();
+        CerrarModalYServidor();
     }
 
     /// <summary>
@@ -266,7 +272,18 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConfirmarFirma()
     {
-        if (!FirmaRecibida || string.IsNullOrEmpty(ImagenFirmaBase64))
+        if (EsConsentimientoMenor)
+        {
+            if (!FirmaRecibida ||
+                string.IsNullOrWhiteSpace(FirmaMenorBase64) ||
+                string.IsNullOrWhiteSpace(ImagenFirmaBase64))
+            {
+                Log.Warning("Intento de confirmar consentimiento menor sin ambas firmas");
+                EstadoConexion = "⚠️ Falta alguna firma (representante o menor). Completa desde el móvil.";
+                return;
+            }
+        }
+        else if (!FirmaRecibida || string.IsNullOrEmpty(ImagenFirmaBase64))
         {
             Log.Warning("Intento de confirmar firma sin firma recibida");
             return;
@@ -284,44 +301,15 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
             return;
         }
 
-        // Flujo de doble firma para menores
-        if (EsConsentimientoMenor && !EsperandoFirmaTutor)
-        {
-            // Primera fase completada: firma del menor recibida
-            // Verificar que el cliente tiene datos del tutor
-            if (!Cliente.TieneDatosTutor)
-            {
-                EstadoConexion = "⚠️ Faltan datos del tutor. Edita el cliente primero.";
-                return;
-            }
-
-            // Guardar firma del menor y pasar a fase 2
-            _consentimiento.FirmaMenorBase64 = FirmaMenorBase64;
-            EsperandoFirmaTutor = true;
-            
-            // Limpiar para nueva firma (del tutor)
-            FirmaRecibida = false;
-            ImagenFirmaBase64 = null;
-            AceptaTerminos = false;
-            
-            // Notificar cambios en propiedades calculadas
-            OnPropertyChanged(nameof(TituloFaseFirma));
-            
-            EstadoConexion = "👨‍👩‍👧 Ahora debe firmar el tutor/representante legal";
-            
-            // Generar nuevo token y QR para la firma del tutor
-            await IniciarFirmaCommand.ExecuteAsync(null);
-            return;
-        }
-
         try
         {
             EstaProcesando = true;
             EstadoConexion = "📄 Generando PDF...";
 
-            // Si es menor, guardar también la firma del tutor
+            // Consentimiento de menor: representante legal (captura en mismo envío desde el móvil) + menor
             if (EsConsentimientoMenor)
             {
+                _consentimiento.FirmaMenorBase64 = FirmaMenorBase64;
                 _consentimiento.FirmaTutorBase64 = ImagenFirmaBase64;
                 _consentimiento.NombreTutorFirmante = Cliente.NombreCompletoTutor;
                 _consentimiento.DniTutorFirmante = Cliente.DniTutor;
@@ -364,10 +352,16 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
             PdfGenerado = true;
             OnPropertyChanged(nameof(MostrarImprimir));
 
+            OverlayNotificationService.Mostrar(
+                "El archivo PDF del consentimiento se ha guardado. Puedes imprimirlo desde el mismo modal o cerrar cuando termines.",
+                OverlayNotificationKind.Success,
+                "¡PDF guardado!");
+
             // Disparar evento de firma completada
             FirmaCompletada?.Invoke(this, Cliente);
 
             // No cerrar automáticamente: el usuario puede imprimir o cerrar
+            EstaProcesando = false;
         }
         catch (Exception ex)
         {
@@ -418,16 +412,21 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     /// <param name="cliente">Cliente que va a firmar.</param>
     /// <param name="tipo">Tipo de consentimiento.</param>
     /// <param name="trabajo">Trabajo asociado (opcional).</param>
-    public async Task AbrirModal(Cliente cliente, TipoConsentimiento tipo, Trabajo? trabajo = null)
+    /// <param name="omitirConsentimientoIdRenovacion">
+    /// Renovación: Id del consentimiento vigente que no debe reutilizarse (se creará una fila nueva).
+    /// </param>
+    public async Task AbrirModal(Cliente cliente, TipoConsentimiento tipo, Trabajo? trabajo = null,
+        int? omitirConsentimientoIdRenovacion = null)
     {
         Cliente = cliente;
         TipoConsentimiento = tipo;
         Trabajo = trabajo;
 
         // Detectar si es consentimiento para menor de edad
-        EsConsentimientoMenor = cliente.EsMenorDeEdad && 
-                               (tipo == TipoConsentimiento.RGPD_Menor || 
-                                tipo == TipoConsentimiento.Trabajo_Menor);
+        EsConsentimientoMenor = cliente.EsMenorDeEdad &&
+                               (tipo == TipoConsentimiento.RGPD_Menor ||
+                                tipo == TipoConsentimiento.Trabajo_Menor ||
+                                tipo == TipoConsentimiento.Imagenes_Menor);
 
         // Cargar texto del consentimiento
         var plantilla = ConsentimientoService.CargarPlantillaTexto(tipo);
@@ -461,12 +460,17 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
             UsarImpresora = cfg?.UsarImpresora ?? false;
         }
 
-        // Crear o cargar consentimiento
+        // Crear o cargar consentimiento vigente (!Renovado). En renovaciones se puede excluir el Id sustituido.
         using var db = new AtaenaDbContext();
-        _consentimiento = await db.Consentimientos
-            .FirstOrDefaultAsync(c => c.ClienteId == cliente.Id && 
-                                     c.Tipo == tipo && 
-                                     (trabajo == null || c.TrabajoId == trabajo.Id));
+        var query = db.Consentimientos
+            .Where(c => c.ClienteId == cliente.Id &&
+                        c.Tipo == tipo &&
+                        !c.Renovado &&
+                        (trabajo == null || c.TrabajoId == trabajo.Id));
+        if (omitirConsentimientoIdRenovacion.HasValue)
+            query = query.Where(c => c.Id != omitirConsentimientoIdRenovacion.Value);
+
+        _consentimiento = await query.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
 
         if (_consentimiento == null)
         {
@@ -482,17 +486,16 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
             };
         }
 
-        // Limpiar estado primero
-        LimpiarEstado();
-        
-        // Notificar cambio en propiedades calculadas
-        OnPropertyChanged(nameof(TituloFaseFirma));
-        OnPropertyChanged(nameof(FaltanDatosTutor));
-        
-        // Ahora abrir el modal explícitamente
-        EsVisible = true;
+        // Tras awaits de BD la continuación puede ser de un pool de hilos (sin sync context UI):
+        // abrir modal, QR y bitmap deben asignarse en el hilo de la aplicación Avalonia.
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            LimpiarEstado();
+            OnPropertyChanged(nameof(TituloFaseFirma));
+            OnPropertyChanged(nameof(FaltanDatosTutor));
+            EsVisible = true;
+        });
 
-        // Iniciar automáticamente el servidor
         await IniciarFirmaCommand.ExecuteAsync(null);
     }
 
@@ -501,10 +504,16 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
     /// </summary>
     public void CerrarModal()
     {
-        EsVisible = false;
-        LimpiarEstado();
+        CerrarModalYServidor();
+    }
+
+    private void CerrarModalYServidor()
+    {
         _firmaWebService.FirmaRecibida -= OnFirmaRecibida;
         _firmaWebService.DetenerServidor();
+        EsVisible = false;
+        LimpiarEstado();
+        ModalSesionFinalizada?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion
@@ -521,21 +530,27 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
 
         try
         {
-            var firma = await _firmaWebService.EsperarFirma(_tokenActual, TimeSpan.FromMinutes(5));
+            var firma = await _firmaWebService.EsperarFirma(_tokenActual, TimeSpan.FromMinutes(5))
+                .ConfigureAwait(false);
             if (!string.IsNullOrEmpty(firma))
             {
-                // La firma se recibirá a través del evento OnFirmaRecibida
                 Log.Information("Firma recibida para token: {Token}", _tokenActual);
             }
             else
             {
-                EstadoConexion = "⏱️ Tiempo de espera agotado. Intenta de nuevo.";
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    EstadoConexion = "⏱️ Tiempo de espera agotado. Intenta de nuevo.";
+                });
             }
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error al esperar firma");
-            EstadoConexion = "❌ Error al recibir la firma";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstadoConexion = "❌ Error al recibir la firma";
+            });
         }
     }
 
@@ -547,30 +562,53 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
         if (e.Token != _tokenActual)
             return;
 
-        ImagenFirmaBase64 = e.ImagenBase64;
-        FirmaRecibida = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (e.Token != _tokenActual)
+                return;
 
-        if (EsConsentimientoMenor)
-        {
-            if (!EsperandoFirmaTutor)
+            if (EsConsentimientoMenor && e.EsFirmaConsentimientoMenorDual)
             {
-                // Primera fase: firma del menor
-                FirmaMenorBase64 = e.ImagenBase64;
-                FirmaMenorRecibida = true;
-                EstadoConexion = "✅ Firma del menor recibida - Revisa y continúa con la firma del tutor";
+                ImagenFirmaBase64 = e.ImagenBase64;
+                FirmaMenorBase64 = e.ImagenMenorConsentimientoMenorDual!;
+                FirmaRecibida = true;
+                VistaPreviaRepresentanteDataUrl = ABase64SinPrefijoADataUri(e.ImagenBase64);
+                VistaPreviaMenorDataUrl = ABase64SinPrefijoADataUri(e.ImagenMenorConsentimientoMenorDual);
+                EstadoConexion =
+                    "✅ Representante legal y menor firmaron en la misma página — revisa y pulsa «Generar PDF».";
+                OverlayNotificationService.Mostrar(
+                    "Ambas firmas recibidas. Comprueba la vista previa en el equipo y guarda el PDF.",
+                    OverlayNotificationKind.Success,
+                    "Firmas recibidas");
+                return;
             }
-            else
+
+            if (EsConsentimientoMenor)
             {
-                // Segunda fase: firma del tutor
-                FirmaTutorRecibida = true;
-                EstadoConexion = "✅ Firma del tutor recibida - Revisa y confirma";
+                FirmaRecibida = false;
+                EstadoConexion =
+                    "⚠️ Falta modo de firma dual en el móvil. Actualiza la app, recarga esta vista y rescanea el QR.";
+                Log.Warning(
+                    "Recibida firma no dual para consentimiento de menor — token puede ser página antigua.");
+                return;
             }
-        }
-        else
-        {
+
+            ImagenFirmaBase64 = e.ImagenBase64;
+            FirmaRecibida = true;
+            VistaPreviaRepresentanteDataUrl = ABase64SinPrefijoADataUri(e.ImagenBase64);
+            VistaPreviaMenorDataUrl = null;
             EstadoConexion = "✅ Firma recibida - Revisa y confirma";
-        }
+            OverlayNotificationService.Mostrar(
+                "Revisa la firma en el modal y pulsa «Generar PDF» para guardarlo.",
+                OverlayNotificationKind.Success,
+                "¡Consentimiento firmado!");
+        });
     }
+
+    private static string? ABase64SinPrefijoADataUri(string? imagenSinPrefijo) =>
+        string.IsNullOrWhiteSpace(imagenSinPrefijo)
+            ? null
+            : "data:image/png;base64," + imagenSinPrefijo.Trim();
 
     /// <summary>
     /// Limpia el estado del modal.
@@ -586,11 +624,9 @@ public partial class ConsentimientoFirmaViewModel : ViewModelBase
         EstaProcesando = false;
         _tokenActual = null;
         
-        // Limpiar estado de menores
-        EsperandoFirmaTutor = false;
         FirmaMenorBase64 = null;
-        FirmaMenorRecibida = false;
-        FirmaTutorRecibida = false;
+        VistaPreviaRepresentanteDataUrl = null;
+        VistaPreviaMenorDataUrl = null;
 
         // Limpiar estado post-generación
         PdfGenerado = false;

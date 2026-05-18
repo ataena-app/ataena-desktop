@@ -46,6 +46,7 @@
             <ComboBox.Items>
               <x:Static Member="models:TipoConsentimiento.RGPD"/>
               <x:Static Member="models:TipoConsentimiento.Imagenes"/>
+              <x:Static Member="models:TipoConsentimiento.Imagenes_Menor"/>
               <x:Static Member="models:TipoConsentimiento.Trabajo"/>
             </ComboBox.Items>
           </ComboBox>

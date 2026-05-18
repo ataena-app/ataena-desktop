@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ataena.Data;
@@ -18,7 +19,7 @@ namespace Ataena.ViewModels;
 public partial class FotoTrabajoViewModel : ViewModelBase
 {
     private readonly AtaenaDbContext _db;
-    private readonly FirmaWebService _firmaWebService = new();
+    private readonly FirmaWebService _firmaWebService = FirmaWebService.InstanciaCompartida;
 
     private string? _tokenActual;
     private Trabajo? _trabajo;
@@ -85,7 +86,7 @@ public partial class FotoTrabajoViewModel : ViewModelBase
             // Iniciar servidor y generar QR
             await IniciarCapturaAsync();
 
-            EsVisible = true;
+            await Dispatcher.UIThread.InvokeAsync(() => EsVisible = true);
         }
         catch (Exception ex)
         {
@@ -142,37 +143,47 @@ public partial class FotoTrabajoViewModel : ViewModelBase
 
         try
         {
-            EstaProcesando = true;
-            EstadoConexion = "🔄 Iniciando servidor...";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstaProcesando = true;
+                EstadoConexion = "🔄 Iniciando servidor...";
+            });
 
-            var servidorIniciado = await _firmaWebService.IniciarServidor();
+            var servidorIniciado = await _firmaWebService.IniciarServidor().ConfigureAwait(false);
             if (!servidorIniciado)
             {
-                EstadoConexion = "❌ Error al iniciar servidor. Verifica permisos.";
-                EstaProcesando = false;
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    EstadoConexion = "❌ Error al iniciar servidor. Verifica permisos.";
+                    EstaProcesando = false;
+                });
                 return;
             }
 
             _tokenActual = FirmaWebService.GenerarTokenUnico();
             _firmaWebService.RegistrarToken(_tokenActual);
 
-            UrlFoto = _firmaWebService.GenerarUrlFoto(_tokenActual);
-            QrCodeImage = QRCodeService.GenerarQRCode(UrlFoto, 300);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                UrlFoto = _firmaWebService.GenerarUrlFoto(_tokenActual);
+                QrCodeImage = QRCodeService.GenerarQRCode(UrlFoto, 300);
+                EstadoConexion = "✅ Servidor activo - Escanea el código QR con tu móvil para hacer la foto";
+            });
 
-            // Esperar foto en segundo plano
-            _ = Task.Run(async () => await EsperarFotoAsync());
-
-            EstadoConexion = "✅ Servidor activo - Escanea el código QR con tu móvil para hacer la foto";
+            _ = Task.Run(async () => await EsperarFotoAsync().ConfigureAwait(false));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error al iniciar captura de foto");
-            EstadoConexion = "❌ Error al iniciar la captura de foto";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstadoConexion = "❌ Error al iniciar la captura de foto";
+                EstaProcesando = false;
+            });
+            return;
         }
-        finally
-        {
-            EstaProcesando = false;
-        }
+
+        await Dispatcher.UIThread.InvokeAsync(() => EstaProcesando = false);
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
 using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ataena.Services;
@@ -56,6 +58,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public BackupViewModel BackupVM { get; } = new();
 
     /// <summary>
+    /// Modal de novedades / changelog.
+    /// </summary>
+    public ChangelogViewModel ChangelogVM { get; } = new();
+
+    /// <summary>
     /// Título de la ventana principal, actualizado con el nombre del estudio.
     /// </summary>
     [ObservableProperty]
@@ -96,8 +103,41 @@ public partial class MainWindowViewModel : ViewModelBase
         // Registrar handler para diálogos de confirmación
         DialogService.OnConfirmacionRequerida += ProcesarSolicitudConfirmacion;
 
+        OverlayNotificationService.Registrar(MostrarNotificacionOverlay);
+
         // Comprobar actualizaciones en segundo plano (no bloquea el arranque)
         _ = Task.Run(ComprobarActualizacionesAsync);
+
+        _ = ComprobarChangelogTrasArranqueAsync();
+    }
+
+    /// <summary>
+    /// Tras arrancar, muestra el changelog si la versión instalada es más nueva que la última vista.
+    /// </summary>
+    private async Task ComprobarChangelogTrasArranqueAsync()
+    {
+        try
+        {
+            await Task.Delay(900).ConfigureAwait(false);
+
+            if (!ChangelogService.DebeMostrarTrasActualizacion())
+                return;
+
+            await Dispatcher.UIThread.InvokeAsync(() => ChangelogVM.AbrirTrasActualizacion());
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Error al comprobar changelog al arranque");
+        }
+    }
+
+    /// <summary>
+    /// Abre el historial de cambios (consulta manual).
+    /// </summary>
+    [RelayCommand]
+    private void VerChangelog()
+    {
+        ChangelogVM.AbrirHistorial();
     }
 
     #endregion
@@ -276,6 +316,91 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         MostrarDialogoConfirmacion = false;
         _dialogoTcs?.TrySetResult(false);
+    }
+
+    #endregion
+
+    #region Avisos superpuestos (primera plana, sobre modales secundarios)
+
+    private CancellationTokenSource? _overlayAutoCloseCts;
+
+    /// <summary>
+    /// Muestra el panel de aviso global sobre toda la ventana.
+    /// </summary>
+    [ObservableProperty]
+    private bool _overlayNotificacionVisible;
+
+    /// <summary>
+    /// Mensaje principal del aviso.
+    /// </summary>
+    [ObservableProperty]
+    private string _overlayNotificacionMensaje = string.Empty;
+
+    /// <summary>
+    /// Variante visual (acento por tipo).
+    /// </summary>
+    [ObservableProperty]
+    private OverlayNotificationKind _overlayNotificacionTipo = OverlayNotificationKind.Information;
+
+    /// <summary>
+    /// Encabezado corto derivado del tipo (puede personalizarse en el futuro).
+    /// </summary>
+    [ObservableProperty]
+    private string _overlayNotificacionTitulo = string.Empty;
+
+    private void MostrarNotificacionOverlay(string mensaje, OverlayNotificationKind tipo, string? tituloPersonalizado)
+    {
+        _overlayAutoCloseCts?.Cancel();
+        _overlayAutoCloseCts?.Dispose();
+        _overlayAutoCloseCts = new CancellationTokenSource();
+        var token = _overlayAutoCloseCts.Token;
+
+        OverlayNotificacionTitulo = !string.IsNullOrWhiteSpace(tituloPersonalizado)
+            ? tituloPersonalizado.Trim()
+            : tipo switch
+            {
+                OverlayNotificationKind.Success => "Listo",
+                OverlayNotificationKind.Warning => "Atención",
+                OverlayNotificationKind.Error => "No se puede continuar",
+                _ => "Aviso"
+            };
+
+        OverlayNotificacionTipo = tipo;
+        OverlayNotificacionMensaje = mensaje;
+        OverlayNotificacionVisible = true;
+
+        _ = CerrarNotificacionPorTiempoAsync(token);
+    }
+
+    private async Task CerrarNotificacionPorTiempoAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(5200), ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!ct.IsCancellationRequested)
+                OverlayNotificacionVisible = false;
+        }, DispatcherPriority.Normal);
+    }
+
+    /// <summary>
+    /// Cierra el aviso y cancela el cierre automático pendiente.
+    /// </summary>
+    [RelayCommand]
+    private void CerrarOverlayNotificacion()
+    {
+        _overlayAutoCloseCts?.Cancel();
+        _overlayAutoCloseCts?.Dispose();
+        _overlayAutoCloseCts = null;
+        OverlayNotificacionVisible = false;
+        OverlayNotificacionMensaje = string.Empty;
     }
 
     #endregion

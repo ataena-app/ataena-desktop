@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Ataena.Models;
 using Ataena.ViewModels;
 
@@ -24,6 +25,7 @@ public partial class TrabajosView : UserControl
         if (DataContext is TrabajosViewModel vm)
         {
             _ = vm.CargarTrabajosCommand.ExecuteAsync(null);
+            _ = vm.CargarClientesCommand.ExecuteAsync(null);
         }
     }
 
@@ -54,6 +56,38 @@ public partial class TrabajosView : UserControl
                 vm.FirmarConsentimientoTrabajoCommand.Execute(trabajo);
             }
         }
+    }
+
+    /// <summary>
+    /// Abre el desplegable del cliente cuando hay texto de búsqueda, para que se vean solo los resultados filtrados.
+    /// </summary>
+    private void OnClienteBusquedaTrabajoTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (ClienteTrabajoComboBox == null)
+            return;
+
+        var q = ClienteBusquedaTrabajoTextBox?.Text?.Trim();
+        if (string.IsNullOrEmpty(q))
+        {
+            ClienteTrabajoComboBox.IsDropDownOpen = false;
+            return;
+        }
+
+        if (DataContext is not TrabajosViewModel vm || vm.ClientesFiltradosFormulario.Count == 0)
+        {
+            ClienteTrabajoComboBox.IsDropDownOpen = false;
+            return;
+        }
+
+        // Esperar un tick para que el binding aplicado tras el texto actualice la lista antes de abrir.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ClienteTrabajoComboBox is null ||
+                vm.ClientesFiltradosFormulario.Count == 0)
+                return;
+
+            ClienteTrabajoComboBox.IsDropDownOpen = true;
+        }, DispatcherPriority.Input);
     }
 }
 

@@ -5,6 +5,24 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.5] - 2026-05-18
+
+### Añadido
+- **Consentimiento de imágenes para menores** (`Imagenes_Menor`): doble firma tutor + menor en un solo QR y PDF.
+- **Chips en lista de clientes**: RGPD, imágenes y menor; botón **Ver DNI** en ficha y modal de foto.
+- **Changelog / Novedades**: se muestra al actualizar (una vez por versión) y se puede consultar desde el menú **Novedades** o pulsando la versión en la barra lateral.
+
+### Cambiado
+- Firma en móvil: dos cajas en la misma página, dibujo estable en pantalla táctil.
+- Formulario y PDF de consentimiento de **trabajo** sin precio ni duración estimada; firmas más compactas en el PDF.
+- Búsqueda de **trabajos** por teléfono del cliente; botones de consentimiento sin texto cortado.
+
+### Arreglado
+- Mensajes y validaciones de fotos de trabajo alineados con consentimientos vigentes (RGPD, imágenes, trabajo).
+- Cliente puede indicar que no quiere fotos de trabajo (`PermiteFotosTrabajo`).
+
+---
+
 ## [0.5.4] - 2026-05-13
 
 ### Cambiado
@@ -69,6 +87,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+[0.5.5]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.5
 [0.5.4]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.4
 [0.5.3]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.3
 [0.5.2]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.2

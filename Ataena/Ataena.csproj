@@ -5,8 +5,8 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Ataena</AssemblyName>
     <RootNamespace>Ataena</RootNamespace>
-    <Version>0.5.4</Version>
-    <InformationalVersion>0.5.4-beta</InformationalVersion>
+    <Version>0.5.5</Version>
+    <InformationalVersion>0.5.5-beta</InformationalVersion>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\favicon.ico</ApplicationIcon>
@@ -25,6 +25,10 @@
     </Content>
     <!-- Plantillas de consentimientos -->
     <Content Include="Plantillas\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- Changelog (novedades tras actualizar) -->
+    <Content Include="..\CHANGELOG.md" Link="Changelog\CHANGELOG.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

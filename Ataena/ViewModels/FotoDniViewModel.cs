@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ataena.Data;
@@ -17,7 +18,7 @@ namespace Ataena.ViewModels;
 /// </summary>
 public partial class FotoDniViewModel : ViewModelBase
 {
-    private readonly FirmaWebService _firmaWebService = new();
+    private readonly FirmaWebService _firmaWebService = FirmaWebService.InstanciaCompartida;
 
     private string? _tokenActual;
     private Cliente? _cliente;
@@ -94,10 +95,10 @@ public partial class FotoDniViewModel : ViewModelBase
             // Cargar preview existente
             CargarPreview();
 
-            // Iniciar servidor y generar QR
+            // Iniciar servidor y generar QR (UI thread en IniciarCapturaAsync después del await)
             await IniciarCapturaAsync();
 
-            EsVisible = true;
+            await Dispatcher.UIThread.InvokeAsync(() => EsVisible = true);
         }
         catch (Exception ex)
         {
@@ -128,7 +129,15 @@ public partial class FotoDniViewModel : ViewModelBase
     {
         try
         {
-            var ruta = _esDniTutor ? _cliente?.FotoDniTutorPath : _cliente?.FotoDniPath;
+            if (_cliente == null)
+            {
+                PreviewFotoDni = null;
+                return;
+            }
+
+            var ruta = _esDniTutor
+                ? ConsentimientoPathService.RutaFotoDniTutorExistente(_cliente.Id, _cliente.FotoDniTutorPath)
+                : ConsentimientoPathService.RutaFotoDniExistente(_cliente.Id, _cliente.FotoDniPath);
             PreviewFotoDni = CargarBitmapDesdeRuta(ruta);
         }
         catch (Exception ex)
@@ -167,36 +176,46 @@ public partial class FotoDniViewModel : ViewModelBase
 
         try
         {
-            EstaProcesando = true;
-            EstadoConexion = "🔄 Iniciando servidor...";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstaProcesando = true;
+                EstadoConexion = "🔄 Iniciando servidor...";
+            });
 
-            var servidorIniciado = await _firmaWebService.IniciarServidor();
+            var servidorIniciado = await _firmaWebService.IniciarServidor().ConfigureAwait(false);
             if (!servidorIniciado)
             {
-                EstadoConexion = "❌ Error al iniciar servidor. Verifica permisos.";
-                EstaProcesando = false;
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    EstadoConexion =
+                        "❌ No se pudo iniciar el servidor local. ¿Puerto ocupado? Prueba ejecutar como admin.";
+                });
                 return;
             }
 
             _tokenActual = FirmaWebService.GenerarTokenUnico();
-            _firmaWebService.RegistrarToken(_tokenActual);
+            _firmaWebService.RegistrarToken(_tokenActual!);
 
-            UrlFoto = _firmaWebService.GenerarUrlFoto(_tokenActual);
-            QrCodeImage = QRCodeService.GenerarQRCode(UrlFoto, 300);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                UrlFoto = _firmaWebService.GenerarUrlFoto(_tokenActual);
+                QrCodeImage = QRCodeService.GenerarQRCode(UrlFoto, 300);
+                EstadoConexion = "✅ Escanea el código QR con tu móvil y sube la foto del DNI";
+            });
 
-            // Esperar foto en segundo plano
-            _ = Task.Run(async () => await EsperarFotoAsync());
-
-            EstadoConexion = "✅ Escanea el código QR con tu móvil y sube la foto del DNI";
+            _ = Task.Run(async () => await EsperarFotoAsync().ConfigureAwait(false));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error al iniciar captura de foto de DNI");
-            EstadoConexion = "❌ Error al iniciar la captura";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                EstadoConexion = "❌ Error al iniciar la captura";
+            });
         }
         finally
         {
-            EstaProcesando = false;
+            await Dispatcher.UIThread.InvokeAsync(() => EstaProcesando = false);
         }
     }
 
@@ -313,6 +332,40 @@ public partial class FotoDniViewModel : ViewModelBase
         _firmaWebService.DetenerServidor();
         _tokenActual = null;
         PreviewFotoDni = null;
+    }
+
+    /// <summary>
+    /// Abre la foto actual en el visor de imágenes del sistema.
+    /// </summary>
+    [RelayCommand]
+    private void VerFotoAmpliada()
+    {
+        if (_cliente == null)
+            return;
+
+        try
+        {
+            var ruta = _esDniTutor
+                ? ConsentimientoPathService.RutaFotoDniTutorExistente(_cliente.Id, _cliente.FotoDniTutorPath)
+                : ConsentimientoPathService.RutaFotoDniExistente(_cliente.Id, _cliente.FotoDniPath);
+
+            if (string.IsNullOrWhiteSpace(ruta) || !File.Exists(ruta))
+            {
+                MensajeError = "No hay foto del DNI para abrir.";
+                return;
+            }
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = ruta,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir foto de DNI ampliada");
+            MensajeError = $"Error al abrir la foto: {ex.Message}";
+        }
     }
 
     [RelayCommand]

@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Ataena.Data;
@@ -33,6 +35,7 @@ public static class ConsentimientoService
                 TipoConsentimiento.RGPD => "ConsentimientoRGPD.txt",
                 TipoConsentimiento.RGPD_Menor => "ConsentimientoRGPD_Menor.txt",
                 TipoConsentimiento.Imagenes => "ConsentimientoImagenes.txt",
+                TipoConsentimiento.Imagenes_Menor => "ConsentimientoImagenes_Menor.txt",
                 TipoConsentimiento.Trabajo => "ConsentimientoTrabajo.txt",
                 TipoConsentimiento.Trabajo_Menor => "ConsentimientoTrabajo_Menor.txt",
                 _ => null
@@ -103,26 +106,104 @@ public static class ConsentimientoService
         resultado = resultado.Replace("{FECHA_FIRMA}", fechaFirma.ToString("dd/MM/yyyy"));
         resultado = resultado.Replace("{HORA_FIRMA}", fechaFirma.ToString("HH:mm"));
 
-        // Datos del trabajo (si aplica)
+        // Datos del trabajo (si aplica). El consentimiento solo refleja tipo y descripción; notas/zona/precio/duración no se incluyen.
         if (trabajo != null)
         {
-            resultado = resultado.Replace("{TIPO_TRABAJO}", trabajo.Tipo.ToString());
+            var tipoTxt = trabajo.Tipo switch
+            {
+                TipoTrabajo.Tatuaje => "Tatuaje",
+                TipoTrabajo.Piercing => "Piercing",
+                _ => trabajo.Tipo.ToString()
+            };
+            resultado = resultado.Replace("{TIPO_TRABAJO}", tipoTxt);
             resultado = resultado.Replace("{DESCRIPCION_TRABAJO}", trabajo.Descripcion ?? "No especificada");
-            resultado = resultado.Replace("{ZONA_CUERPO}", trabajo.ZonaCuerpo ?? "No especificada");
-            // Usar la duración real si existe, si no la estimada, si no indicar no especificada
-            var minutosTrabajo = trabajo.DuracionRealMinutos
-                                 ?? trabajo.DuracionEstimadaMinutos;
-            resultado = resultado.Replace("{DURACION_MINUTOS}", minutosTrabajo.HasValue && minutosTrabajo.Value > 0
-                ? minutosTrabajo.Value.ToString()
-                : "No especificada");
-            resultado = resultado.Replace("{PRECIO}", trabajo.Precio.ToString("F2"));
+
+            // Compatibilidad con plantillas antiguas si aún contienen estos marcadores:
+            resultado = resultado.Replace("{ZONA_CUERPO}", string.Empty);
+            resultado = resultado.Replace("{DURACION_MINUTOS}", string.Empty);
+            resultado = resultado.Replace("{PRECIO}", string.Empty);
+        }
+        else
+        {
+            resultado = resultado.Replace("{TIPO_TRABAJO}", string.Empty);
+            resultado = resultado.Replace("{DESCRIPCION_TRABAJO}", string.Empty);
+            resultado = resultado.Replace("{ZONA_CUERPO}", string.Empty);
+            resultado = resultado.Replace("{DURACION_MINUTOS}", string.Empty);
+            resultado = resultado.Replace("{PRECIO}", string.Empty);
         }
 
         // Datos del profesional (desde configuración, si están disponibles)
         resultado = resultado.Replace("{NOMBRE_PROFESIONAL}", configuracion.NombreEstudio); // Por ahora usar nombre del estudio
         resultado = resultado.Replace("{NUMERO_COLEGIADO}", "No especificado"); // TODO: Agregar campo a Configuracion si es necesario
 
+        resultado = LimpiarLineasPrecioDuracionZonaVacias(resultado);
+
         return resultado;
+    }
+
+    /// <summary>
+    /// Elimina líneas residuales de plantillas antiguas (precio, duración, zona) tras vaciar placeholders.
+    /// </summary>
+    private static string LimpiarLineasPrecioDuracionZonaVacias(string texto)
+    {
+        var lineas = texto.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+        var filtradas = new List<string>(lineas.Length);
+
+        foreach (var linea in lineas)
+        {
+            if (EsLineaResidualPrecioDuracionOZona(linea.Trim()))
+                continue;
+            filtradas.Add(linea);
+        }
+
+        var resultado = string.Join(Environment.NewLine, filtradas);
+        return Regex.Replace(resultado, @"(\r?\n){3,}", Environment.NewLine + Environment.NewLine);
+    }
+
+    private static bool EsLineaResidualPrecioDuracionOZona(string linea)
+    {
+        if (string.IsNullOrWhiteSpace(linea))
+            return false;
+
+        if (linea.Contains('{'))
+            return false;
+
+        if (linea.StartsWith("Precio", StringComparison.OrdinalIgnoreCase) &&
+            !Regex.IsMatch(linea, @"\d"))
+            return true;
+
+        if ((linea.Contains("duración", StringComparison.OrdinalIgnoreCase) ||
+             linea.Contains("duracion", StringComparison.OrdinalIgnoreCase) ||
+             linea.Contains("DURACION", StringComparison.Ordinal)) &&
+            !Regex.IsMatch(linea, @"\d"))
+            return true;
+
+        if (linea.StartsWith("Zona", StringComparison.OrdinalIgnoreCase))
+        {
+            var idx = linea.IndexOf(':');
+            if (idx >= 0 && string.IsNullOrWhiteSpace(linea[(idx + 1)..]))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static void AgregarBloqueFirmaPdf(ColumnDescriptor column, string etiqueta, byte[] imagenBytes)
+    {
+        column.Item()
+            .PaddingTop(0.35f, Unit.Centimetre)
+            .Column(bloque =>
+            {
+                bloque.Spacing(0.08f, Unit.Centimetre);
+                bloque.Item()
+                    .Text(etiqueta)
+                    .FontSize(10)
+                    .Bold();
+                bloque.Item()
+                    .MaxHeight(2.6f, Unit.Centimetre)
+                    .Image(imagenBytes)
+                    .FitHeight();
+            });
     }
 
     /// <summary>
@@ -274,49 +355,36 @@ public static class ConsentimientoService
                                 }
                             }
 
-                            // Espacio antes de la firma
                             column.Item()
-                                .Height(2f, Unit.Centimetre);
+                                .PaddingTop(0.5f, Unit.Centimetre);
 
-                            // Imagen de la firma (cliente o menor)
-                            if (imagenBytes != null)
+                            // Menor + representante: primero REPRESENTANTE LEGAL, después MENOR
+                            if (consentimiento.EsConsentimientoMenor)
                             {
-                                var tituloFirma = consentimiento.EsConsentimientoMenor 
-                                    ? $"Firma del menor ({cliente.NombreCompleto}):" 
-                                    : "Firma del cliente:";
-                                
-                                column.Item()
-                                    .PaddingTop(1, Unit.Centimetre)
-                                    .PaddingBottom(0.5f, Unit.Centimetre)
-                                    .Text(tituloFirma)
-                                    .FontSize(10)
-                                    .Italic();
+                                if (imagenTutorBytes != null)
+                                {
+                                    AgregarBloqueFirmaPdf(
+                                        column,
+                                        $"REPRESENTANTE LEGAL ({consentimiento.NombreTutorFirmante}, DNI {consentimiento.DniTutorFirmante})",
+                                        imagenTutorBytes);
+                                }
 
-                                column.Item()
-                                    .Height(3f, Unit.Centimetre)
-                                    .Image(imagenBytes)
-                                    .FitArea();
+                                if (imagenBytes != null)
+                                {
+                                    AgregarBloqueFirmaPdf(
+                                        column,
+                                        $"MENOR ({cliente.NombreCompleto})",
+                                        imagenBytes);
+                                }
                             }
-
-                            // Imagen de la firma del tutor (para consentimientos de menores)
-                            if (imagenTutorBytes != null && consentimiento.EsConsentimientoMenor)
+                            else if (imagenBytes != null)
                             {
-                                column.Item()
-                                    .PaddingTop(0.5f, Unit.Centimetre)
-                                    .PaddingBottom(0.5f, Unit.Centimetre)
-                                    .Text($"Firma del tutor/representante legal ({consentimiento.NombreTutorFirmante}, DNI: {consentimiento.DniTutorFirmante}):")
-                                    .FontSize(10)
-                                    .Italic();
-
-                                column.Item()
-                                    .Height(3f, Unit.Centimetre)
-                                    .Image(imagenTutorBytes)
-                                    .FitArea();
+                                AgregarBloqueFirmaPdf(column, "Firma del cliente:", imagenBytes);
                             }
 
                             // Datos de firma
                             column.Item()
-                                .PaddingTop(1, Unit.Centimetre)
+                                .PaddingTop(0.4f, Unit.Centimetre)
                                 .Text(text =>
                                 {
                                     text.Span($"Firmado el {consentimiento.FechaFirma:dd/MM/yyyy} a las {consentimiento.FechaFirma:HH:mm}")

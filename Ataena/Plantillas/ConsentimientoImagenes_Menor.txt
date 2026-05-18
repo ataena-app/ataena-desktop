@@ -1,0 +1,43 @@
+CONSENTIMIENTO PARA EL USO DE IMÁGENES (MENOR DE EDAD)
+
+DATOS DEL MENOR:
+Nombre: {NOMBRE_CLIENTE}
+DNI/NIE: {DNI_CLIENTE}
+Fecha de nacimiento: {FECHA_NACIMIENTO_CLIENTE}
+
+DATOS DEL TUTOR/REPRESENTANTE LEGAL:
+Nombre: {NOMBRE_TUTOR}
+DNI/NIE: {DNI_TUTOR}
+Teléfono: {TELEFONO_TUTOR}
+
+El menor indicado anteriormente participa voluntariamente de la sesión/documentación fotográfica o audiovisual en {NOMBRE_ESTUDIO} (en adelante, "el Estudio"), con domicilio en {DIRECCION_ESTUDIO}.
+
+Yo, {NOMBRE_TUTOR}, en calidad de tutor o representante legal del menor arriba identificado, y en mi propio nombre, doy el consentimiento expreso para que el Estudio pueda capturar, almacenar, reproducir y utilizar fotografías y/o vídeos que incluyan la imagen del menor, tanto del estado inicial como del resultado de los tratamientos realizados cuando proceda.
+
+1. FINALIDAD DEL USO DE IMÁGENES:
+   - Documentación del estado inicial y resultado de los tratamientos
+   - Uso interno del Estudio para seguimiento y evaluación de resultados
+   - Publicidad y promoción del Estudio (solo si se ha marcado la opción correspondiente en la ficha del cliente)
+   - Publicación en redes sociales, página web o material promocional (solo si se ha marcado la opción correspondiente en la ficha del cliente)
+
+2. ALCANCE DEL CONSENTIMIENTO:
+   Este consentimiento es VOLUNTARIO y puede ser revocado en cualquier momento mediante comunicación escrita al Estudio.
+
+3. INTERÉS SUPERIOR DEL MENOR:
+   Como representante legal declaro haber sido informado/a de los fines del tratamiento de la imagen y de los derechos que asisten al menor y al propio tutor en materia de protección de datos, actuando en interés superior del menor.
+
+4. IDENTIFICACIÓN EN USOS PUBLICITARIOS:
+   Las imágenes podrán utilizarse de forma anónima o con identificación, según lo acordado en cada caso.
+
+5. DERECHO DE REVOCACIÓN:
+   Puede revocarse este consentimiento en cualquier momento, sin que ello afecte a la licitud del tratamiento basado en el consentimiento previo a su revocación.
+
+6. CONSERVACIÓN:
+   Las imágenes se conservarán durante el tiempo necesario para cumplir con la finalidad para la que fueron capturadas, salvo que se solicite su eliminación conforme a la normativa aplicable.
+
+He leído y comprendido la información anterior. Autorizo el uso de las imágenes conforme a lo descrito y declaro firmar también en representación legal del menor.
+
+Este documento requiere la firma del menor y la firma del tutor/representante legal.
+
+Fecha: {FECHA_FIRMA}
+Hora: {HORA_FIRMA}

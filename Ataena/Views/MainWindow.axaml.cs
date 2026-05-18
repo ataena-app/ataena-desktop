@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Ataena.ViewModels;
 
 namespace Ataena.Views;
 
@@ -9,7 +10,7 @@ namespace Ataena.Views;
 /// Contiene:
 /// - Barra de navegación lateral
 /// - Área de contenido principal (cambia según la sección)
-/// 
+///
 /// Las vistas disponibles son:
 /// - Dashboard (inicio)
 /// - Clientes (gestión de clientes)
@@ -25,8 +26,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        
-        // Asegurar que la ventana se abra maximizada después de que se muestre
+
         Opened += (sender, e) =>
         {
             WindowState = WindowState.Maximized;

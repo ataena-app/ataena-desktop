@@ -33,6 +33,12 @@ public partial class ClientesViewModel : ViewModelBase
         private int? _clientePendienteImagenesDespuesRgpdId;
 
     /// <summary>
+    /// Handlers temporarios al renovar un consentimiento (evita fugas y duplicados al cerrar sin firmar).
+    /// </summary>
+    private EventHandler<Cliente>? _renovacionConsentimientoFirmaHandler;
+    private EventHandler? _renovacionModalCerradoHandler;
+
+    /// <summary>
     /// Permite inyectar el ViewModel de Trabajos para navegar a trabajos desde la ficha de cliente.
     /// </summary>
     public void SetTrabajosViewModel(TrabajosViewModel trabajosViewModel)
@@ -342,6 +348,18 @@ public partial class ClientesViewModel : ViewModelBase
     private bool _solicitarConsentimientoImagenes = false;
 
     /// <summary>
+    /// Si es false, el cliente no quiere fotos de trabajo ni el consentimiento de imágenes asociado.
+    /// </summary>
+    [ObservableProperty]
+    private bool _permiteFotosTrabajo = true;
+
+    partial void OnPermiteFotosTrabajoChanged(bool value)
+    {
+        if (!value)
+            SolicitarConsentimientoImagenes = false;
+    }
+
+    /// <summary>
     /// Indica si se desea firmar el consentimiento RGPD al crear el cliente.
     /// </summary>
     [ObservableProperty]
@@ -483,6 +501,25 @@ public partial class ClientesViewModel : ViewModelBase
         await VerFichaCliente(clienteEnLista);
     }
 
+    /// <summary>
+    /// Tras actualizar datos de cliente, recarga trabajos (y cliente embebido) para que RGPD/imágenes y botones de foto coincidan con la BD.
+    /// </summary>
+    private async Task RefrescarTrabajosTrasClienteAsync()
+    {
+        if (_trabajosVM == null)
+            return;
+
+        var trabajoSeleccionadoId = _trabajosVM.TrabajoSeleccionado?.Id;
+        await _trabajosVM.CargarTrabajosCommand.ExecuteAsync(null);
+        await _trabajosVM.CargarClientesCommand.ExecuteAsync(null);
+
+        if (trabajoSeleccionadoId.HasValue)
+        {
+            var t = _trabajosVM.Trabajos.FirstOrDefault(x => x.Id == trabajoSeleccionadoId.Value);
+            _trabajosVM.TrabajoSeleccionado = t;
+        }
+    }
+
     #endregion
 
     #region Comandos - CRUD
@@ -621,6 +658,32 @@ public partial class ClientesViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Abre la sección Trabajos con un trabajo nuevo y el cliente de la ficha ya seleccionado.
+    /// </summary>
+    [RelayCommand]
+    private async Task NuevoTrabajoDesdeFichaCliente()
+    {
+        if (ClienteSeleccionado == null || _trabajosVM == null || _mainWindowVM == null)
+        {
+            Log.Warning("No se puede crear trabajo desde ficha (cliente o referencias incompletas)");
+            return;
+        }
+
+        try
+        {
+            MensajeError = string.Empty;
+            _mainWindowVM.IrATrabajosCommand.Execute(null);
+            await _trabajosVM.NuevoTrabajoParaCliente(ClienteSeleccionado);
+            Log.Information("Nuevo trabajo abierto desde ficha del cliente {ClienteId}", ClienteSeleccionado.Id);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir nuevo trabajo desde ficha de cliente");
+            MensajeError = $"Error al abrir el formulario de trabajo: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Guarda el cliente (crea nuevo o actualiza existente).
     /// </summary>
     [RelayCommand]
@@ -727,25 +790,47 @@ public partial class ClientesViewModel : ViewModelBase
 
             if (EsEdicion && ClienteSeleccionado != null)
             {
-                // Actualizar cliente existente
-                Log.Information("Actualizando cliente ID: {ClienteId}, Nombre: {Nombre}, FechaNacimiento: {FechaNacimiento}", 
+                // IMPORTANTE: ClienteSeleccionado suele ser AsNoTracking (lista/ficha). Hay que persistir contra una entidad rastreada.
+                Log.Information("Actualizando cliente ID: {ClienteId}, Nombre: {Nombre}, FechaNacimiento: {FechaNacimiento}",
                     ClienteSeleccionado.Id, Nombre, FechaNacimiento);
-                ClienteSeleccionado.Nombre = nombreCapitalizado;
-                ClienteSeleccionado.Apellidos = apellidosCapitalizados;
-                ClienteSeleccionado.Telefono = string.IsNullOrWhiteSpace(Telefono) ? string.Empty : Telefono.Trim();
-                ClienteSeleccionado.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
-                ClienteSeleccionado.Dni = dniTrimmed; // DNI/NIE/Pasaporte validado y en mayúsculas
-                ClienteSeleccionado.FechaNacimiento = FechaNacimiento?.DateTime;
-                ClienteSeleccionado.Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim();
-                ClienteSeleccionado.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
-                
-                // Datos del tutor (solo si es menor de edad)
-                ClienteSeleccionado.NombreTutor = string.IsNullOrWhiteSpace(NombreTutor) ? null : NombreTutor.Trim();
-                ClienteSeleccionado.ApellidosTutor = string.IsNullOrWhiteSpace(ApellidosTutor) ? null : ApellidosTutor.Trim();
-                ClienteSeleccionado.DniTutor = string.IsNullOrWhiteSpace(DniTutor) ? null : DniTutor.Trim().ToUpperInvariant();
-                ClienteSeleccionado.TelefonoTutor = string.IsNullOrWhiteSpace(TelefonoTutor) ? null : TelefonoTutor.Trim();
-                
-                clienteGuardado = ClienteSeleccionado;
+
+                var tracked = await _db.Clientes.FindAsync(ClienteSeleccionado.Id);
+                if (tracked == null)
+                {
+                    MensajeError = "Cliente no encontrado.";
+                    return;
+                }
+
+                tracked.Nombre = nombreCapitalizado;
+                tracked.Apellidos = apellidosCapitalizados;
+                tracked.Telefono = string.IsNullOrWhiteSpace(Telefono) ? string.Empty : Telefono.Trim();
+                tracked.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
+                tracked.Dni = dniTrimmed;
+                tracked.FechaNacimiento = FechaNacimiento?.DateTime;
+                tracked.Alergias = string.IsNullOrWhiteSpace(Alergias) ? null : Alergias.Trim();
+                tracked.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
+                tracked.NombreTutor = string.IsNullOrWhiteSpace(NombreTutor) ? null : NombreTutor.Trim();
+                tracked.ApellidosTutor = string.IsNullOrWhiteSpace(ApellidosTutor) ? null : ApellidosTutor.Trim();
+                tracked.DniTutor = string.IsNullOrWhiteSpace(DniTutor) ? null : DniTutor.Trim().ToUpperInvariant();
+                tracked.TelefonoTutor = string.IsNullOrWhiteSpace(TelefonoTutor) ? null : TelefonoTutor.Trim();
+                tracked.PermiteFotosTrabajo = PermiteFotosTrabajo;
+
+                // Mantener la instancia de vista alineada con lo que se guardará
+                ClienteSeleccionado.Nombre = tracked.Nombre;
+                ClienteSeleccionado.Apellidos = tracked.Apellidos;
+                ClienteSeleccionado.Telefono = tracked.Telefono;
+                ClienteSeleccionado.Email = tracked.Email;
+                ClienteSeleccionado.Dni = tracked.Dni;
+                ClienteSeleccionado.FechaNacimiento = tracked.FechaNacimiento;
+                ClienteSeleccionado.Alergias = tracked.Alergias;
+                ClienteSeleccionado.Notas = tracked.Notas;
+                ClienteSeleccionado.NombreTutor = tracked.NombreTutor;
+                ClienteSeleccionado.ApellidosTutor = tracked.ApellidosTutor;
+                ClienteSeleccionado.DniTutor = tracked.DniTutor;
+                ClienteSeleccionado.TelefonoTutor = tracked.TelefonoTutor;
+                ClienteSeleccionado.PermiteFotosTrabajo = tracked.PermiteFotosTrabajo;
+
+                clienteGuardado = tracked;
             }
             else
             {
@@ -768,7 +853,8 @@ public partial class ClientesViewModel : ViewModelBase
                     DniTutor = string.IsNullOrWhiteSpace(DniTutor) ? null : DniTutor.Trim().ToUpperInvariant(),
                     TelefonoTutor = string.IsNullOrWhiteSpace(TelefonoTutor) ? null : TelefonoTutor.Trim(),
                     FechaRegistro = DateTime.Now,
-                    Activo = true
+                    Activo = true,
+                    PermiteFotosTrabajo = PermiteFotosTrabajo
                 };
                 _db.Clientes.Add(nuevoCliente);
                 clienteGuardado = nuevoCliente;
@@ -803,9 +889,10 @@ public partial class ClientesViewModel : ViewModelBase
                             try
                             {
                                 var clienteDb = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId);
-                                if (clienteDb != null)
+                                if (clienteDb != null && clienteDb.PermiteFotosTrabajo)
                                 {
-                                    await ConsentimientoFirmaVM.AbrirModal(clienteDb, TipoConsentimiento.Imagenes);
+                                    await ConsentimientoFirmaVM.AbrirModal(clienteDb,
+                                        Consentimiento.TipoConsentimientoImagenesSegunEdad(clienteDb.EsMenorDeEdad));
                                 }
                             }
                             catch (Exception ex)
@@ -824,22 +911,23 @@ public partial class ClientesViewModel : ViewModelBase
                 _clientePendienteImagenesDespuesRgpdId = null;
 
                 // 1) RGPD: si el usuario ha marcado la casilla
-                if (FirmarConsentimientoRGPD)
-                {
-                    // Si también quiere imágenes, marcar que después de RGPD hay que abrir imágenes
-                    if (SolicitarConsentimientoImagenes)
+                    if (FirmarConsentimientoRGPD)
                     {
-                        _clientePendienteImagenesDespuesRgpdId = clienteGuardado.Id;
-                    }
+                        // Si también quiere imágenes, marcar que después de RGPD hay que abrir imágenes
+                        if (SolicitarConsentimientoImagenes && PermiteFotosTrabajo)
+                        {
+                            _clientePendienteImagenesDespuesRgpdId = clienteGuardado.Id;
+                        }
 
-                    await _db.Entry(clienteGuardado).ReloadAsync();
-                    await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.RGPD);
-                }
-                // 2) Solo imágenes (sin RGPD marcado)
-                else if (SolicitarConsentimientoImagenes)
+                        await _db.Entry(clienteGuardado).ReloadAsync();
+                        await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.RGPD);
+                    }
+                    // 2) Solo imágenes (sin RGPD marcado)
+                    else if (SolicitarConsentimientoImagenes && PermiteFotosTrabajo)
                 {
                     await _db.Entry(clienteGuardado).ReloadAsync();
-                    await ConsentimientoFirmaVM.AbrirModal(clienteGuardado, TipoConsentimiento.Imagenes);
+                    await ConsentimientoFirmaVM.AbrirModal(clienteGuardado,
+                        Consentimiento.TipoConsentimientoImagenesSegunEdad(clienteGuardado.EsMenorDeEdad));
                 }
             }
             else
@@ -849,6 +937,9 @@ public partial class ClientesViewModel : ViewModelBase
             }
 
             await CargarClientes();
+
+            if (EsEdicion)
+                await RefrescarTrabajosTrasClienteAsync();
 
             // Si la ficha de este cliente está abierta, refrescarla para reflejar cambios y consentimientos
             await RefrescarFichaClientePorIdAsync(clienteGuardado.Id);
@@ -941,18 +1032,26 @@ public partial class ClientesViewModel : ViewModelBase
 
     /// <summary>
     /// Abre el flujo de firma de consentimiento de imágenes desde la ficha del cliente.
-    /// NOTA: Los menores de edad no pueden firmar consentimiento de imágenes.
+    /// Los menores firman el tipo menor con autorización del tutor (doble firma).
     /// </summary>
     [RelayCommand]
     private async Task FirmarConsentimientoImagenesDesdeFicha(Cliente cliente)
     {
         try
         {
-            // Validar que no sea menor de edad
-            if (cliente.EsMenorDeEdad)
+            if (!cliente.PermiteFotosTrabajo)
             {
-                MensajeError = "⚠️ Los menores de edad no pueden firmar consentimiento de uso de imágenes.";
-                Log.Warning("Intento de firma de imágenes bloqueado para cliente menor: {ClienteId}", cliente.Id);
+                OverlayNotificationService.Mostrar(
+                    "Este cliente no autoriza fotos de trabajo. Activa la opción en editar cliente si debe firmarse el consentimiento de imágenes.",
+                    OverlayNotificationKind.Warning);
+                return;
+            }
+
+            if (cliente.EsMenorDeEdad && !cliente.TieneDatosTutor)
+            {
+                OverlayNotificationService.Mostrar(
+                    "Para firmar el consentimiento de imágenes de un menor necesitas nombre, apellidos y DNI del tutor en la ficha del cliente.",
+                    OverlayNotificationKind.Warning);
                 return;
             }
 
@@ -966,7 +1065,8 @@ public partial class ClientesViewModel : ViewModelBase
                 };
             }
 
-            await ConsentimientoFirmaVM.AbrirModal(cliente, TipoConsentimiento.Imagenes);
+            await ConsentimientoFirmaVM.AbrirModal(cliente,
+                Consentimiento.TipoConsentimientoImagenesSegunEdad(cliente.EsMenorDeEdad));
         }
         catch (Exception ex)
         {
@@ -1043,6 +1143,63 @@ public partial class ClientesViewModel : ViewModelBase
             Log.Error(ex, "Error al abrir modal de foto DNI tutor para cliente {ClienteId}", cliente.Id);
             MensajeError = $"Error al abrir el modal de foto de DNI del tutor: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Abre la foto del DNI del cliente en el visor predeterminado del sistema.
+    /// </summary>
+    [RelayCommand]
+    private Task VerFotoDniCliente(Cliente? cliente)
+    {
+        var c = cliente ?? ClienteSeleccionado;
+        if (c == null)
+            return Task.CompletedTask;
+
+        return AbrirFotoDniEnVisor(
+            ConsentimientoPathService.RutaFotoDniExistente(c.Id, c.FotoDniPath),
+            "No hay foto del DNI guardada para este cliente.");
+    }
+
+    /// <summary>
+    /// Abre la foto del DNI del tutor en el visor predeterminado del sistema.
+    /// </summary>
+    [RelayCommand]
+    private Task VerFotoDniTutor(Cliente? cliente)
+    {
+        var c = cliente ?? ClienteSeleccionado;
+        if (c == null)
+            return Task.CompletedTask;
+
+        return AbrirFotoDniEnVisor(
+            ConsentimientoPathService.RutaFotoDniTutorExistente(c.Id, c.FotoDniTutorPath),
+            "No hay foto del DNI del tutor guardada.");
+    }
+
+    private Task AbrirFotoDniEnVisor(string? ruta, string mensajeSinFoto)
+    {
+        try
+        {
+            MensajeError = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(ruta) || !File.Exists(ruta))
+            {
+                MensajeError = mensajeSinFoto;
+                return Task.CompletedTask;
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = ruta,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error al abrir foto de DNI: {Ruta}", ruta);
+            MensajeError = $"Error al abrir la foto del DNI: {ex.Message}";
+        }
+
+        return Task.CompletedTask;
     }
 
     #endregion
@@ -1358,6 +1515,27 @@ public partial class ClientesViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Elimina handlers temporales registrados durante <see cref="RenovarConsentimiento"/>.
+    /// </summary>
+    private void QuitarHandlersRenovacionConsentimientoTemporal()
+    {
+        if (ConsentimientoFirmaVM == null)
+            return;
+
+        if (_renovacionConsentimientoFirmaHandler != null)
+        {
+            ConsentimientoFirmaVM.FirmaCompletada -= _renovacionConsentimientoFirmaHandler;
+            _renovacionConsentimientoFirmaHandler = null;
+        }
+
+        if (_renovacionModalCerradoHandler != null)
+        {
+            ConsentimientoFirmaVM.ModalSesionFinalizada -= _renovacionModalCerradoHandler;
+            _renovacionModalCerradoHandler = null;
+        }
+    }
+
+    /// <summary>
     /// Renueva un consentimiento existente.
     /// Marca el consentimiento anterior como renovado y abre el modal para firmar uno nuevo.
     /// </summary>
@@ -1380,31 +1558,59 @@ public partial class ClientesViewModel : ViewModelBase
                 {
                     TipoConsentimiento.RGPD_Menor => TipoConsentimiento.RGPD,
                     TipoConsentimiento.Trabajo_Menor => TipoConsentimiento.Trabajo,
+                    TipoConsentimiento.Imagenes_Menor => TipoConsentimiento.Imagenes,
                     _ => consentimientoAnterior.Tipo
                 };
                 Log.Information("Cliente ahora es mayor de edad, cambiando tipo de {TipoAnterior} a {TipoNuevo}", 
                     consentimientoAnterior.Tipo, tipoNuevo);
             }
 
-            // Abrir modal de firma para el nuevo consentimiento
-            if (ConsentimientoFirmaVM == null)
+            ConsentimientoFirmaVM ??= new ConsentimientoFirmaViewModel();
+
+            QuitarHandlersRenovacionConsentimientoTemporal();
+
+            var idClienteSel = ClienteSeleccionado.Id;
+            var idAnterior = consentimientoAnterior.Id;
+
+            _renovacionConsentimientoFirmaHandler = async (_, cliente) =>
             {
-                ConsentimientoFirmaVM = new ConsentimientoFirmaViewModel();
-                ConsentimientoFirmaVM.FirmaCompletada += async (s, cliente) =>
+                try
                 {
-                    // Marcar el consentimiento anterior como renovado
-                    consentimientoAnterior.Renovado = true;
-                    await _db.SaveChangesAsync();
-                    
+                    QuitarHandlersRenovacionConsentimientoTemporal();
+
+                    if (cliente.Id != idClienteSel)
+                        return;
+
+                    await using var cx = new AtaenaDbContext();
+                    var anteriorEnBd = await cx.Consentimientos.FindAsync(idAnterior);
+                    if (anteriorEnBd != null && !anteriorEnBd.Renovado)
+                    {
+                        anteriorEnBd.Renovado = true;
+                        await cx.SaveChangesAsync();
+                    }
+
                     await CargarClientes();
                     await RefrescarFichaClientePorIdAsync(cliente.Id);
-                };
-            }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error al marcar consentimiento anterior {Id} como renovado", idAnterior);
+                }
+            };
+            _renovacionModalCerradoHandler = (_, _) =>
+            {
+                QuitarHandlersRenovacionConsentimientoTemporal();
+            };
+
+            ConsentimientoFirmaVM.FirmaCompletada += _renovacionConsentimientoFirmaHandler;
+            ConsentimientoFirmaVM.ModalSesionFinalizada += _renovacionModalCerradoHandler;
 
             // Si es consentimiento de trabajo, necesitamos el trabajo asociado
             var trabajo = consentimientoAnterior.Trabajo;
-            
-            await ConsentimientoFirmaVM.AbrirModal(ClienteSeleccionado, tipoNuevo, trabajo);
+
+            await ConsentimientoFirmaVM.AbrirModal(
+                ClienteSeleccionado, tipoNuevo, trabajo,
+                omitirConsentimientoIdRenovacion: idAnterior);
         }
         catch (Exception ex)
         {
@@ -1699,6 +1905,7 @@ public partial class ClientesViewModel : ViewModelBase
         
         MensajeError = string.Empty;
         SolicitarConsentimientoImagenes = false;
+        PermiteFotosTrabajo = true;
         FirmarConsentimientoRGPD = false;
     }
 
@@ -1727,6 +1934,7 @@ public partial class ClientesViewModel : ViewModelBase
         TelefonoTutor = cliente.TelefonoTutor ?? string.Empty;
         
         MensajeError = string.Empty;
+        PermiteFotosTrabajo = cliente.PermiteFotosTrabajo;
     }
 
     #endregion

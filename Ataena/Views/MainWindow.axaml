@@ -47,20 +47,27 @@
                         <TextBlock Text="🖋️ Ataena" 
                                    FontSize="22" 
                                    FontWeight="Bold"/>
-                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="28,0,0,0">
-                            <TextBlock Text="CRM"
-                                       FontSize="12"
-                                       Opacity="0.5"/>
-                            <TextBlock Text="·"
-                                       FontSize="12"
-                                       Opacity="0.4"/>
-                            <TextBlock Text="{Binding VersionApp}"
-                                       FontSize="11"
-                                       Opacity="0.55"
-                                       Foreground="#a0a0a0"
-                                       VerticalAlignment="Center"
-                                       ToolTip.Tip="Versión instalada de Ataena"/>
-                        </StackPanel>
+                        <Button Background="Transparent"
+                                BorderThickness="0"
+                                Padding="28,4,0,0"
+                                HorizontalAlignment="Left"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding VerChangelogCommand}"
+                                ToolTip.Tip="Ver novedades y historial de cambios">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="CRM"
+                                           FontSize="12"
+                                           Opacity="0.5"/>
+                                <TextBlock Text="·"
+                                           FontSize="12"
+                                           Opacity="0.4"/>
+                                <TextBlock Text="{Binding VersionApp}"
+                                           FontSize="11"
+                                           Opacity="0.55"
+                                           Foreground="#a0a0a0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
                 
@@ -298,6 +305,61 @@
                 </StackPanel>
             </Border>
         </Border>
+
+        <!-- Avisos globales centrados (por encima de modales locales de Clientes / Trabajos / Fotos, etc.) -->
+        <Border Grid.ColumnSpan="2"
+                Background="#D1000000"
+                IsHitTestVisible="True"
+                IsVisible="{Binding OverlayNotificacionVisible}"
+                ZIndex="2000">
+            <Border Background="Transparent"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+                <Border MaxWidth="440"
+                        MinWidth="280"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="28"
+                        Background="#0f172a"
+                        CornerRadius="16"
+                        BorderBrush="#475569"
+                        BorderThickness="1"
+                        BoxShadow="0 20 60 #CC000000">
+                    <Grid ColumnDefinitions="7,*">
+                        <Border Grid.Column="0"
+                                Background="{Binding OverlayNotificacionTipo, Converter={StaticResource OverlayNotificationKindToAccentBrushConverter}}"
+                                CornerRadius="16,0,0,16"/>
+                        <StackPanel Grid.Column="1"
+                                    Margin="22,22,24,22"
+                                    Spacing="14">
+                            <TextBlock Text="{Binding OverlayNotificacionTitulo}"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="White"/>
+                            <TextBlock Text="{Binding OverlayNotificacionMensaje}"
+                                       FontSize="14"
+                                       LineHeight="22"
+                                       TextWrapping="Wrap"
+                                       Foreground="#cbd5e1"
+                                       MaxWidth="360"/>
+                            <StackPanel Margin="0,6,0,0"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal">
+                                <Button Content="Entendido"
+                                        Classes="btn-primary"
+                                        Command="{Binding CerrarOverlayNotificacionCommand}"
+                                        MinWidth="130"
+                                        Padding="18,12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Border>
+        </Border>
+
+        <!-- Changelog / novedades -->
+        <views:ChangelogView Grid.ColumnSpan="2"
+                             DataContext="{Binding ChangelogVM}"/>
         
     </Grid>
 

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Ataena.Models;
 
@@ -14,6 +16,33 @@ namespace Ataena.Models;
 /// </remarks>
 public class Consentimiento
 {
+    /// <summary>
+    /// Indica si existe al menos un consentimiento RGPD (o RGPD menor) firmado.
+    /// No se filtra por <see cref="Renovado"/>: en datos legados ese flag quedó inconsistente
+    /// (p. ej. renovaciones que reutilizaban la misma fila); para flujos operativos y ficha basta con constatar la firma guardada.
+    /// </summary>
+    public static bool TieneConsentimientoRgpdVigente(IEnumerable<Consentimiento> todos)
+    {
+        return todos.Any(c =>
+            (c.Tipo == TipoConsentimiento.RGPD || c.Tipo == TipoConsentimiento.RGPD_Menor) && c.Firmado);
+    }
+
+    /// <summary>
+    /// Tipo de consentimiento de imágenes según si el cliente es menor de edad.
+    /// </summary>
+    public static TipoConsentimiento TipoConsentimientoImagenesSegunEdad(bool clienteEsMenor) =>
+        clienteEsMenor ? TipoConsentimiento.Imagenes_Menor : TipoConsentimiento.Imagenes;
+
+    /// <summary>
+    /// Indica si existe al menos un consentimiento de imágenes firmado del tipo que corresponde a la edad del cliente.
+    /// No se filtra por <see cref="Renovado"/> por el mismo motivo que <see cref="TieneConsentimientoRgpdVigente"/>.
+    /// </summary>
+    public static bool TieneConsentimientoImagenesVigente(IEnumerable<Consentimiento> todos, bool clienteEsMenor)
+    {
+        var tipo = TipoConsentimientoImagenesSegunEdad(clienteEsMenor);
+        return todos.Any(c => c.Tipo == tipo && c.Firmado);
+    }
+
     #region Identificación
 
     /// <summary>
@@ -186,8 +215,9 @@ public class Consentimiento
     /// <summary>
     /// Indica si es un tipo de consentimiento para menores.
     /// </summary>
-    public bool EsTipoMenor => Tipo == TipoConsentimiento.RGPD_Menor || 
-                               Tipo == TipoConsentimiento.Trabajo_Menor;
+    public bool EsTipoMenor => Tipo == TipoConsentimiento.RGPD_Menor ||
+                               Tipo == TipoConsentimiento.Trabajo_Menor ||
+                               Tipo == TipoConsentimiento.Imagenes_Menor;
 
     /// <summary>
     /// Nombre legible del consentimiento, con más contexto para los de trabajo.
@@ -201,6 +231,7 @@ public class Consentimiento
                 TipoConsentimiento.RGPD => "RGPD - Protección de datos",
                 TipoConsentimiento.RGPD_Menor => "RGPD - Protección de datos (Menor)",
                 TipoConsentimiento.Imagenes => "Consentimiento de uso de imágenes",
+                TipoConsentimiento.Imagenes_Menor => "Consentimiento de uso de imágenes (Menor)",
                 TipoConsentimiento.Trabajo => GetNombreConsentimientoTrabajo(),
                 TipoConsentimiento.Trabajo_Menor => GetNombreConsentimientoTrabajo() + " (Menor)",
                 _ => "Consentimiento desconocido"

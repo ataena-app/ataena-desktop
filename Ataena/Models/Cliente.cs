@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ataena.Services;
 
 namespace Ataena.Models;
 
@@ -126,6 +127,11 @@ public class Cliente
     public bool Activo { get; set; } = true;
 
     /// <summary>
+    /// Si es <c>false</c>, el cliente no acepta fotos antes/después en trabajos ni el flujo de firma del consentimiento de imágenes para ello.
+    /// </summary>
+    public bool PermiteFotosTrabajo { get; set; } = true;
+
+    /// <summary>
     /// Fecha y hora de registro del cliente.
     /// </summary>
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
@@ -179,15 +185,27 @@ public class Cliente
     /// <summary>
     /// Indica si el cliente tiene el consentimiento RGPD firmado (incluye RGPD_Menor).
     /// </summary>
-    public bool TieneConsentimientoRGPD => Consentimientos
-        .Any(c => (c.Tipo == TipoConsentimiento.RGPD || c.Tipo == TipoConsentimiento.RGPD_Menor) 
-                  && c.Firmado && !c.Renovado);
+    public bool TieneConsentimientoRGPD =>
+        Consentimiento.TieneConsentimientoRgpdVigente(Consentimientos);
 
     /// <summary>
-    /// Indica si el cliente tiene un consentimiento de uso de imágenes firmado.
+    /// Indica si el cliente tiene al menos un consentimiento de uso de imágenes firmado en base de datos.
     /// </summary>
-    public bool TieneConsentimientoImagenes => Consentimientos
-        .Any(c => c.Tipo == TipoConsentimiento.Imagenes && c.Firmado);
+    public bool TieneConsentimientoImagenes =>
+        Consentimiento.TieneConsentimientoImagenesVigente(Consentimientos, EsMenorDeEdad);
+
+    /// <summary>Chip en ficha: cliente excluye fotos de trabajo.</summary>
+    public bool ImagenesChipSinFotosAcordado => !PermiteFotosTrabajo;
+
+    /// <summary>Chip en ficha: puede imágenes y hay firma vigente.</summary>
+    public bool ImagenesChipOk => PermiteFotosTrabajo && TieneConsentimientoImagenes;
+
+    /// <summary>Chip en ficha: permite fotos pero aún falta consentimiento firmado.</summary>
+    public bool ImagenesChipPendienteFirma => PermiteFotosTrabajo && !TieneConsentimientoImagenes;
+
+    /// <summary>Mostrar botón firmar uso de imágenes desde la ficha.</summary>
+    public bool MostrarAccionFirmarConsentimientoImagenes =>
+        PermiteFotosTrabajo && !TieneConsentimientoImagenes;
 
     /// <summary>
     /// Indica si el cliente es menor de edad (menos de 18 años).
@@ -216,14 +234,14 @@ public class Cliente
     /// <summary>
     /// Indica si el cliente tiene foto de su DNI.
     /// </summary>
-    public bool TieneFotoDni => !string.IsNullOrWhiteSpace(FotoDniPath) && 
-                                 System.IO.File.Exists(FotoDniPath);
+    public bool TieneFotoDni =>
+        ConsentimientoPathService.RutaFotoDniExistente(Id, FotoDniPath) != null;
 
     /// <summary>
     /// Indica si el tutor tiene foto de DNI (para menores).
     /// </summary>
-    public bool TieneFotoDniTutor => !string.IsNullOrWhiteSpace(FotoDniTutorPath) && 
-                                      System.IO.File.Exists(FotoDniTutorPath);
+    public bool TieneFotoDniTutor =>
+        ConsentimientoPathService.RutaFotoDniTutorExistente(Id, FotoDniTutorPath) != null;
 
     /// <summary>
     /// Indica si el cliente tiene consentimientos que necesitan renovación.

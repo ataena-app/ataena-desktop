@@ -7,6 +7,8 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using Serilog;
 
 namespace Ataena.Services;
@@ -17,9 +19,13 @@ namespace Ataena.Services;
 /// <remarks>
 /// El servidor se inicia en un puerto local (por defecto 8080) y permite que dispositivos
 /// móviles en la misma red WiFi se conecten para firmar consentimientos.
+/// Una sola instancia por proceso evita conflicto (<see cref="HttpListenerException"/> 32).
 /// </remarks>
 public class FirmaWebService : IDisposable
 {
+    /// <summary>Una única instancia por proceso para no intentar enlazar dos veces el mismo puerto (error 32).</summary>
+    public static FirmaWebService InstanciaCompartida { get; } = new();
+
     private HttpListener? _listener;
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _serverTask;
@@ -35,8 +41,10 @@ public class FirmaWebService : IDisposable
     private readonly ConcurrentDictionary<string, ContextoFirma> _contextoPorToken = new();
 
     private const int PuertoPorDefecto = 8080;
+    /// <summary>Si el puerto preferido está ocupado (WIN32 32 / 183), se prueban sucesivamente más puertos TCP.</summary>
+    private const int MaxPuertosAlternativos = 32;
     private const int TimeoutTokenMinutos = 10; // Los tokens expiran después de 10 minutos
-    private static bool _firewallConfigurado = false; // Flag para evitar configurar múltiples veces
+    private static readonly HashSet<int> PuertosFirewallConfigurados = new();
 
     /// <summary>
     /// Evento que se dispara cuando se recibe una firma.
@@ -245,7 +253,7 @@ public class FirmaWebService : IDisposable
     {
         if (_listener?.IsListening ?? false)
         {
-            Log.Warning("El servidor ya está activo");
+            Log.Warning("El servidor ya está activo en el puerto {Puerto}", Puerto);
             return Task.FromResult(true);
         }
 
@@ -253,7 +261,30 @@ public class FirmaWebService : IDisposable
         {
             try
             {
-                // Detectar IP local
+                LiberarListenerHuerfano();
+
+                // Evitar CTS/task colgados si un arranque anterior falló a medias
+                try
+                {
+                    _cancellationTokenSource?.Cancel();
+                }
+                catch
+                {
+                    // ok
+                }
+
+                try
+                {
+                    _cancellationTokenSource?.Dispose();
+                }
+                catch
+                {
+                    // ok
+                }
+
+                _cancellationTokenSource = null;
+                _serverTask = null;
+
                 IpLocal = DetectarIPLocal();
                 if (string.IsNullOrEmpty(IpLocal))
                 {
@@ -261,59 +292,89 @@ public class FirmaWebService : IDisposable
                     return false;
                 }
 
-                Puerto = puerto;
-                UrlBase = $"http://{IpLocal}:{Puerto}";
+                // WIN32 32 = recurso compartido (puerto/prefijo http.sys ocupado); 183 = ya existe (mismo efecto práctico).
+                const int errorPuertoEnUso = 32;
+                const int errorYaExiste = 183;
 
-                // Configurar firewall automáticamente si es necesario
-                if (!_firewallConfigurado)
+                for (var intento = 0; intento < MaxPuertosAlternativos; intento++)
                 {
-                    ConfigurarFirewall(puerto);
-                    _firewallConfigurado = true;
+                    Puerto = puerto + intento;
+                    var urlQr = $"http://{IpLocal}:{Puerto}";
+
+                    if (PuertosFirewallConfigurados.Add(Puerto))
+                        ConfigurarFirewall(Puerto);
+
+                    HttpListener? nuevo = null;
+                    try
+                    {
+                        nuevo = new HttpListener();
+                        try
+                        {
+                            nuevo.Prefixes.Add($"http://*:{Puerto}/");
+                            if (intento == 0)
+                                Log.Information("Intentando enlazar en el puerto {Puerto} (todas las interfaces)", Puerto);
+                            else
+                                Log.Information(
+                                    "Probando otro puerto libre: {Puerto} (intento {Intento}/{Max})",
+                                    Puerto,
+                                    intento + 1,
+                                    MaxPuertosAlternativos);
+                        }
+                        catch (HttpListenerException exPref)
+                        {
+                            Log.Warning(
+                                exPref,
+                                "Sin prefijo *:{Puerto} (permisos/URLACL). Usando localhost; el QR con la LAN puede fallar hasta resolver permisos.",
+                                Puerto);
+                            nuevo.Prefixes.Add($"http://localhost:{Puerto}/");
+                            urlQr = $"http://localhost:{Puerto}";
+                        }
+
+                        nuevo.Start();
+                        _listener = nuevo;
+                        nuevo = null;
+                        UrlBase = urlQr;
+
+                        Log.Information("═══════════════════════════════════════════════════════");
+                        Log.Information("Servidor HTTP local iniciado");
+                        Log.Information("IP: {IP}", IpLocal);
+                        Log.Information("Puerto: {Puerto}", Puerto);
+                        Log.Information("URL Base (QR): {URL}", UrlBase);
+                        Log.Information("═══════════════════════════════════════════════════════");
+
+                        _cancellationTokenSource = new CancellationTokenSource();
+                        var cancellationToken = _cancellationTokenSource.Token;
+                        _ = Task.Run(() => LimpiarTokensExpirados(cancellationToken));
+                        _serverTask = Task.Run(() => ProcesarPeticiones(cancellationToken));
+
+                        return true;
+                    }
+                    catch (HttpListenerException ex) when (ex.ErrorCode == errorPuertoEnUso || ex.ErrorCode == errorYaExiste)
+                    {
+                        Log.Warning(
+                            "Puerto {Puerto} no disponible (código Win32 {Codigo}). Suele estar ocupado por otra aplicación o otra sesión.",
+                            Puerto,
+                            ex.ErrorCode);
+                        LiberarIntentoListener(ref nuevo);
+                        continue;
+                    }
+                    catch (HttpListenerException ex)
+                    {
+                        Log.Error(ex, "HttpListener rechazado en puerto {Puerto} (código {Codigo})", Puerto, ex.ErrorCode);
+                        LiberarIntentoListener(ref nuevo);
+                        LiberarListenerHuerfano();
+                        return false;
+                    }
+                    finally
+                    {
+                        LiberarIntentoListener(ref nuevo);
+                    }
                 }
 
-                // Crear listener
-                _listener = new HttpListener();
-                // Intentar escuchar en todas las interfaces primero
-                try
-                {
-                    // Usar * en lugar de + para evitar problemas de permisos
-                    _listener.Prefixes.Add($"http://*:{Puerto}/"); // Escuchar en todas las interfaces
-                    Log.Information("Configurado para escuchar en todas las interfaces (puerto {Puerto})", Puerto);
-                }
-                catch (HttpListenerException ex)
-                {
-                    // Si falla (sin permisos de admin), intentar solo en localhost
-                    Log.Warning("No se pueden usar todas las interfaces. Error: {Error}. Intentando solo localhost...", ex.Message);
-                    _listener.Prefixes.Add($"http://localhost:{Puerto}/");
-                    // Actualizar URL base para usar localhost
-                    UrlBase = $"http://localhost:{Puerto}";
-                    Log.Warning("Solo disponible en localhost. El móvil no podrá conectarse.");
-                }
-
-                // Iniciar servidor
-                _listener.Start();
-                Log.Information("═══════════════════════════════════════════════════════");
-                Log.Information("Servidor HTTP local iniciado");
-                Log.Information("IP: {IP}", IpLocal);
-                Log.Information("Puerto: {Puerto}", Puerto);
-                Log.Information("URL Base: {URL}", UrlBase);
-                Log.Information("═══════════════════════════════════════════════════════");
-
-                // Crear token de cancelación
-                _cancellationTokenSource = new CancellationTokenSource();
-                var cancellationToken = _cancellationTokenSource.Token;
-
-                // Iniciar tarea de limpieza de tokens expirados
-                _ = Task.Run(() => LimpiarTokensExpirados(cancellationToken));
-
-                // Iniciar tarea del servidor
-                _serverTask = Task.Run(() => ProcesarPeticiones(cancellationToken));
-
-                return true;
-            }
-            catch (HttpListenerException ex)
-            {
-                Log.Error(ex, "Error al iniciar el servidor HTTP. ¿Tienes permisos de administrador?");
+                Log.Error(
+                    "No se encontró ningún puerto libre entre {Desde} y {Hasta}. Cierra otros programas en esos puertos o reinicia tras un cierre abrupto.",
+                    puerto,
+                    puerto + MaxPuertosAlternativos - 1);
                 return false;
             }
             catch (Exception ex)
@@ -323,6 +384,25 @@ public class FirmaWebService : IDisposable
             }
         });
     }
+
+    private static void LiberarIntentoListener(ref HttpListener? l)
+    {
+        if (l == null)
+            return;
+        try { l.Abort(); } catch { /* ok */ }
+        try { l.Close(); } catch { /* ok */ }
+        l = null;
+    }
+
+    private void LiberarListenerHuerfano()
+    {
+        if (_listener == null || _listener.IsListening)
+            return;
+        try { _listener.Abort(); } catch { /* ok */ }
+        try { _listener.Close(); } catch { /* ok */ }
+        _listener = null;
+    }
+
 
     /// <summary>
     /// Registra un token como activo para una sesión de firma.
@@ -341,13 +421,17 @@ public class FirmaWebService : IDisposable
     /// <param name="token">Token único de la sesión.</param>
     /// <param name="textoConsentimiento">Texto completo del consentimiento (ya con placeholders sustituidos).</param>
     /// <param name="titulo">Título a mostrar en la cabecera (p.ej. "Consentimiento RGPD").</param>
-    public void RegistrarToken(string token, string textoConsentimiento, string? titulo = null)
+    /// <param name="firmaMenorDosCajas">
+    /// Si es true, en el mismo enlace aparecen dos cajas en el móvil: representante legal y menor.
+    /// </param>
+    public void RegistrarToken(string token, string textoConsentimiento, string? titulo = null, bool firmaMenorDosCajas = false)
     {
         RegistrarToken(token);
         _contextoPorToken[token] = new ContextoFirma
         {
             Texto = textoConsentimiento ?? string.Empty,
             Titulo = string.IsNullOrWhiteSpace(titulo) ? "Consentimiento" : titulo!,
+            FirmaMenorDosCajasEnMismaPagina = firmaMenorDosCajas,
         };
     }
 
@@ -370,9 +454,12 @@ public class FirmaWebService : IDisposable
             // PRIMERO verificar si ya se recibió la firma (puede que se haya recibido antes de esta verificación)
             if (_firmasRecibidas.TryGetValue(token, out var firma))
             {
-                Log.Information("Firma/foto recibida para token: {Token}, tamaño base64: {Tamaño} caracteres", 
-                    token, firma.ImagenBase64?.Length ?? 0);
-                return firma.ImagenBase64;
+                Log.Information(
+                    "Firma/foto recibida para token: {Token}, tamaño representante/uni: {TamañoRep}, tamaño menor: {TamañoMenor}",
+                    token,
+                    firma.ImagenBase64?.Length ?? 0,
+                    firma.ImagenFirmaMenorDual?.Length ?? 0);
+                return firma.ImagenFirmaRepresentanteLegal ?? firma.ImagenBase64;
             }
 
             // LUEGO verificar si el token expiró (pero solo si no hay firma recibida)
@@ -384,9 +471,12 @@ public class FirmaWebService : IDisposable
                 // Verificar una vez más después de esperar
                 if (_firmasRecibidas.TryGetValue(token, out var firmaRetrasada))
                 {
-                    Log.Information("Firma/foto recibida para token: {Token} (con retraso), tamaño base64: {Tamaño} caracteres", 
-                        token, firmaRetrasada.ImagenBase64?.Length ?? 0);
-                    return firmaRetrasada.ImagenBase64;
+                    Log.Information(
+                        "Firma/foto recibida para token: {Token} (con retraso). Rep/uni: {TamañoRep}, menor: {TamañoMenor}",
+                        token,
+                        firmaRetrasada.ImagenBase64?.Length ?? 0,
+                        firmaRetrasada.ImagenFirmaMenorDual?.Length ?? 0);
+                    return firmaRetrasada.ImagenFirmaRepresentanteLegal ?? firmaRetrasada.ImagenBase64;
                 }
                 Log.Warning("Token expirado o inválido: {Token}", token);
                 return null;
@@ -404,46 +494,73 @@ public class FirmaWebService : IDisposable
     /// </summary>
     public void DetenerServidor()
     {
-        if (!(_listener?.IsListening ?? false))
-        {
-            Log.Debug("El servidor no está activo");
-            return;
-        }
-
         try
         {
-            // Cancelar primero para que el bucle de procesamiento se detenga
+            if (_listener?.IsListening != true)
+            {
+                Log.Debug("El servidor no está activo o ya estaba detenido");
+                LiberarListenerHuerfano();
+                return;
+            }
+
             _cancellationTokenSource?.Cancel();
-            
-            // Esperar un poco para que las peticiones en curso terminen
             Task.Delay(100).Wait();
-            
-            // Detener el listener
-            _listener?.Stop();
-            
-            // Esperar a que termine el task del servidor si existe
+
+            try
+            {
+                _listener.Stop();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ok
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Stop del HttpListener durante detención");
+            }
+
             try
             {
                 _serverTask?.Wait(TimeSpan.FromSeconds(2));
             }
             catch (Exception ex)
             {
-                Log.Debug("Error al esperar que termine el task del servidor: {Error}", ex.Message);
+                Log.Debug("Esperando el task del servidor: {Msg}", ex.Message);
             }
-            
-            // Cerrar el listener
-            _listener?.Close();
-            
+
+            try
+            {
+                _listener?.Close();
+            }
+            catch (ObjectDisposedException)
+            {
+                Log.Debug("Listener ya cerrado al detener");
+            }
+
             Log.Information("Servidor HTTP local detenido");
         }
         catch (ObjectDisposedException)
         {
-            // Ya estaba cerrado, no es un error
             Log.Debug("El listener ya estaba cerrado");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error al detener el servidor HTTP");
+        }
+        finally
+        {
+            try
+            {
+                _cancellationTokenSource?.Dispose();
+            }
+            catch
+            {
+                // ok
+            }
+
+            _cancellationTokenSource = null;
+            _listener = null;
+            _serverTask = null;
         }
     }
 
@@ -628,18 +745,30 @@ public class FirmaWebService : IDisposable
             // Reemplazar texto del consentimiento y título (si están registrados)
             string textoHtml;
             string tituloHtml;
+            string firmaDobleValor;
+            string subtituloMovil;
             if (_contextoPorToken.TryGetValue(token, out var ctx))
             {
                 textoHtml = WebUtility.HtmlEncode(ctx.Texto);
                 tituloHtml = WebUtility.HtmlEncode(ctx.Titulo);
+                firmaDobleValor = ctx.FirmaMenorDosCajasEnMismaPagina ? "true" : "false";
+                subtituloMovil = WebUtility.HtmlEncode(
+                    ctx.FirmaMenorDosCajasEnMismaPagina
+                        ? "Representante legal y menor: mismo documento; dos firmas arriba y abajo en esta página."
+                        : "Lee el documento, marca que lo aceptas y firma abajo.");
             }
             else
             {
                 textoHtml = string.Empty;
                 tituloHtml = "Consentimiento";
+                firmaDobleValor = "false";
+                subtituloMovil = WebUtility.HtmlEncode("Lee el documento, marca que lo aceptas y firma abajo.");
             }
             html = html.Replace("{CONSENT_TEXT}", textoHtml);
             html = html.Replace("{CONSENT_TITLE}", tituloHtml);
+
+            html = html.Replace("{FIRMA_MENOR_DOS_CAJAS}", firmaDobleValor);
+            html = html.Replace("{SUBTITLE_MOBILE}", subtituloMovil);
 
             // Agregar headers CORS y otros necesarios para móviles
             response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -741,10 +870,20 @@ public class FirmaWebService : IDisposable
                 return;
             }
 
-            // Agregar headers CORS
+            // Agregar headers CORS (sin caché larga en JS de firma: el móvil debe recibir la versión actual)
             response.Headers.Add("Access-Control-Allow-Origin", "*");
-            response.Headers.Add("Cache-Control", "public, max-age=3600");
-            
+            if (nombreArchivo.Equals("signature.js", StringComparison.OrdinalIgnoreCase) ||
+                nombreArchivo.Equals("firma.html", StringComparison.OrdinalIgnoreCase))
+            {
+                response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+                response.Headers.Add("Pragma", "no-cache");
+                response.Headers.Add("Expires", "0");
+            }
+            else
+            {
+                response.Headers.Add("Cache-Control", "public, max-age=3600");
+            }
+
             var contenido = await File.ReadAllTextAsync(rutaArchivo);
             response.ContentType = $"{contentType}; charset=utf-8";
             response.StatusCode = 200;
@@ -780,29 +919,58 @@ public class FirmaWebService : IDisposable
         {
             // Leer el body de la petición
             using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
-            var body = await reader.ReadToEndAsync();
+            var body = (await reader.ReadToEndAsync()).Trim();
 
-            // Parsear JSON (formato esperado: {"firma": "data:image/png;base64,..."})
-            // Por ahora, asumimos que viene como base64 directo o en formato data URL
-            string imagenBase64 = body.Trim();
+            var firma = new FirmaRecibida { Token = token, FechaRecepcion = DateTime.Now };
 
-            // Si viene como data URL, extraer solo el base64
-            if (imagenBase64.StartsWith("data:image"))
+            static string? SoloBase64DesdeCampo(string? valor)
             {
-                var base64Index = imagenBase64.IndexOf(',');
-                if (base64Index > 0)
+                if (string.IsNullOrEmpty(valor)) return null;
+                var s = valor.Trim();
+                if (s.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
                 {
-                    imagenBase64 = imagenBase64.Substring(base64Index + 1);
+                    var comma = s.IndexOf(',');
+                    if (comma > 0)
+                        return s.Substring(comma + 1);
                 }
+
+                return s;
             }
 
-            // Guardar la firma
-            var firma = new FirmaRecibida
+            if (body.Length > 0 && body.StartsWith('{'))
             {
-                Token = token,
-                ImagenBase64 = imagenBase64,
-                FechaRecepcion = DateTime.Now
-            };
+                try
+                {
+                    var dto = JsonSerializer.Deserialize<FirmaDobleMenorPayload>(body);
+                    var fiRep = SoloBase64DesdeCampo(dto?.FirmaRepresentanteLegal);
+                    var fiMen = SoloBase64DesdeCampo(dto?.FirmaMenor);
+                    if (string.IsNullOrEmpty(fiRep) || string.IsNullOrEmpty(fiMen))
+                        throw new InvalidOperationException("Faltan firmas dual en JSON.");
+
+                    firma.ImagenFirmaRepresentanteLegal = fiRep!;
+                    firma.ImagenFirmaMenorDual = fiMen!;
+                    firma.ImagenBase64 = fiRep!;
+                }
+                catch (Exception exParse)
+                {
+                    Log.Warning(exParse, "Body JSON dual inválido, se esperaba firmaRepresentanteLegal/firmaMenor");
+                    response.StatusCode = 400;
+                    response.Close();
+                    return;
+                }
+            }
+            else
+            {
+                var imagenBase64 = body;
+                if (imagenBase64.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+                {
+                    var base64Index = imagenBase64.IndexOf(',');
+                    if (base64Index > 0)
+                        imagenBase64 = imagenBase64.Substring(base64Index + 1);
+                }
+
+                firma.ImagenBase64 = imagenBase64;
+            }
 
             _firmasRecibidas[token] = firma;
 
@@ -811,14 +979,21 @@ public class FirmaWebService : IDisposable
             _contextoPorToken.TryRemove(token, out _);
 
             // Disparar evento
-            FirmaRecibida?.Invoke(this, new FirmaRecibidaEventArgs
+            var args = new FirmaRecibidaEventArgs { Token = token, ImagenBase64 = firma.ImagenBase64 };
+            if (!string.IsNullOrEmpty(firma.ImagenFirmaMenorDual) &&
+                !string.IsNullOrEmpty(firma.ImagenFirmaRepresentanteLegal))
             {
-                Token = token,
-                ImagenBase64 = imagenBase64
-            });
+                args.ImagenMenorConsentimientoMenorDual = firma.ImagenFirmaMenorDual;
+                args.ImagenBase64 = firma.ImagenFirmaRepresentanteLegal!;
+            }
 
-            Log.Information("Firma/foto recibida para token: {Token}, tamaño base64: {Tamaño} caracteres", 
-                token, imagenBase64?.Length ?? 0);
+            FirmaRecibida?.Invoke(this, args);
+
+            Log.Information(
+                "Firma/foto recibida para token: {Token}, rep/uni: {TRep}, menor_dual: {TMenor}",
+                token,
+                firma.ImagenBase64.Length,
+                firma.ImagenFirmaMenorDual?.Length ?? 0);
 
             // Responder con éxito
             response.StatusCode = 200;
@@ -897,8 +1072,14 @@ public class FirmaWebService : IDisposable
 internal class FirmaRecibida
 {
     public string Token { get; set; } = string.Empty;
+    /// <summary>Firma única (mayor) o, en dual menor, repetimos el representante para compatibilidad.</summary>
     public string ImagenBase64 { get; set; } = string.Empty;
     public DateTime FechaRecepcion { get; set; }
+
+    /// <summary>Consentimiento menor: segunda firma capturada en la misma página del móvil.</summary>
+    public string? ImagenFirmaMenorDual { get; set; }
+
+    public string? ImagenFirmaRepresentanteLegal { get; set; }
 }
 
 /// <summary>
@@ -908,6 +1089,7 @@ internal class ContextoFirma
 {
     public string Texto { get; set; } = string.Empty;
     public string Titulo { get; set; } = "Consentimiento";
+    public bool FirmaMenorDosCajasEnMismaPagina { get; set; }
 }
 
 /// <summary>
@@ -916,6 +1098,21 @@ internal class ContextoFirma
 public class FirmaRecibidaEventArgs : EventArgs
 {
     public string Token { get; set; } = string.Empty;
+    /// <summary>Representante (dual menor), firma única (mayores) o foto DNI capturada igual.</summary>
     public string ImagenBase64 { get; set; } = string.Empty;
+
+    /// <summary>Si viene relleno junto con <see cref="ImagenBase64"/>, firma menor en mismo envío desde el móvil.</summary>
+    public string? ImagenMenorConsentimientoMenorDual { get; set; }
+
+    public bool EsFirmaConsentimientoMenorDual =>
+        !string.IsNullOrEmpty(ImagenBase64) && !string.IsNullOrEmpty(ImagenMenorConsentimientoMenorDual);
 }
 
+internal sealed class FirmaDobleMenorPayload
+{
+    [JsonPropertyName("firmaRepresentanteLegal")]
+    public string? FirmaRepresentanteLegal { get; set; }
+
+    [JsonPropertyName("firmaMenor")]
+    public string? FirmaMenor { get; set; }
+}

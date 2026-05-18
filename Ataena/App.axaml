@@ -22,6 +22,7 @@
         <converters:BoolToTodayBackgroundConverter x:Key="BoolToTodayBackgroundConverter"/>
         <converters:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter"/>
         <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+        <converters:OverlayNotificationKindToAccentBrushConverter x:Key="OverlayNotificationKindToAccentBrushConverter"/>
 
         <!-- Paleta base oscura moderna (morado / naranja) -->
         <SolidColorBrush x:Key="AppBackgroundBrush" Color="#020617"/>
@@ -147,6 +148,8 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style Selector="Button.btn-primary:pointerover">
@@ -168,6 +171,8 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style Selector="Button.btn-secondary:pointerover">
@@ -195,6 +200,8 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style Selector="Button.btn-danger:pointerover">
@@ -272,6 +279,7 @@
             <Setter Property="Padding" Value="24,18"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>

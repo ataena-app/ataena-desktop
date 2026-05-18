@@ -11,8 +11,9 @@
         
         <Border Background="#1e1e2e"
                 CornerRadius="18"
-                Padding="40"
-                MaxWidth="800"
+                Padding="32"
+                MinWidth="520"
+                MaxWidth="860"
                 MaxHeight="700"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -174,6 +175,13 @@
                                            HorizontalAlignment="Center"/>
                             </Border>
 
+                            <TextBlock Text="{Binding TituloFaseFirma}"
+                                       FontSize="12"
+                                       Opacity="0.85"
+                                       TextWrapping="Wrap"
+                                       Margin="4,6,4,4"
+                                       HorizontalAlignment="Center"/>
+
                             <!-- Preview de firma recibida -->
                             <Border IsVisible="{Binding FirmaRecibida}"
                                     Background="#1a4d2e"
@@ -181,20 +189,46 @@
                                     Padding="15"
                                     BorderBrush="#10b981"
                                     BorderThickness="2">
-                                <StackPanel Spacing="10">
-                                    <TextBlock Text="✅ Firma recibida:"
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="✅ Firma(s) recibida(s)"
                                                FontSize="14"
                                                FontWeight="Bold"
                                                Foreground="#10b981"/>
-                                    <Border Background="White"
-                                            CornerRadius="8"
-                                            Padding="10"
-                                            HorizontalAlignment="Center">
-                                        <Image Source="{Binding ImagenFirmaBase64}"
-                                               MaxWidth="300"
-                                               MaxHeight="150"
-                                               Stretch="Uniform"/>
-                                    </Border>
+                                    <StackPanel IsVisible="{Binding EsConsentimientoMenor}" Spacing="10">
+                                        <TextBlock Text="REPRESENTANTE LEGAL"
+                                                   FontWeight="Heavy"
+                                                   Foreground="#a7f3d0"/>
+                                        <Border Background="White"
+                                                CornerRadius="8"
+                                                Padding="10"
+                                                HorizontalAlignment="Stretch">
+                                            <Image Source="{Binding VistaPreviaRepresentanteDataUrl}"
+                                                   MaxHeight="140"
+                                                   Stretch="Uniform"/>
+                                        </Border>
+                                        <TextBlock Text="MENOR"
+                                                   FontWeight="Heavy"
+                                                   Foreground="#a7f3d0"/>
+                                        <Border Background="White"
+                                                CornerRadius="8"
+                                                Padding="10"
+                                                HorizontalAlignment="Stretch">
+                                            <Image Source="{Binding VistaPreviaMenorDataUrl}"
+                                                   MaxHeight="140"
+                                                   Stretch="Uniform"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel IsVisible="{Binding !EsConsentimientoMenor}">
+                                        <Border Background="White"
+                                                CornerRadius="8"
+                                                Padding="10"
+                                                HorizontalAlignment="Center">
+                                            <Image Source="{Binding VistaPreviaRepresentanteDataUrl}"
+                                                   MaxWidth="300"
+                                                   MaxHeight="150"
+                                                   Stretch="Uniform"/>
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -204,35 +238,59 @@
                 <!-- Footer con botones -->
                 <Border Grid.Row="2"
                         Background="#2a2a3e"
-                        Padding="24,20"
+                        Padding="20,16"
                         CornerRadius="0,0,18,18">
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                        <!-- Botones antes de generar -->
-                        <Button Grid.Column="1"
-                                Content="Cancelar"
-                                Classes="btn-secondary"
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="12"
+                                HorizontalAlignment="Right">
+                        <!-- Botones antes de generar PDF -->
+                        <Button Classes="btn-secondary"
                                 Command="{Binding CancelarFirmaCommand}"
                                 IsEnabled="{Binding !EstaProcesando}"
-                                IsVisible="{Binding !PdfGenerado}"/>
-                        <Button Grid.Column="2"
-                                Content="Generar PDF"
-                                Classes="btn-primary"
+                                IsVisible="{Binding !PdfGenerado}"
+                                MinWidth="130"
+                                MinHeight="46"
+                                Padding="16,10"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Content="Cancelar"/>
+                        <Button Classes="btn-primary"
                                 Command="{Binding ConfirmarFirmaCommand}"
                                 IsEnabled="{Binding FirmaRecibida}"
-                                IsVisible="{Binding !PdfGenerado}"/>
-                        <!-- Botones después de generar -->
-                        <Button Grid.Column="1"
-                                Content="🖨️ Imprimir"
-                                Classes="btn-secondary"
+                                IsVisible="{Binding !PdfGenerado}"
+                                MinWidth="160"
+                                MinHeight="46"
+                                Padding="16,10"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+                            <TextBlock Text="Generar PDF"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"/>
+                        </Button>
+                        <!-- Botones después de generar PDF -->
+                        <Button Classes="btn-secondary"
                                 Command="{Binding ImprimirPdfCommand}"
                                 IsEnabled="{Binding !EstaProcesando}"
-                                IsVisible="{Binding MostrarImprimir}"/>
-                        <Button Grid.Column="2"
-                                Content="Cerrar"
-                                Classes="btn-primary"
+                                IsVisible="{Binding MostrarImprimir}"
+                                MinWidth="140"
+                                MinHeight="46"
+                                Padding="16,10"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+                            <TextBlock Text="🖨️ Imprimir"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"/>
+                        </Button>
+                        <Button Classes="btn-primary"
                                 Command="{Binding CancelarFirmaCommand}"
-                                IsVisible="{Binding PdfGenerado}"/>
-                    </Grid>
+                                IsVisible="{Binding PdfGenerado}"
+                                MinWidth="130"
+                                MinHeight="46"
+                                Padding="16,10"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Content="Cerrar"/>
+                    </StackPanel>
                 </Border>
             </Grid>
         </Border>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -72,6 +73,28 @@ public partial class TrabajosViewModel : ViewModelBase
     private ObservableCollection<Cliente> _clientes = new();
 
     /// <summary>
+    /// Clientes que cumplen la búsqueda en el formulario de trabajo (nombre, apellidos o teléfono).
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<Cliente> _clientesFiltradosFormulario = new();
+
+    /// <summary>
+    /// Texto para filtrar el desplegable de cliente en el modal de trabajo.
+    /// </summary>
+    [ObservableProperty]
+    private string _textoBusquedaClienteFormulario = string.Empty;
+
+    partial void OnTextoBusquedaClienteFormularioChanged(string value)
+    {
+        ActualizarClientesFiltradosFormulario();
+    }
+
+    partial void OnClientesChanged(ObservableCollection<Cliente> value)
+    {
+        ActualizarClientesFiltradosFormulario();
+    }
+
+    /// <summary>
     /// ViewModel del modal de firma de consentimientos.
     /// </summary>
     [ObservableProperty]
@@ -106,6 +129,23 @@ public partial class TrabajosViewModel : ViewModelBase
     /// </summary>
     public bool MostrarAvisoNoModificable => EsEdicion && TrabajoSeleccionado != null && TrabajoSeleccionado.TieneConsentimiento;
 
+    /// <summary>
+    /// Formulario de edición con consentimiento de trabajo ya firmado: bloquea cliente, tipo, descripción y notas.
+    /// </summary>
+    public bool TrabajoFormularioBloqueadoPorConsentimiento =>
+        EsEdicion && TrabajoSeleccionado != null && TrabajoSeleccionado.TieneConsentimiento;
+
+    /// <summary>
+    /// El trabajo seleccionado tiene cliente que acepta fotos antes/después (UI).
+    /// </summary>
+    public bool ClientePermiteFotosEnTrabajo =>
+        TrabajoSeleccionado?.Cliente != null && TrabajoSeleccionado.Cliente.PermiteFotosTrabajo;
+
+    /// <summary>
+    /// Si es false, cliente/tipo/descripción/notas se muestran deshabilitados (solo fotos y documentos siguen activos).
+    /// </summary>
+    public bool TrabajoCamposPrincipalesHabilitados => !TrabajoFormularioBloqueadoPorConsentimiento;
+
     #endregion
 
     #region Propiedades - Formulario de Edición
@@ -128,6 +168,20 @@ public partial class TrabajosViewModel : ViewModelBase
     partial void OnEsEdicionChanged(bool value)
     {
         OnPropertyChanged(nameof(MostrarAvisoNoModificable));
+        OnPropertyChanged(nameof(TrabajoFormularioBloqueadoPorConsentimiento));
+        OnPropertyChanged(nameof(TrabajoCamposPrincipalesHabilitados));
+        OnPropertyChanged(nameof(ClientePermiteFotosEnTrabajo));
+    }
+
+    /// <summary>
+    /// Trabajo seleccionado cambia: refrescar estado del formulario ante consentimiento.
+    /// </summary>
+    partial void OnTrabajoSeleccionadoChanged(Trabajo? value)
+    {
+        OnPropertyChanged(nameof(MostrarAvisoNoModificable));
+        OnPropertyChanged(nameof(TrabajoFormularioBloqueadoPorConsentimiento));
+        OnPropertyChanged(nameof(TrabajoCamposPrincipalesHabilitados));
+        OnPropertyChanged(nameof(ClientePermiteFotosEnTrabajo));
     }
 
     /// <summary>
@@ -165,36 +219,9 @@ public partial class TrabajosViewModel : ViewModelBase
     [ObservableProperty]
     private string _descripcion = string.Empty;
 
-    [ObservableProperty]
-    private string _zonaCuerpo = string.Empty;
-
-    [ObservableProperty]
-    private string? _estilo;
-
-    [ObservableProperty]
-    private string? _tamano;
-
-    [ObservableProperty]
-    private bool _colores = false;
-
-    [ObservableProperty]
-    private decimal _precio = 0;
-
-    [ObservableProperty]
-    private DateTimeOffset? _fecha = DateTimeOffset.Now.Date;
-
     /// <summary>
-    /// Duración estimada del trabajo en minutos (lo que planifica el artista).
+    /// Notas internas del trabajo (no forman parte del consentimiento PDF).
     /// </summary>
-    [ObservableProperty]
-    private int? _duracionEstimadaMinutos;
-
-    /// <summary>
-    /// Estado/fase del trabajo (Diseño, En progreso, Finalizado).
-    /// </summary>
-    [ObservableProperty]
-    private EstadoTrabajo _estadoTrabajo = EstadoTrabajo.Diseno;
-
     [ObservableProperty]
     private string? _notas;
 
@@ -209,6 +236,24 @@ public partial class TrabajosViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private Bitmap? _fotoDespuesImagen;
+
+    /// <summary>
+    /// Placeholder "Sin foto" en la vista (no usar <c>!<see cref="FotoAntesImagen"/></c> en AXAML sobre un Bitmap).
+    /// </summary>
+    public bool MuestraSinFotoAntes => FotoAntesImagen == null;
+
+    /// <inheritdoc cref="MuestraSinFotoAntes"/>
+    public bool MuestraSinFotoDespues => FotoDespuesImagen == null;
+
+    partial void OnFotoAntesImagenChanged(Bitmap? value)
+    {
+        OnPropertyChanged(nameof(MuestraSinFotoAntes));
+    }
+
+    partial void OnFotoDespuesImagenChanged(Bitmap? value)
+    {
+        OnPropertyChanged(nameof(MuestraSinFotoDespues));
+    }
 
     #endregion
 
@@ -274,23 +319,19 @@ public partial class TrabajosViewModel : ViewModelBase
                 query = query.Where(t => t.ClienteId == ClienteFiltro.Id);
             }
 
-            // Aplicar búsqueda si existe
-            if (!string.IsNullOrWhiteSpace(TextoBusqueda))
-            {
-                var busqueda = TextoBusqueda.ToLower();
-                query = query.Where(t =>
-                    (t.Descripcion != null && t.Descripcion.ToLower().Contains(busqueda)) ||
-                    (t.ZonaCuerpo != null && t.ZonaCuerpo.ToLower().Contains(busqueda)) ||
-                    (t.Estilo != null && t.Estilo.ToLower().Contains(busqueda)) ||
-                    (t.Cliente.Nombre.ToLower().Contains(busqueda) ||
-                     t.Cliente.Apellidos.ToLower().Contains(busqueda))
-                );
-            }
-
             var lista = await query
-                .OrderByDescending(t => t.Fecha)
+                .OrderByDescending(t => t.FechaCreacion)
                 .ThenByDescending(t => t.Id)
                 .ToListAsync();
+
+            if (!string.IsNullOrWhiteSpace(TextoBusqueda))
+            {
+                var busqueda = TextoBusqueda.Trim().ToLower();
+                var busquedaDigitos = new string(TextoBusqueda.Where(char.IsDigit).ToArray());
+                lista = lista
+                    .Where(t => TrabajoCoincideBusqueda(t, busqueda, busquedaDigitos))
+                    .ToList();
+            }
 
             Trabajos = new ObservableCollection<Trabajo>(lista);
             TotalTrabajos = lista.Count;
@@ -316,11 +357,22 @@ public partial class TrabajosViewModel : ViewModelBase
         try
         {
             var lista = await _db.Clientes
+                .AsNoTracking()
                 .OrderBy(c => c.Nombre)
                 .ThenBy(c => c.Apellidos)
                 .ToListAsync();
 
             Clientes = new ObservableCollection<Cliente>(lista);
+
+            // Mantener el filtro si seguía aplicado (evita instancia huérfana al reemplazar la colección)
+            if (ClienteFiltro != null)
+            {
+                var idFiltro = ClienteFiltro.Id;
+                ClienteFiltro = lista.FirstOrDefault(c => c.Id == idFiltro);
+            }
+
+            ActualizarClientesFiltradosFormulario();
+
             Log.Debug("Clientes cargados para selector: {Count}", lista.Count);
         }
         catch (Exception ex)
@@ -337,16 +389,20 @@ public partial class TrabajosViewModel : ViewModelBase
     /// Abre el formulario para crear un nuevo trabajo.
     /// </summary>
     [RelayCommand]
-    private void NuevoTrabajo()
+    private async Task NuevoTrabajo()
     {
+        await CargarClientes();
+
         LimpiarFormulario();
-        
+
         // Si hay un cliente pre-seleccionado (desde modal de cita), usarlo
         if (ClientePreseleccionado != null)
         {
-            ClienteSeleccionado = ClientePreseleccionado;
+            ClienteSeleccionado = Clientes.FirstOrDefault(c => c.Id == ClientePreseleccionado.Id) ?? ClientePreseleccionado;
             ClientePreseleccionado = null; // Limpiar después de usar
         }
+
+        ActualizarClientesFiltradosFormulario();
         
         EsEdicion = false;
         TituloFormulario = "✨ Nuevo Trabajo";
@@ -364,16 +420,13 @@ public partial class TrabajosViewModel : ViewModelBase
 
         try
         {
-            // Asegurar que la lista de clientes está cargada
-            if (!Clientes.Any())
-            {
-                await CargarClientes();
-            }
+            await CargarClientes();
 
-            // Buscar al cliente por Id dentro de la colección propia
+            // Buscar al cliente por Id dentro de la colección actual (misma instancia que el ComboBox)
             var clienteEnContexto = Clientes.FirstOrDefault(c => c.Id == cliente.Id);
 
             ClienteSeleccionado = clienteEnContexto ?? cliente;
+            ActualizarClientesFiltradosFormulario();
         }
         catch (Exception ex)
         {
@@ -394,10 +447,12 @@ public partial class TrabajosViewModel : ViewModelBase
     {
         if (TrabajoSeleccionado == null) return;
 
+        await CargarClientes();
+
         // Cargar consentimiento para verificar estado (pero permitir abrir el modal para ver datos)
         await _db.Entry(TrabajoSeleccionado).Reference(t => t.Consentimiento).LoadAsync();
 
-        CargarTrabajoEnFormulario(TrabajoSeleccionado);
+        await CargarTrabajoEnFormularioAsync(TrabajoSeleccionado);
         EsEdicion = true;
         TituloFormulario = "✏️ Editar Trabajo";
         MostrarFormulario = true;
@@ -425,18 +480,6 @@ public partial class TrabajosViewModel : ViewModelBase
                 return;
             }
 
-            if (!Fecha.HasValue)
-            {
-                MensajeError = "Debes seleccionar una fecha";
-                return;
-            }
-
-            if (Precio < 0)
-            {
-                MensajeError = "El precio no puede ser negativo";
-                return;
-            }
-
             Cargando = true;
             MensajeError = string.Empty;
 
@@ -449,14 +492,6 @@ public partial class TrabajosViewModel : ViewModelBase
                 TrabajoSeleccionado.ClienteId = ClienteSeleccionado.Id;
                 TrabajoSeleccionado.Tipo = TipoTrabajo;
                 TrabajoSeleccionado.Descripcion = Descripcion.Trim();
-                TrabajoSeleccionado.ZonaCuerpo = ZonaCuerpo.Trim();
-                TrabajoSeleccionado.Estilo = string.IsNullOrWhiteSpace(Estilo) ? null : Estilo.Trim();
-                TrabajoSeleccionado.Tamano = string.IsNullOrWhiteSpace(Tamano) ? null : Tamano.Trim();
-                TrabajoSeleccionado.Colores = Colores;
-                TrabajoSeleccionado.Precio = Precio;
-                TrabajoSeleccionado.Fecha = Fecha.Value.DateTime;
-                TrabajoSeleccionado.DuracionEstimadaMinutos = DuracionEstimadaMinutos;
-                TrabajoSeleccionado.Estado = EstadoTrabajo;
                 TrabajoSeleccionado.Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
             }
             else
@@ -465,21 +500,19 @@ public partial class TrabajosViewModel : ViewModelBase
                 Log.Information("Creando nuevo trabajo para cliente {ClienteId}: {Descripcion}", 
                     ClienteSeleccionado.Id, Descripcion);
                 
+                var ahora = DateTime.Now;
                 var nuevoTrabajo = new Trabajo
                 {
                     ClienteId = ClienteSeleccionado.Id,
                     Tipo = TipoTrabajo,
                     Descripcion = Descripcion.Trim(),
-                    ZonaCuerpo = ZonaCuerpo.Trim(),
-                    Estilo = string.IsNullOrWhiteSpace(Estilo) ? null : Estilo.Trim(),
-                    Tamano = string.IsNullOrWhiteSpace(Tamano) ? null : Tamano.Trim(),
-                    Colores = Colores,
-                    Precio = Precio,
-                    Fecha = Fecha.Value.DateTime,
-                    DuracionEstimadaMinutos = DuracionEstimadaMinutos,
-                    Estado = EstadoTrabajo,
                     Notas = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim(),
-                    FechaCreacion = DateTime.Now
+                    ZonaCuerpo = string.Empty,
+                    Estado = EstadoTrabajo.Diseno,
+                    Precio = 0,
+                    Colores = false,
+                    FechaCreacion = ahora,
+                    Fecha = ahora
                 };
                 
                 _db.Trabajos.Add(nuevoTrabajo);
@@ -645,27 +678,75 @@ public partial class TrabajosViewModel : ViewModelBase
 
         try
         {
-            // Cargar cliente y consentimientos
-            await _db.Entry(trabajoFoto).Reference(t => t.Cliente).LoadAsync();
-            await _db.Entry(trabajoFoto.Cliente).Collection(c => c.Consentimientos).LoadAsync();
-            await _db.Entry(trabajoFoto).Reference(t => t.Consentimiento).LoadAsync();
+            var clienteId = trabajoFoto.ClienteId;
 
-            // Validaciones de consentimiento
-            if (!trabajoFoto.Cliente.TieneConsentimientoRGPD)
+            // Contexto fresco: evita leer estado desactualizado tras firmar en otro ViewModel/contexto SQLite.
+            // La edad se consulta igual que en Cliente (TotalDays / 365.25) para alinear EsMenorDeEdad con la ficha.
+            await using var readDb = new AtaenaDbContext();
+            var clientePrefs = await readDb.Clientes.AsNoTracking()
+                .Where(c => c.Id == clienteId)
+                .Select(c => new { c.FechaNacimiento, c.PermiteFotosTrabajo })
+                .FirstOrDefaultAsync();
+
+            if (clientePrefs == null)
             {
-                MensajeError = "El cliente debe tener RGPD firmado antes de tomar fotos.";
+                OverlayNotificationService.Mostrar(
+                    "No se encontró el cliente del trabajo.",
+                    OverlayNotificationKind.Warning);
                 return;
             }
 
-            if (!trabajoFoto.Cliente.TieneConsentimientoImagenes)
+            if (!clientePrefs.PermiteFotosTrabajo)
             {
-                MensajeError = "El cliente debe tener firmado el consentimiento de uso de imágenes antes de tomar fotos.";
+                OverlayNotificationService.Mostrar(
+                    "Este cliente no autoriza fotos de trabajo. Actívalo al editar el cliente en Clientes si debe poder tomarse fotos y firmarse el consentimiento de imágenes.",
+                    OverlayNotificationKind.Warning);
                 return;
             }
 
-            if (trabajoFoto.Consentimiento == null || !trabajoFoto.Consentimiento.Firmado)
+            var fechaNacimiento = clientePrefs.FechaNacimiento;
+            var esMenorDeEdad = fechaNacimiento.HasValue &&
+                (int)((DateTime.Today - fechaNacimiento.Value).TotalDays / 365.25) < 18;
+
+            var consentCliente = await readDb.Consentimientos.AsNoTracking()
+                .Where(c => c.ClienteId == clienteId)
+                .ToListAsync();
+
+            var tieneRgpd = Consentimiento.TieneConsentimientoRgpdVigente(consentCliente);
+            var tieneImagenes =
+                Consentimiento.TieneConsentimientoImagenesVigente(consentCliente, esMenorDeEdad);
+
+            // Misma condición que en la vista: Trabajo.TieneConsentimiento (solo Firmado; no usar !Renovado aquí).
+            // Con FK 1:1 por trabajo, marcados Renovado por errores históricos bloqueaban fotos teniendo ✅ en pantalla.
+            var tieneConsentimientoTrabajo = await readDb.Trabajos.AsNoTracking()
+                .Where(t => t.Id == trabajoFoto.Id)
+                .Select(t => t.Consentimiento != null && t.Consentimiento.Firmado)
+                .FirstOrDefaultAsync();
+
+            // Validaciones de consentimiento (aviso en primera plana sobre modales locales)
+            if (!tieneRgpd)
             {
-                MensajeError = "Debes firmar primero el consentimiento de trabajo antes de tomar fotos.";
+                OverlayNotificationService.Mostrar(
+                    "El cliente debe tener el consentimiento RGPD firmado antes de tomar fotos.",
+                    OverlayNotificationKind.Warning);
+                return;
+            }
+
+            if (!tieneImagenes)
+            {
+                OverlayNotificationService.Mostrar(
+                    esMenorDeEdad
+                        ? "El tutor debe tener firmado el consentimiento de uso de imágenes del menor antes de tomar fotos."
+                        : "El cliente debe tener firmado el consentimiento de uso de imágenes antes de tomar fotos.",
+                    OverlayNotificationKind.Warning);
+                return;
+            }
+
+            if (!tieneConsentimientoTrabajo)
+            {
+                OverlayNotificationService.Mostrar(
+                    "Primero debe firmarse el consentimiento de trabajo antes de tomar fotos.",
+                    OverlayNotificationKind.Warning);
                 return;
             }
 
@@ -773,6 +854,8 @@ public partial class TrabajosViewModel : ViewModelBase
                         await _db.Entry(TrabajoSeleccionado).Reference(t => t.Consentimiento).LoadAsync();
                         OnPropertyChanged(nameof(TrabajoSeleccionado));
                         OnPropertyChanged(nameof(MostrarAvisoNoModificable));
+                        OnPropertyChanged(nameof(TrabajoFormularioBloqueadoPorConsentimiento));
+                        OnPropertyChanged(nameof(TrabajoCamposPrincipalesHabilitados));
                     }
                 };
             }
@@ -933,7 +1016,7 @@ public partial class TrabajosViewModel : ViewModelBase
 
             // Crear mailto con el PDF adjunto (si el cliente de correo lo soporta)
             var asunto = Uri.EscapeDataString($"Consentimiento de Trabajo - {trabajoAVer.Descripcion}");
-            var cuerpo = Uri.EscapeDataString($"Adjunto encontrarás el consentimiento de trabajo firmado.\n\nTrabajo: {trabajoAVer.Descripcion}\nFecha: {trabajoAVer.Fecha:dd/MM/yyyy}");
+            var cuerpo = Uri.EscapeDataString($"Adjunto encontrarás el consentimiento de trabajo firmado.\n\nTrabajo: {trabajoAVer.Descripcion}\nFecha (alta): {trabajoAVer.FechaCreacion:dd/MM/yyyy}");
             var mailto = $"mailto:{trabajoAVer.Cliente.Email}?subject={asunto}&body={cuerpo}";
 
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -1056,47 +1139,134 @@ public partial class TrabajosViewModel : ViewModelBase
         ClienteSeleccionado = null;
         TipoTrabajo = TipoTrabajo.Tatuaje;
         Descripcion = string.Empty;
-        ZonaCuerpo = string.Empty;
-        Estilo = null;
-        Tamano = null;
-        Colores = false;
-        Precio = 0;
-        Fecha = DateTimeOffset.Now.Date;
-        DuracionEstimadaMinutos = null;
-        EstadoTrabajo = EstadoTrabajo.Diseno;
         Notas = null;
         MensajeError = string.Empty;
+        FotoAntesImagen = null;
+        FotoDespuesImagen = null;
+        TextoBusquedaClienteFormulario = string.Empty;
+        ActualizarClientesFiltradosFormulario();
     }
 
     /// <summary>
-    /// Carga los datos de un trabajo en el formulario.
+    /// Carga los datos de un trabajo en el formulario (solo campos editables en UI: cliente, tipo, descripción, notas).
     /// </summary>
-    /// <param name="trabajo">Trabajo a cargar.</param>
-    private async void CargarTrabajoEnFormulario(Trabajo trabajo)
+    private async Task CargarTrabajoEnFormularioAsync(Trabajo trabajo)
     {
-        // Cargar relaciones necesarias
         await _db.Entry(trabajo).Reference(t => t.Cliente).LoadAsync();
         await _db.Entry(trabajo).Reference(t => t.Consentimiento).LoadAsync();
-        
-        ClienteSeleccionado = trabajo.Cliente;
+
+        ClienteSeleccionado = Clientes.FirstOrDefault(c => c.Id == trabajo.ClienteId) ?? trabajo.Cliente;
         TipoTrabajo = trabajo.Tipo;
         Descripcion = trabajo.Descripcion;
-        ZonaCuerpo = trabajo.ZonaCuerpo;
-        Estilo = trabajo.Estilo;
-        Tamano = trabajo.Tamano;
-        Colores = trabajo.Colores;
-        Precio = trabajo.Precio;
-        Fecha = new DateTimeOffset(trabajo.Fecha);
-        DuracionEstimadaMinutos = trabajo.DuracionEstimadaMinutos;
-        EstadoTrabajo = trabajo.Estado;
         Notas = trabajo.Notas;
         MensajeError = string.Empty;
-        
-        // Cargar imágenes de las fotos si existen
+
         CargarFotosTrabajo(trabajo);
-        
-        // Notificar cambios en las propiedades del trabajo para actualizar la UI
+
         OnPropertyChanged(nameof(TrabajoSeleccionado));
+        OnPropertyChanged(nameof(TrabajoFormularioBloqueadoPorConsentimiento));
+        OnPropertyChanged(nameof(TrabajoCamposPrincipalesHabilitados));
+        OnPropertyChanged(nameof(ClientePermiteFotosEnTrabajo));
+        ActualizarClientesFiltradosFormulario();
+    }
+
+    /// <summary>
+    /// Comprueba si un trabajo coincide con el texto de búsqueda (incluye teléfono solo dígitos).
+    /// </summary>
+    private static bool TrabajoCoincideBusqueda(Trabajo trabajo, string busquedaLower, string busquedaDigitos)
+    {
+        var cliente = trabajo.Cliente;
+
+        if (!string.IsNullOrEmpty(busquedaLower))
+        {
+            if (trabajo.Descripcion != null &&
+                trabajo.Descripcion.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (trabajo.ZonaCuerpo != null &&
+                trabajo.ZonaCuerpo.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (trabajo.Estilo != null &&
+                trabajo.Estilo.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (cliente.Nombre.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase) ||
+                cliente.Apellidos.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase) ||
+                $"{cliente.Nombre} {cliente.Apellidos}".Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!string.IsNullOrEmpty(cliente.Telefono) &&
+                cliente.Telefono.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        if (!string.IsNullOrEmpty(busquedaDigitos))
+        {
+            var telDigitos = new string((cliente.Telefono ?? "").Where(char.IsDigit).ToArray());
+            if (telDigitos.Contains(busquedaDigitos, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Lista desplegable de clientes según texto de búsqueda y mantiene el seleccionado con la misma instancia que <see cref="Clientes"/>.
+    /// </summary>
+    private void ActualizarClientesFiltradosFormulario()
+    {
+        ClientesFiltradosFormulario.Clear();
+        if (Clientes.Count == 0)
+            return;
+
+        const int limite = 300;
+        var qRaw = TextoBusquedaClienteFormulario?.Trim() ?? string.Empty;
+
+        IEnumerable<Cliente> candidatos = Clientes;
+        if (!string.IsNullOrWhiteSpace(qRaw))
+        {
+            var ql = qRaw;
+            var qDigits = new string(qRaw.Where(char.IsDigit).ToArray());
+            candidatos = Clientes.Where(c =>
+                c.Nombre.Contains(ql, StringComparison.OrdinalIgnoreCase) ||
+                c.Apellidos.Contains(ql, StringComparison.OrdinalIgnoreCase) ||
+                $"{c.Nombre} {c.Apellidos}".Contains(ql, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(c.Telefono) && c.Telefono.Contains(ql, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(qDigits)
+                 && new string((c.Telefono ?? "").Where(char.IsDigit).ToArray())
+                     .Contains(qDigits, StringComparison.Ordinal)));
+        }
+
+        var ordenados = candidatos
+            .OrderBy(c => c.Nombre)
+            .ThenBy(c => c.Apellidos)
+            .Take(limite)
+            .ToList();
+
+        foreach (var c in ordenados)
+            ClientesFiltradosFormulario.Add(c);
+
+        AsegurarClienteSeleccionadoEnListaFiltrada();
+    }
+
+    /// <summary>
+    /// Si el cliente elegido no entra por el Take o por el texto, se antepone usando la referencia canonical de <see cref="Clientes"/>.
+    /// </summary>
+    private void AsegurarClienteSeleccionadoEnListaFiltrada()
+    {
+        if (ClienteSeleccionado == null || Clientes.Count == 0)
+            return;
+
+        var canon = Clientes.FirstOrDefault(c => c.Id == ClienteSeleccionado.Id);
+        if (canon == null)
+            return;
+
+        if (!ClientesFiltradosFormulario.Any(c => c.Id == canon.Id))
+            ClientesFiltradosFormulario.Insert(0, canon);
+
+        if (!ReferenceEquals(ClienteSeleccionado, canon))
+            ClienteSeleccionado = canon;
     }
 
     /// <summary>

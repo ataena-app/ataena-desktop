@@ -105,7 +105,8 @@ public enum EstadoTrabajo
 /// <remarks>
 /// - RGPD: Obligatorio para cumplir con la protección de datos (mayores de edad).
 /// - RGPD_Menor: Para menores de edad, requiere doble firma (menor + tutor).
-/// - Imagenes: Opcional, para usar fotos en redes sociales (solo mayores).
+/// - Imagenes: Opcional, para usar fotos en redes sociales (mayores de edad).
+/// - Imagenes_Menor: Uso de imágenes del menor; doble firma (menor + tutor).
 /// - Trabajo: Obligatorio antes de cada tatuaje/piercing (mayores de edad).
 /// - Trabajo_Menor: Para menores de edad, requiere doble firma (menor + tutor).
 /// </remarks>
@@ -120,7 +121,6 @@ public enum TipoConsentimiento
     /// <summary>
     /// Consentimiento de uso de imágenes en redes sociales.
     /// Se firma una vez por cliente mayor de edad.
-    /// NO disponible para menores de edad.
     /// </summary>
     Imagenes = 1,
 
@@ -140,5 +140,11 @@ public enum TipoConsentimiento
     /// Consentimiento de trabajo para menores de edad.
     /// Requiere doble firma: menor + tutor/representante legal.
     /// </summary>
-    Trabajo_Menor = 4
+    Trabajo_Menor = 4,
+
+    /// <summary>
+    /// Consentimiento de uso de imágenes del menor.
+    /// Requiere doble firma: menor + tutor/representante legal.
+    /// </summary>
+    Imagenes_Menor = 5
 }

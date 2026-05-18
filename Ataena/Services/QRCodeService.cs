@@ -33,8 +33,8 @@ public static class QRCodeService
             using var qrCode = new PngByteQRCode(qrCodeData);
             var qrCodeBytes = qrCode.GetGraphic(20); // 20 píxeles por módulo
             
-            // Convertir bytes a Bitmap de Avalonia
             using var stream = new MemoryStream(qrCodeBytes);
+            stream.Position = 0;
             return new Bitmap(stream);
         }
         catch (Exception ex)
@@ -72,8 +72,8 @@ public static class QRCodeService
             using var qrCode = new PngByteQRCode(qrCodeData);
             var qrCodeBytes = qrCode.GetGraphic(pixelesPorModulo);
             
-            // Convertir bytes a Bitmap de Avalonia
             using var stream = new MemoryStream(qrCodeBytes);
+            stream.Position = 0;
             return new Bitmap(stream);
         }
         catch (Exception ex)

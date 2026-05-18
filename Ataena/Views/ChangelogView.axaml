@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ataena.ViewModels"
+             x:Class="Ataena.Views.ChangelogView"
+             x:DataType="vm:ChangelogViewModel">
+
+  <Border IsVisible="{Binding EsVisible, FallbackValue=False}"
+          Background="#D9000000"
+          ZIndex="2100">
+    <Border MinWidth="480"
+            MaxWidth="640"
+            MaxHeight="560"
+            Margin="24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="#0f172a"
+            CornerRadius="18"
+            BorderBrush="#475569"
+            BorderThickness="1"
+            BoxShadow="0 24 64 #CC000000">
+      <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0"
+                Background="#1e293b"
+                Padding="24,20"
+                CornerRadius="18,18,0,0">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Spacing="6">
+              <TextBlock Text="✨"
+                         FontSize="22"/>
+              <TextBlock Text="{Binding Titulo}"
+                         FontSize="20"
+                         FontWeight="Bold"
+                         TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding Subtitulo}"
+                         FontSize="13"
+                         Opacity="0.75"
+                         TextWrapping="Wrap"
+                         IsVisible="{Binding Subtitulo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Content="✕"
+                    Classes="btn-close"
+                    Command="{Binding CerrarCommand}"
+                    Width="36"
+                    Height="36"
+                    VerticalAlignment="Top"/>
+          </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1"
+                      Padding="24,16"
+                      VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="{Binding TextoCuerpo}"
+                     FontSize="13"
+                     LineHeight="22"
+                     TextWrapping="Wrap"
+                     Foreground="#e2e8f0"/>
+        </ScrollViewer>
+
+        <Border Grid.Row="2"
+                Background="#1e293b"
+                Padding="20,16"
+                CornerRadius="0,0,18,18">
+          <Button Content="{Binding TextoBotonCerrar}"
+                  Classes="btn-primary"
+                  Command="{Binding CerrarCommand}"
+                  HorizontalAlignment="Right"
+                  MinWidth="140"
+                  MinHeight="44"
+                  Padding="20,10"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"/>
+        </Border>
+      </Grid>
+    </Border>
+  </Border>
+</UserControl>
