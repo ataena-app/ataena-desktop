@@ -70,6 +70,9 @@ Desktop.ini
 # ─────────────────────────────────────────────────────────────
 # Secretos y configuración local
 # ─────────────────────────────────────────────────────────────
+# Notas internas, backlog local y documentos que no deben versionarse
+.local/
+
 appsettings.local.json
 secrets.json
 *.pfx
