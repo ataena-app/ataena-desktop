@@ -2,7 +2,7 @@
 
 > CRM de escritorio para estudios de tatuaje y piercing. Gestiona clientes, agenda, trabajos y consentimientos RGPD desde una sola aplicación nativa para Windows.
 
-![Version](https://img.shields.io/badge/version-0.5.5--beta-a855f7)
+![Version](https://img.shields.io/badge/version-0.6.1--beta-a855f7)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078d4)
 ![Framework](https://img.shields.io/badge/.NET-9.0-512bd4)
 ![UI](https://img.shields.io/badge/UI-Avalonia%2011-purple)
@@ -61,7 +61,7 @@ Ataena comprueba automáticamente si hay una nueva versión disponible cada vez 
 
 ## Estado del proyecto
 
-Actualmente en fase **beta** (`v0.5.x`). La aplicación es funcional y estable para uso diario, pero algunas características secundarias están aún en desarrollo.
+Actualmente en fase **beta** (`v0.6.x`). La aplicación es funcional y estable para uso diario, pero algunas características secundarias están aún en desarrollo.
 
 Consulta el [CHANGELOG](./CHANGELOG.md) para ver el detalle de cambios por versión.
 

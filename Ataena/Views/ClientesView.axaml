@@ -10,17 +10,25 @@
              Loaded="OnLoaded">
 
     <UserControl.Styles>
-        <!-- Fila de cliente (estilo lista) -->
+        <!-- Tarjeta de cliente -->
         <Style Selector="Border.cliente-card">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="8,6"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="BorderBrush" Value="#272738"/>
+            <Setter Property="Background" Value="#1a1a2e"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#2a2a3e"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Border.cliente-card:pointerover">
-            <Setter Property="Background" Value="#202032"/>
+            <Setter Property="Background" Value="#22223a"/>
+            <Setter Property="BorderBrush" Value="#4c3d6e"/>
+        </Style>
+
+        <Style Selector="Border.chip">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         
         <!-- Formulario -->
@@ -66,126 +74,203 @@
             </StackPanel>
             
             <!-- Barra de búsqueda y acciones -->
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,20">
-                <TextBox Grid.Column="0"
-                         Text="{Binding TextoBusqueda}"
-                         Watermark="🔍 Buscar por nombre, teléfono o email..."
-                         Margin="0,0,10,0"/>
-                <Button Grid.Column="1"
-                        Content="Buscar"
-                        Command="{Binding BuscarCommand}"
-                        Margin="0,0,10,0"/>
-                <Button Grid.Column="2"
-                        Content="⚠️ Sin RGPD"
-                        Classes="btn-secondary"
-                        Command="{Binding FiltrarSinConsentimientoCommand}"
-                        ToolTip.Tip="Mostrar solo clientes sin consentimiento RGPD firmado"
-                        Margin="0,0,10,0"/>
-                <Button Grid.Column="3"
-                        Content="➕ Nuevo Cliente"
-                        Classes="btn-primary"
-                        Command="{Binding NuevoClienteCommand}"/>
+            <Grid Grid.Row="1" RowDefinitions="Auto,Auto" Margin="0,0,0,16">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+                    <TextBox Grid.Column="0"
+                             Text="{Binding TextoBusqueda}"
+                             Watermark="🔍 Buscar por nombre, apellidos, DNI, teléfono o email..."
+                             Margin="0,0,10,0"/>
+                    <Button Grid.Column="1"
+                            Content="⚠️ Sin RGPD"
+                            Classes="btn-secondary"
+                            Command="{Binding FiltrarSinConsentimientoCommand}"
+                            ToolTip.Tip="Mostrar solo clientes sin consentimiento RGPD firmado"
+                            Margin="0,0,10,0"/>
+                    <Button Grid.Column="2"
+                            Content="➕ Nuevo Cliente"
+                            Classes="btn-primary"
+                            Command="{Binding NuevoClienteCommand}"/>
+                </Grid>
+
+                <StackPanel Grid.Row="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10"
+                            Margin="0,12,0,0">
+                    <TextBlock Text="Ordenar por"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Opacity="0.65"/>
+                    <ComboBox ItemsSource="{Binding OpcionesOrden}"
+                              SelectedItem="{Binding OrdenSeleccionado}"
+                              MinWidth="190"
+                              VerticalAlignment="Center">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Etiqueta}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
             </Grid>
             
-            <!-- Lista de clientes (altura fija, sin scroll) -->
-            <Border Grid.Row="2" 
-                    BorderBrush="#272738" 
-                    BorderThickness="0,1,0,1"
-                    Background="Transparent">
+            <!-- Lista de clientes -->
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Clientes}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="models:Cliente">
                             <Border Classes="cliente-card"
                                     PointerPressed="OnClienteClick"
                                     Tag="{Binding}">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    
-                                    <!-- Info -->
-                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="8">
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding NombreCompleto}"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"/>
-                                            <!-- Indicador de menor de edad -->
-                                            <Border Grid.Column="1"
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                                    <!-- Barra de estado (color según ficha del cliente) -->
+                                    <Grid Grid.Column="0"
+                                          Width="4"
+                                          Margin="0,2,14,2"
+                                          VerticalAlignment="Stretch"
+                                          MinHeight="48">
+                                        <!-- Verde: DNI + consentimientos al día -->
+                                        <Border CornerRadius="2"
+                                                IsVisible="{Binding FichaListaCompleta}">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#34d399" Offset="0"/>
+                                                    <GradientStop Color="#059669" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                        <!-- Rojo: sin RGPD -->
+                                        <Border CornerRadius="2"
+                                                IsVisible="{Binding FichaListaCritica}">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#f87171" Offset="0"/>
+                                                    <GradientStop Color="#dc2626" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                        <!-- Naranja: RGPD ok pero falta DNI, imágenes o renovación -->
+                                        <Border CornerRadius="2"
+                                                IsVisible="{Binding FichaListaParcial}">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#fb923c" Offset="0"/>
+                                                    <GradientStop Color="#ea580c" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Info principal -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                                        <TextBlock Text="{Binding NombreCompleto}"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#f1f5f9"/>
+
+                                        <WrapPanel Orientation="Horizontal">
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding EsMenorDeEdad}"
-                                                    Background="#f59e0b"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="🔞 Menor"
+                                                    Background="#f59e0b22"
+                                                    BorderBrush="#f59e0b55"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Menor"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#fbbf24"/>
                                             </Border>
-                                            <!-- Indicador de consentimiento RGPD -->
-                                            <Border Grid.Column="2"
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding !TieneConsentimientoRGPD}"
-                                                    Background="#ef5350"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="⚠️ Sin RGPD"
+                                                    Background="#ef444422"
+                                                    BorderBrush="#ef444455"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Sin RGPD"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#fca5a5"/>
                                             </Border>
-                                            <Border Grid.Column="2"
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding TieneConsentimientoRGPD}"
-                                                    Background="#10b981"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="✅ RGPD"
+                                                    Background="#10b98122"
+                                                    BorderBrush="#10b98155"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="RGPD"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#6ee7b7"/>
                                             </Border>
-                                            <!-- Indicador de consentimiento de imágenes -->
-                                            <Border Grid.Column="3"
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding ImagenesChipPendienteFirma}"
-                                                    Background="#f97316"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="⚠️ Sin imágenes"
+                                                    Background="#f9731622"
+                                                    BorderBrush="#f9731655"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Sin imágenes"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#fdba74"/>
                                             </Border>
-                                            <Border Grid.Column="3"
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding ImagenesChipOk}"
-                                                    Background="#10b981"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="✅ Imágenes"
+                                                    Background="#10b98122"
+                                                    BorderBrush="#10b98155"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Imágenes"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#6ee7b7"/>
                                             </Border>
-                                        </Grid>
-                                        <StackPanel Orientation="Horizontal" Spacing="15" Opacity="0.7">
-                                            <TextBlock Text="{Binding Telefono}"/>
-                                            <TextBlock Text="{Binding Email}" 
-                                                       IsVisible="{Binding Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                            <TextBlock Text="{Binding Dni}" 
-                                                       IsVisible="{Binding Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </WrapPanel>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="14">
+                                            <TextBlock FontSize="12" Foreground="#94a3b8"
+                                                       IsVisible="{Binding Telefono, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <Run Text="📞 "/>
+                                                <Run Text="{Binding Telefono}"/>
+                                            </TextBlock>
+                                            <TextBlock FontSize="12" Foreground="#94a3b8"
+                                                       IsVisible="{Binding Dni, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <Run Text="🪪 "/>
+                                                <Run Text="{Binding Dni}"/>
+                                            </TextBlock>
+                                            <TextBlock FontSize="12" Foreground="#94a3b8"
+                                                       IsVisible="{Binding Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <Run Text="✉ "/>
+                                                <Run Text="{Binding Email}"/>
+                                            </TextBlock>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding FechaNacimientoConEdad}"
-                                                   FontSize="12"
-                                                   Opacity="0.6"
-                                                   Margin="0,5,0,0"/>
                                     </StackPanel>
-                                    
-                                    <!-- Sin botones de acción: solo fila clicable -->
+
+                                    <!-- Edad / fecha -->
+                                    <StackPanel Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Spacing="2">
+                                        <TextBlock Text="{Binding Edad, StringFormat='{}{0} años'}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#cbd5e1"
+                                                   HorizontalAlignment="Right"
+                                                   IsVisible="{Binding Edad, Converter={x:Static conv:IsNotNullConverter.Instance}}"/>
+                                        <TextBlock Text="{Binding FechaNacimiento, StringFormat='dd/MM/yyyy'}"
+                                                   FontSize="11"
+                                                   Foreground="#64748b"
+                                                   HorizontalAlignment="Right"
+                                                   IsVisible="{Binding FechaNacimiento, Converter={x:Static conv:IsNotNullConverter.Instance}}"/>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </Border>
+            </ScrollViewer>
             
             <!-- Controles de paginación -->
             <Border Grid.Row="3"

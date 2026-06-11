@@ -5,6 +5,20 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.6.1] - 2026-06-11
+
+### Añadido
+- **Lista de clientes:** desplegable para ordenar por más reciente, más antiguo, nombre (A-Z) o edad; por defecto **más reciente** (último cliente añadido primero).
+- **Búsqueda por DNI** e insensible a tildes (p. ej. `fernandez` encuentra «Fernández»); misma lógica en el selector de cliente de Trabajos.
+- **Barra de estado** en cada tarjeta: verde (DNI + consentimientos de ficha al día), naranja (falta algo), rojo (sin RGPD).
+- Comando de desarrollo `--seed-demo-clientes` para generar clientes de prueba en la BD local (no se distribuye con el instalador).
+
+### Cambiado
+- **Rediseño de la lista de clientes:** tarjetas con scroll, chips compactos y datos de contacto más legibles.
+- **Búsqueda automática** al escribir (eliminado el botón «Buscar»); filtrado en memoria con retardo breve.
+
+---
+
 ## [0.6.0] - 2026-05-29
 
 ### Añadido
@@ -117,6 +131,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+[0.6.1]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.1
 [0.6.0]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.0
 [0.5.6]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.6
 [0.5.5]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.5.5

@@ -1513,16 +1513,10 @@ public partial class TrabajosViewModel : ViewModelBase
         IEnumerable<Cliente> candidatos = Clientes;
         if (!string.IsNullOrWhiteSpace(qRaw))
         {
-            var ql = qRaw;
-            var qDigits = new string(qRaw.Where(char.IsDigit).ToArray());
+            var termino = TextoBusquedaHelper.Normalizar(qRaw);
+            var terminoDigitos = TextoBusquedaHelper.SoloDigitos(qRaw);
             candidatos = Clientes.Where(c =>
-                c.Nombre.Contains(ql, StringComparison.OrdinalIgnoreCase) ||
-                c.Apellidos.Contains(ql, StringComparison.OrdinalIgnoreCase) ||
-                $"{c.Nombre} {c.Apellidos}".Contains(ql, StringComparison.OrdinalIgnoreCase) ||
-                (!string.IsNullOrEmpty(c.Telefono) && c.Telefono.Contains(ql, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(qDigits)
-                 && new string((c.Telefono ?? "").Where(char.IsDigit).ToArray())
-                     .Contains(qDigits, StringComparison.Ordinal)));
+                TextoBusquedaHelper.ClienteCoincide(c, termino, terminoDigitos));
         }
 
         var ordenados = candidatos

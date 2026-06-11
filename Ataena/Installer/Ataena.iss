@@ -2,7 +2,7 @@
 ; Crea un instalador con asistente completo (Bienvenida, elegir carpeta, accesos directos, etc.)
 
 #define MyAppName "Ataena CRM"
-#define MyAppVersion "0.6.0"
+#define MyAppVersion "0.6.1"
 #define MyAppPublisher "Ataena"
 #define MyAppURL "https://github.com/Jvalfdev/desktop-myos-app"
 #define MyAppExeName "Ataena.exe"

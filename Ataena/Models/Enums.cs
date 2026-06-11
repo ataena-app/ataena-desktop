@@ -148,3 +148,21 @@ public enum TipoConsentimiento
     /// </summary>
     Imagenes_Menor = 5
 }
+
+/// <summary>
+/// Criterio de ordenación de la lista de clientes.
+/// </summary>
+public enum OrdenClientes
+{
+    /// <summary>Registrados hace más tiempo primero.</summary>
+    MasAntiguo = 0,
+
+    /// <summary>Últimos registrados primero.</summary>
+    MasReciente = 1,
+
+    /// <summary>Alfabético por nombre y apellidos.</summary>
+    Nombre = 2,
+
+    /// <summary>Mayor edad primero.</summary>
+    Edad = 3
+}

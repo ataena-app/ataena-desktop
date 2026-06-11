@@ -5,6 +5,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Ataena;
@@ -29,6 +30,12 @@ sealed class Program
         // (Inno Setup /VERYSILENT) y debe seguir su flujo normal.
         LoggingService.Inicializar();
         LoggingService.EscribirDiagnostico("Main: Inicio");
+
+        if (args.Contains("--seed-demo-clientes"))
+        {
+            EjecutarSeedDemoClientes();
+            return;
+        }
 
         try
         {
@@ -108,4 +115,26 @@ sealed class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
+
+    private static void EjecutarSeedDemoClientes()
+    {
+        try
+        {
+            using var db = new AtaenaDbContext();
+            db.Database.Migrate();
+            var insertados = DemoClientesSeeder.SembrarAsync(db, 100).GetAwaiter().GetResult();
+            Console.WriteLine(insertados > 0
+                ? $"✅ Insertados {insertados} clientes demo."
+                : "ℹ️ Ya hay clientes demo en la BD (no se insertaron más).");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al sembrar clientes demo: {ex.Message}");
+            Environment.ExitCode = 1;
+        }
+        finally
+        {
+            LoggingService.Cerrar();
+        }
+    }
 }

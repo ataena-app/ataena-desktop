@@ -255,5 +255,35 @@ public class Cliente
     public int NumeroConsentimientosPendientesRenovacion => Consentimientos
         .Count(c => c.Firmado && c.NecesitaRenovacion);
 
+    /// <summary>
+    /// Foto de DNI del cliente y, si es menor, del tutor.
+    /// </summary>
+    public bool TieneDocumentacionDniCompleta =>
+        TieneFotoDni && (!EsMenorDeEdad || TieneFotoDniTutor);
+
+    /// <summary>
+    /// RGPD firmado, imágenes si aplica, y sin renovaciones pendientes.
+    /// </summary>
+    public bool TieneConsentimientosFichaCompletos =>
+        TieneConsentimientoRGPD &&
+        (!PermiteFotosTrabajo || TieneConsentimientoImagenes) &&
+        !TieneConsentimientosPendientesRenovacion;
+
+    /// <summary>
+    /// Ficha al día: DNI documentado y consentimientos de ficha completos (barra verde).
+    /// </summary>
+    public bool FichaListaCompleta =>
+        TieneDocumentacionDniCompleta && TieneConsentimientosFichaCompletos;
+
+    /// <summary>
+    /// Falta RGPD u otro requisito crítico (barra roja).
+    /// </summary>
+    public bool FichaListaCritica => !TieneConsentimientoRGPD;
+
+    /// <summary>
+    /// Tiene RGPD pero le falta algo más: DNI, imágenes, renovación, etc. (barra naranja).
+    /// </summary>
+    public bool FichaListaParcial => !FichaListaCompleta && !FichaListaCritica;
+
     #endregion
 }

@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -54,12 +56,29 @@ public partial class ClientesViewModel : ViewModelBase
         _mainWindowVM = mainWindowViewModel;
     }
 
+    public ClientesViewModel()
+    {
+        _ordenSeleccionado = OpcionesOrden.First(o => o.Valor == OrdenClientes.MasReciente);
+    }
+
     #region Propiedades - Lista y Selección
 
     /// <summary>
     /// Colección completa de clientes (sin paginación).
     /// </summary>
     private ObservableCollection<Cliente> _todosLosClientes = new();
+
+    /// <summary>
+    /// Caché en memoria para búsqueda dinámica sin consultar la BD en cada tecla.
+    /// </summary>
+    private List<Cliente> _clientesEnCache = new();
+
+    /// <summary>
+    /// Indica si la caché actual solo contiene clientes sin RGPD.
+    /// </summary>
+    private bool _filtroSinRgpdActivo;
+
+    private CancellationTokenSource? _busquedaCts;
 
     /// <summary>
     /// Colección observable de clientes mostrados en la página actual.
@@ -78,6 +97,31 @@ public partial class ClientesViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private string _textoBusqueda = string.Empty;
+
+    partial void OnTextoBusquedaChanged(string value) => ProgramarBusquedaAutomatica();
+
+    /// <summary>
+    /// Opciones del desplegable de ordenación.
+    /// </summary>
+    public IReadOnlyList<OpcionOrdenCliente> OpcionesOrden { get; } =
+    [
+        new(OrdenClientes.MasReciente, "Más reciente"),
+        new(OrdenClientes.MasAntiguo, "Más antiguo"),
+        new(OrdenClientes.Nombre, "Nombre (A-Z)"),
+        new(OrdenClientes.Edad, "Edad (mayor a menor)")
+    ];
+
+    /// <summary>
+    /// Ordenación seleccionada en la UI (por defecto: más reciente).
+    /// </summary>
+    [ObservableProperty]
+    private OpcionOrdenCliente _ordenSeleccionado;
+
+    partial void OnOrdenSeleccionadoChanged(OpcionOrdenCliente value)
+    {
+        if (value != null && _todosLosClientes.Count > 0)
+            ReordenarClientesActuales();
+    }
 
     #endregion
 
@@ -500,13 +544,11 @@ public partial class ClientesViewModel : ViewModelBase
             var lista = await _db.Clientes
                 .AsNoTracking()
                 .Include(c => c.Consentimientos)
-                .OrderBy(c => c.Nombre)
-                .ThenBy(c => c.Apellidos)
                 .ToListAsync();
 
-            _todosLosClientes = new ObservableCollection<Cliente>(lista);
-            TotalClientes = lista.Count;
-            ActualizarPaginacion();
+            _clientesEnCache = lista;
+            _filtroSinRgpdActivo = false;
+            EstablecerListaClientes(lista);
             Log.Information("Clientes cargados: {Count} clientes activos", lista.Count);
         }
         catch (Exception ex)
@@ -521,51 +563,66 @@ public partial class ClientesViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Busca clientes por nombre, apellidos o teléfono.
+    /// Programa la búsqueda automática con un breve retardo al escribir.
     /// </summary>
-    [RelayCommand]
-    private async Task Buscar()
+    private void ProgramarBusquedaAutomatica()
+    {
+        _busquedaCts?.Cancel();
+        _busquedaCts?.Dispose();
+        _busquedaCts = new CancellationTokenSource();
+        var token = _busquedaCts.Token;
+        _ = AplicarBusquedaAutomaticaAsync(token);
+    }
+
+    /// <summary>
+    /// Filtra la lista en memoria según <see cref="TextoBusqueda"/>.
+    /// </summary>
+    private async Task AplicarBusquedaAutomaticaAsync(CancellationToken token)
     {
         try
         {
-            Cargando = true;
-            MensajeError = string.Empty;
+            await Task.Delay(250, token);
 
-            if (string.IsNullOrWhiteSpace(TextoBusqueda))
+            if (string.IsNullOrWhiteSpace(TextoBusqueda) && !_filtroSinRgpdActivo)
             {
                 await CargarClientes();
                 return;
             }
 
-            Log.Debug("Buscando clientes con término: {Termino}", TextoBusqueda);
-            var busqueda = TextoBusqueda.ToLower();
-            var lista = await _db.Clientes
-                .AsNoTracking()
-                .Include(c => c.Consentimientos)
-                .Where(c =>
-                    c.Nombre.ToLower().Contains(busqueda) ||
-                    c.Apellidos.ToLower().Contains(busqueda) ||
-                    c.Telefono.Contains(busqueda) ||
-                    (c.Email != null && c.Email.ToLower().Contains(busqueda))
-                )
-                .OrderBy(c => c.Nombre)
-                .ToListAsync();
+            if (_clientesEnCache.Count == 0)
+            {
+                await CargarClientes();
+                return;
+            }
 
-            _todosLosClientes = new ObservableCollection<Cliente>(lista);
-            TotalClientes = lista.Count;
-            PaginaActual = 1; // Resetear a primera página
-            ActualizarPaginacion();
-            Log.Information("Búsqueda completada: {Count} resultados para '{Termino}'", lista.Count, TextoBusqueda);
+            var lista = FiltrarClientesEnCache(TextoBusqueda);
+            PaginaActual = 1;
+            EstablecerListaClientes(lista);
+        }
+        catch (OperationCanceledException)
+        {
+            // Nueva pulsación de tecla: se cancela la búsqueda anterior.
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error al buscar clientes con término: {Termino}", TextoBusqueda);
+            Log.Error(ex, "Error en búsqueda automática de clientes");
             MensajeError = $"Error en la búsqueda: {ex.Message}";
         }
-        finally
-        {
-            Cargando = false;
-        }
+    }
+
+    /// <summary>
+    /// Aplica el texto de búsqueda sobre la caché actual.
+    /// </summary>
+    private List<Cliente> FiltrarClientesEnCache(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return _clientesEnCache;
+
+        var termino = TextoBusquedaHelper.Normalizar(texto);
+        var terminoDigitos = TextoBusquedaHelper.SoloDigitos(texto);
+        return _clientesEnCache
+            .Where(c => TextoBusquedaHelper.ClienteCoincide(c, termino, terminoDigitos))
+            .ToList();
     }
 
     #endregion
@@ -1460,8 +1517,6 @@ public partial class ClientesViewModel : ViewModelBase
             // Cargar todos los clientes con sus consentimientos
             var todosClientes = await _db.Clientes
                 .Include(c => c.Consentimientos)
-                .OrderBy(c => c.Nombre)
-                .ThenBy(c => c.Apellidos)
                 .ToListAsync();
 
             // Filtrar solo los que no tienen RGPD firmado
@@ -1469,11 +1524,10 @@ public partial class ClientesViewModel : ViewModelBase
                 .Where(c => !c.Consentimientos.Any(cons => cons.Tipo == TipoConsentimiento.RGPD && cons.Firmado))
                 .ToList();
 
-            _todosLosClientes = new ObservableCollection<Cliente>(clientesSinRGPD);
-            TotalClientes = clientesSinRGPD.Count;
-            PaginaActual = 1; // Resetear a primera página al filtrar
-            ActualizarPaginacion();
-            TotalClientes = clientesSinRGPD.Count;
+            _clientesEnCache = clientesSinRGPD;
+            _filtroSinRgpdActivo = true;
+            PaginaActual = 1;
+            EstablecerListaClientes(FiltrarClientesEnCache(TextoBusqueda));
             
             Log.Information("Filtrado completado: {Count} clientes sin consentimiento RGPD", clientesSinRGPD.Count);
         }
@@ -2470,7 +2524,51 @@ public partial class ClientesViewModel : ViewModelBase
 
     #endregion
 
-    #region Paginación
+    #region Ordenación y paginación
+
+    /// <summary>
+    /// Asigna la lista completa aplicando el orden seleccionado y refresca la paginación.
+    /// </summary>
+    private void EstablecerListaClientes(IEnumerable<Cliente> clientes)
+    {
+        var ordenada = OrdenarClientes(clientes).ToList();
+        _todosLosClientes = new ObservableCollection<Cliente>(ordenada);
+        TotalClientes = ordenada.Count;
+        ActualizarPaginacion();
+    }
+
+    /// <summary>
+    /// Reordena la colección en memoria sin recargar desde la BD.
+    /// </summary>
+    private void ReordenarClientesActuales()
+    {
+        var ordenada = OrdenarClientes(_todosLosClientes).ToList();
+        _todosLosClientes = new ObservableCollection<Cliente>(ordenada);
+        ActualizarPaginacion();
+    }
+
+    /// <summary>
+    /// Aplica el criterio de ordenación activo.
+    /// </summary>
+    private IEnumerable<Cliente> OrdenarClientes(IEnumerable<Cliente> clientes)
+    {
+        var criterio = OrdenSeleccionado?.Valor ?? OrdenClientes.MasReciente;
+        return criterio switch
+        {
+            OrdenClientes.MasReciente => clientes
+                .OrderByDescending(c => c.FechaRegistro)
+                .ThenByDescending(c => c.Id),
+            OrdenClientes.Nombre => clientes
+                .OrderBy(c => c.Nombre, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(c => c.Apellidos, StringComparer.OrdinalIgnoreCase),
+            OrdenClientes.Edad => clientes
+                .OrderByDescending(c => c.Edad ?? -1)
+                .ThenBy(c => c.Nombre, StringComparer.OrdinalIgnoreCase),
+            _ => clientes
+                .OrderBy(c => c.FechaRegistro)
+                .ThenBy(c => c.Id)
+        };
+    }
 
     /// <summary>
     /// Actualiza la lista de clientes mostrados según la página actual.
@@ -2559,3 +2657,13 @@ public partial class ClientesViewModel : ViewModelBase
     #endregion
 }
 
+/// <summary>
+/// Opción visible en el desplegable de ordenación de clientes.
+/// </summary>
+public sealed class OpcionOrdenCliente(OrdenClientes valor, string etiqueta)
+{
+    public OrdenClientes Valor { get; } = valor;
+    public string Etiqueta { get; } = etiqueta;
+
+    public override string ToString() => Etiqueta;
+}
