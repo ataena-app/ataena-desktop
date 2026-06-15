@@ -132,13 +132,24 @@
                 <!-- Espaciador central -->
                 <Border Grid.Column="2"/>
 
-                <!-- Texto de filtros (placeholder para futuros filtros reales) -->
-                <TextBlock Grid.Column="3"
-                           Text="Filtros (pendiente de configurar)"
-                           Opacity="0.6"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Right"
-                           Margin="0,0,10,0"/>
+                <!-- Filtro por estado -->
+                <ComboBox Grid.Column="3"
+                          SelectedItem="{Binding FiltroEstado}"
+                          PlaceholderText="Todos los estados"
+                          MinWidth="160"
+                          Height="32"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Right"
+                          Margin="0,0,10,0">
+                    <ComboBox.Items>
+                        <x:Null/>
+                        <x:Static Member="models:EstadoCita.Pendiente"/>
+                        <x:Static Member="models:EstadoCita.Confirmada"/>
+                        <x:Static Member="models:EstadoCita.EnProceso"/>
+                        <x:Static Member="models:EstadoCita.Completada"/>
+                        <x:Static Member="models:EstadoCita.Cancelada"/>
+                    </ComboBox.Items>
+                </ComboBox>
 
                 <!-- Botón de actualizar -->
                 <Button Grid.Column="4"
@@ -419,7 +430,9 @@
                                         CornerRadius="6"
                                         Margin="2"
                                         MinHeight="80"
-                                        Padding="6">
+                                        Padding="6"
+                                        Cursor="Hand"
+                                        PointerPressed="OnDiaMesPointerPressed">
                                     <Grid RowDefinitions="Auto,*">
                                         <!-- Cabecera del día: número + festivo -->
                                         <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
@@ -795,8 +808,24 @@
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="#d0d0d0"/>
-                                    <DatePicker SelectedDate="{Binding FechaCita}"
-                                                 Height="40"/>
+                                    <Button Classes="btn-secondary"
+                                            Command="{Binding AlternarCalendarioCitaCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Height="40"
+                                            Padding="12,0">
+                                        <TextBlock Text="{Binding FechaCita, StringFormat='{}{0:dddd, dd MMMM yyyy}', TargetNullValue='Seleccionar fecha…'}"/>
+                                    </Button>
+                                    <Border IsVisible="{Binding MostrarCalendarioCitaExpandido}"
+                                            Background="#1e293b"
+                                            CornerRadius="10"
+                                            Padding="8"
+                                            HorizontalAlignment="Stretch">
+                                        <Calendar SelectedDate="{Binding FechaCita}"
+                                                  DisplayDateStart="{Binding FechaMinimaCita}"
+                                                  IsTodayHighlighted="True"
+                                                  FirstDayOfWeek="Monday"/>
+                                    </Border>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Spacing="8">
                                     <TextBlock Text="Hora inicio * (HH:mm)" 

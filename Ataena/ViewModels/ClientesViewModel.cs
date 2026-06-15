@@ -362,6 +362,21 @@ public partial class ClientesViewModel : ViewModelBase
     [ObservableProperty]
     private bool _validacionFormularioActiva;
 
+    /// <summary>
+    /// Aviso modal centrado cuando faltan campos obligatorios al guardar.
+    /// </summary>
+    [ObservableProperty]
+    private bool _mostrarAlertaValidacionFormulario;
+
+    [ObservableProperty]
+    private string _mensajeAlertaValidacionFormulario = string.Empty;
+
+    [RelayCommand]
+    private void CerrarAlertaValidacionFormulario()
+    {
+        MostrarAlertaValidacionFormulario = false;
+    }
+
     private static readonly string[] FormatosFechaNacimiento =
         { "dd/MM/yyyy", "dd-MM-yyyy", "d/M/yyyy", "d-M-yyyy" };
 
@@ -505,12 +520,6 @@ public partial class ClientesViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private ConsentimientoFirmaViewModel? _consentimientoFirmaVM;
-
-    /// <summary>
-    /// ViewModel del modal para subir fotos de DNI.
-    /// </summary>
-    [ObservableProperty]
-    private FotoDniViewModel? _fotoDniVM;
 
     /// <summary>
     /// Lista de trabajos del cliente seleccionado (para la ficha).
@@ -852,7 +861,9 @@ public partial class ClientesViewModel : ViewModelBase
             ValidacionFormularioActiva = true;
             if (!ValidarFormularioCompleto())
             {
-                MensajeError = ObtenerPrimerMensajeErrorFormulario();
+                MensajeAlertaValidacionFormulario = ObtenerPrimerMensajeErrorFormulario();
+                MostrarAlertaValidacionFormulario = true;
+                MensajeError = string.Empty;
                 return;
             }
 
@@ -863,18 +874,19 @@ public partial class ClientesViewModel : ViewModelBase
             var apellidosTrimmed = Apellidos.Trim();
             var dniTrimmed = Dni.Trim().ToUpperInvariant();
 
-            // Verificar que el DNI/Pasaporte no esté duplicado (para nuevos clientes o si cambió)
             var clienteIdActual = EsEdicion && ClienteSeleccionado != null ? ClienteSeleccionado.Id : 0;
-            
+
             if (!EsEdicion || (EsEdicion && ClienteSeleccionado != null && ClienteSeleccionado.Dni != dniTrimmed))
             {
                 var dniDuplicado = await _db.Clientes
                     .AnyAsync(c => c.Dni == dniTrimmed && c.Id != clienteIdActual);
-                
+
                 if (dniDuplicado)
                 {
                     ErrorDni = "Ya existe un cliente con ese documento de identidad.";
-                    MensajeError = ErrorDni;
+                    MensajeAlertaValidacionFormulario = ErrorDni;
+                    MostrarAlertaValidacionFormulario = true;
+                    MensajeError = string.Empty;
                     return;
                 }
             }
@@ -1177,163 +1189,6 @@ public partial class ClientesViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Abre el modal para subir foto del DNI del cliente.
-    /// </summary>
-    [RelayCommand]
-    private async Task SubirFotoDniCliente(Cliente cliente)
-    {
-        try
-        {
-            MensajeError = string.Empty;
-
-            AsegurarFotoDniViewModel();
-            await FotoDniVM!.AbrirModalAsync(cliente, esDniTutor: false);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error al abrir modal de foto DNI para cliente {ClienteId}", cliente.Id);
-            MensajeError = $"Error al abrir el modal de foto de DNI: {ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// Abre el modal para subir foto del DNI del tutor (para menores).
-    /// </summary>
-    [RelayCommand]
-    private async Task SubirFotoDniTutor(Cliente cliente)
-    {
-        try
-        {
-            MensajeError = string.Empty;
-
-            if (!cliente.EsMenorDeEdad)
-            {
-                MensajeError = "⚠️ Solo se puede subir foto de DNI de tutor para clientes menores de edad.";
-                return;
-            }
-
-            if (!cliente.TieneDatosTutor)
-            {
-                MensajeError = "⚠️ Primero debes rellenar los datos del tutor (nombre, apellidos, DNI).";
-                return;
-            }
-
-            AsegurarFotoDniViewModel();
-            await FotoDniVM!.AbrirModalAsync(cliente, esDniTutor: true);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error al abrir modal de foto DNI tutor para cliente {ClienteId}", cliente.Id);
-            MensajeError = $"Error al abrir el modal de foto de DNI del tutor: {ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// Abre la foto del DNI del cliente en el visor predeterminado del sistema.
-    /// </summary>
-    [RelayCommand]
-    private Task VerFotoDniCliente(Cliente? cliente)
-    {
-        var c = cliente ?? ClienteSeleccionado;
-        if (c == null)
-            return Task.CompletedTask;
-
-        return AbrirFotoDniEnVisor(
-            ConsentimientoPathService.RutaFotoDniExistente(c.Id, c.FotoDniPath),
-            "No hay foto del DNI guardada para este cliente.");
-    }
-
-    /// <summary>
-    /// Abre la foto del DNI del tutor en el visor predeterminado del sistema.
-    /// </summary>
-    [RelayCommand]
-    private Task VerFotoDniTutor(Cliente? cliente)
-    {
-        var c = cliente ?? ClienteSeleccionado;
-        if (c == null)
-            return Task.CompletedTask;
-
-        return AbrirFotoDniEnVisor(
-            ConsentimientoPathService.RutaFotoDniTutorExistente(c.Id, c.FotoDniTutorPath),
-            "No hay foto del DNI del tutor guardada.");
-    }
-
-  private void AsegurarFotoDniViewModel()
-    {
-        if (FotoDniVM != null)
-            return;
-
-        FotoDniVM = new FotoDniViewModel();
-        FotoDniVM.FotoGuardada += (_, c) => _ = OnFotoDniGuardadaAsync(c);
-    }
-
-    /// <summary>
-    /// Tras guardar una foto de DNI, actualiza la lista y la ficha sin recargar toda la BD en segundo plano.
-    /// </summary>
-    private async Task OnFotoDniGuardadaAsync(Cliente cliente)
-    {
-        try
-        {
-            await EnUiThreadAsync(() => ActualizarClienteTrasFotoDni(cliente));
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error tras guardar foto DNI del cliente {ClienteId}", cliente.Id);
-            await EnUiThreadAsync(() =>
-                MensajeError = $"Error al actualizar tras guardar el DNI: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Sincroniza rutas de foto DNI en caché, lista paginada y ficha abierta.
-    /// Debe ejecutarse en el hilo de UI.
-    /// </summary>
-    private void ActualizarClienteTrasFotoDni(Cliente clienteActualizado)
-    {
-        var enCache = _clientesEnCache.FirstOrDefault(c => c.Id == clienteActualizado.Id);
-        if (enCache != null)
-        {
-            enCache.FotoDniPath = clienteActualizado.FotoDniPath;
-            enCache.FotoDniTutorPath = clienteActualizado.FotoDniTutorPath;
-        }
-
-        var fuente = _filtroSinRgpdActivo || !string.IsNullOrWhiteSpace(TextoBusqueda)
-            ? FiltrarClientesEnCache(TextoBusqueda)
-            : _clientesEnCache;
-        EstablecerListaClientes(fuente);
-
-        if (ClienteSeleccionado?.Id == clienteActualizado.Id)
-        {
-            ClienteSeleccionado.FotoDniPath = clienteActualizado.FotoDniPath;
-            ClienteSeleccionado.FotoDniTutorPath = clienteActualizado.FotoDniTutorPath;
-            OnPropertyChanged(nameof(ClienteSeleccionado));
-        }
-    }
-
-    private Task AbrirFotoDniEnVisor(string? ruta, string mensajeSinFoto)
-    {
-        try
-        {
-            MensajeError = string.Empty;
-
-            if (string.IsNullOrWhiteSpace(ruta) || !File.Exists(ruta))
-            {
-                MensajeError = mensajeSinFoto;
-                return Task.CompletedTask;
-            }
-
-            ArchivoSistemaService.AbrirEnVisorPredeterminado(ruta);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error al abrir foto de DNI: {Ruta}", ruta);
-            MensajeError = $"Error al abrir la foto del DNI: {ex.Message}";
-        }
-
-        return Task.CompletedTask;
-    }
-
     #endregion
 
     /// <summary>
@@ -1489,6 +1344,8 @@ public partial class ClientesViewModel : ViewModelBase
         MostrarFormulario = false;
         MostrarFicha = false;
         MensajeError = string.Empty;
+        MostrarAlertaValidacionFormulario = false;
+        MensajeAlertaValidacionFormulario = string.Empty;
         LimpiarErroresCampos();
         ValidacionFormularioActiva = false;
     }
@@ -1561,9 +1418,9 @@ public partial class ClientesViewModel : ViewModelBase
                 .Include(c => c.Consentimientos)
                 .ToListAsync();
 
-            // Filtrar solo los que no tienen RGPD firmado
+            // Sin RGPD vigente: ni RGPD de adulto ni RGPD_Menor firmado (menores incluidos)
             var clientesSinRGPD = todosClientes
-                .Where(c => !c.Consentimientos.Any(cons => cons.Tipo == TipoConsentimiento.RGPD && cons.Firmado))
+                .Where(c => !c.TieneConsentimientoRGPD)
                 .ToList();
 
             _clientesEnCache = clientesSinRGPD;

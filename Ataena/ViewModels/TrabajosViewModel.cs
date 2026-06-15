@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -24,8 +25,11 @@ public partial class TrabajosViewModel : ViewModelBase
 {
     private readonly AtaenaDbContext _db = new();
     private ClientesViewModel? _clientesVM;
+    private MainWindowViewModel? _mainWindowVM;
+    private AgendaViewModel? _agendaRetornoVM;
     private EventHandler<Cliente>? _renovacionConsentimientoFirmaHandler;
     private EventHandler? _renovacionModalCerradoHandler;
+    private CancellationTokenSource? _busquedaCts;
 
     /// <summary>
     /// Permite inyectar el ViewModel de Clientes para refrescar la ficha cuando cambian trabajos.
@@ -33,6 +37,14 @@ public partial class TrabajosViewModel : ViewModelBase
     public void SetClientesViewModel(ClientesViewModel clientesViewModel)
     {
         _clientesVM = clientesViewModel;
+    }
+
+    /// <summary>
+    /// Referencia a la ventana principal (navegación tras crear trabajo desde agenda).
+    /// </summary>
+    public void SetMainWindowViewModel(MainWindowViewModel mainWindowVM)
+    {
+        _mainWindowVM = mainWindowVM;
     }
 
     /// <summary>
@@ -76,6 +88,8 @@ public partial class TrabajosViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private string _textoBusqueda = string.Empty;
+
+    partial void OnTextoBusquedaChanged(string value) => ProgramarBusquedaAutomatica();
 
     /// <summary>
     /// Cliente seleccionado para filtrar trabajos (opcional).
@@ -246,6 +260,23 @@ public partial class TrabajosViewModel : ViewModelBase
     [ObservableProperty]
     private Cliente? _clientePreseleccionado;
 
+    /// <summary>
+    /// Si true, el cliente viene fijado (desde ficha o desde agenda) y no se puede cambiar.
+    /// </summary>
+    [ObservableProperty]
+    private bool _clienteBloqueadoEnFormulario;
+
+    /// <summary>
+    /// El selector de cliente está habilitado (no bloqueado por origen ni por consentimiento firmado).
+    /// </summary>
+    public bool ClienteFormularioEditable =>
+        !ClienteBloqueadoEnFormulario && !TrabajoFormularioBloqueadoPorConsentimiento;
+
+    partial void OnClienteBloqueadoEnFormularioChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ClienteFormularioEditable));
+    }
+
     // Campos del formulario
     [ObservableProperty]
     private Cliente? _clienteSeleccionado;
@@ -377,10 +408,10 @@ public partial class TrabajosViewModel : ViewModelBase
 
             if (!string.IsNullOrWhiteSpace(TextoBusqueda))
             {
-                var busqueda = TextoBusqueda.Trim().ToLower();
-                var busquedaDigitos = new string(TextoBusqueda.Where(char.IsDigit).ToArray());
+                var termino = TextoBusquedaHelper.Normalizar(TextoBusqueda);
+                var terminoDigitos = TextoBusquedaHelper.SoloDigitos(TextoBusqueda);
                 lista = lista
-                    .Where(t => TrabajoCoincideBusqueda(t, busqueda, busquedaDigitos))
+                    .Where(t => TextoBusquedaHelper.TrabajoCoincide(t, termino, terminoDigitos))
                     .ToList();
             }
 
@@ -396,6 +427,31 @@ public partial class TrabajosViewModel : ViewModelBase
         finally
         {
             Cargando = false;
+        }
+    }
+
+    /// <summary>
+    /// Programa la búsqueda automática con un breve retardo al escribir.
+    /// </summary>
+    private void ProgramarBusquedaAutomatica()
+    {
+        _busquedaCts?.Cancel();
+        _busquedaCts?.Dispose();
+        _busquedaCts = new CancellationTokenSource();
+        var token = _busquedaCts.Token;
+        _ = AplicarBusquedaAutomaticaAsync(token);
+    }
+
+    private async Task AplicarBusquedaAutomaticaAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(250, token);
+            await CargarTrabajos();
+        }
+        catch (OperationCanceledException)
+        {
+            // Nueva pulsación de tecla
         }
     }
 
@@ -465,18 +521,19 @@ public partial class TrabajosViewModel : ViewModelBase
     /// Se asegura de usar la instancia de cliente del propio DbContext para que
     /// el ComboBox quede correctamente seleccionado.
     /// </summary>
-    public async Task NuevoTrabajoParaCliente(Cliente cliente)
+    public async Task NuevoTrabajoParaCliente(Cliente cliente, bool bloquearCliente = true)
     {
         LimpiarFormulario();
+        ClienteBloqueadoEnFormulario = bloquearCliente;
 
         try
         {
             await CargarClientes();
 
-            // Buscar al cliente por Id dentro de la colección actual (misma instancia que el ComboBox)
             var clienteEnContexto = Clientes.FirstOrDefault(c => c.Id == cliente.Id);
 
             ClienteSeleccionado = clienteEnContexto ?? cliente;
+            TextoBusquedaClienteFormulario = ClienteSeleccionado?.NombreCompleto ?? string.Empty;
             ActualizarClientesFiltradosFormulario();
         }
         catch (Exception ex)
@@ -486,8 +543,37 @@ public partial class TrabajosViewModel : ViewModelBase
         }
 
         EsEdicion = false;
-        TituloFormulario = "✨ Nuevo Trabajo";
+        TituloFormulario = bloquearCliente
+            ? $"✨ Nuevo Trabajo — {cliente.NombreCompleto}"
+            : "✨ Nuevo Trabajo";
         MostrarFormulario = true;
+    }
+
+    /// <summary>
+    /// Abre nuevo trabajo desde la agenda, guardando contexto para volver a la cita tras guardar o cancelar.
+    /// </summary>
+    public async Task NuevoTrabajoDesdeAgenda(AgendaViewModel agenda, Cliente cliente)
+    {
+        agenda.CapturarEstadoFormularioParaRetorno();
+        _agendaRetornoVM = agenda;
+        await NuevoTrabajoParaCliente(cliente, bloquearCliente: true);
+    }
+
+    private async Task FinalizarRetornoAgendaTrasTrabajoAsync(Trabajo? trabajoGuardado, bool cancelado)
+    {
+        var agenda = _agendaRetornoVM;
+        _agendaRetornoVM = null;
+        ClienteBloqueadoEnFormulario = false;
+
+        if (agenda == null)
+            return;
+
+        _mainWindowVM?.IrAAgendaCommand.Execute(null);
+
+        if (cancelado)
+            agenda.RestaurarFormularioCitaTrasCancelarTrabajo();
+        else if (trabajoGuardado != null)
+            await agenda.RestaurarFormularioCitaTrasCrearTrabajoAsync(trabajoGuardado);
     }
 
     /// <summary>
@@ -676,6 +762,14 @@ public partial class TrabajosViewModel : ViewModelBase
             }
             
             var clienteIdTrasGuardar = clienteParaGuardar?.Id ?? TrabajoSeleccionado?.ClienteId;
+
+            if (_agendaRetornoVM != null)
+            {
+                MostrarFormulario = false;
+                await CargarTrabajos();
+                await FinalizarRetornoAgendaTrasTrabajoAsync(trabajoGuardado, cancelado: false);
+                return;
+            }
 
             MostrarFormulario = false;
             await CargarTrabajos();
@@ -1397,11 +1491,21 @@ public partial class TrabajosViewModel : ViewModelBase
     /// Cancela la edición y cierra el formulario.
     /// </summary>
     [RelayCommand]
-    private void CancelarEdicion()
+    private async Task CancelarEdicion()
     {
+        if (_agendaRetornoVM != null)
+        {
+            MostrarFormulario = false;
+            MensajeError = string.Empty;
+            ClientePreseleccionado = null;
+            await FinalizarRetornoAgendaTrasTrabajoAsync(null, cancelado: true);
+            return;
+        }
+
         MostrarFormulario = false;
         MensajeError = string.Empty;
         ClientePreseleccionado = null;
+        ClienteBloqueadoEnFormulario = false;
     }
 
     #endregion
@@ -1417,6 +1521,7 @@ public partial class TrabajosViewModel : ViewModelBase
         TrabajoSeleccionado = null;
 
         ClienteSeleccionado = null;
+        ClienteBloqueadoEnFormulario = false;
         TipoTrabajo = TipoTrabajo.Tatuaje;
         Descripcion = string.Empty;
         Notas = null;
@@ -1455,47 +1560,6 @@ public partial class TrabajosViewModel : ViewModelBase
         OnPropertyChanged(nameof(TooltipEliminarTrabajo));
         OnPropertyChanged(nameof(ClientePermiteFotosEnTrabajo));
         ActualizarClientesFiltradosFormulario();
-    }
-
-    /// <summary>
-    /// Comprueba si un trabajo coincide con el texto de búsqueda (incluye teléfono solo dígitos).
-    /// </summary>
-    private static bool TrabajoCoincideBusqueda(Trabajo trabajo, string busquedaLower, string busquedaDigitos)
-    {
-        var cliente = trabajo.Cliente;
-
-        if (!string.IsNullOrEmpty(busquedaLower))
-        {
-            if (trabajo.Descripcion != null &&
-                trabajo.Descripcion.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (trabajo.ZonaCuerpo != null &&
-                trabajo.ZonaCuerpo.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (trabajo.Estilo != null &&
-                trabajo.Estilo.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (cliente.Nombre.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase) ||
-                cliente.Apellidos.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase) ||
-                $"{cliente.Nombre} {cliente.Apellidos}".Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (!string.IsNullOrEmpty(cliente.Telefono) &&
-                cliente.Telefono.Contains(busquedaLower, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-
-        if (!string.IsNullOrEmpty(busquedaDigitos))
-        {
-            var telDigitos = new string((cliente.Telefono ?? "").Where(char.IsDigit).ToArray());
-            if (telDigitos.Contains(busquedaDigitos, StringComparison.Ordinal))
-                return true;
-        }
-
-        return false;
     }
 
     /// <summary>

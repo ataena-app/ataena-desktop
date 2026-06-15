@@ -9,15 +9,25 @@
              Loaded="OnLoaded">
 
     <UserControl.Styles>
-        <!-- Tarjeta de trabajo -->
+        <!-- Tarjeta de trabajo (mismo estilo que clientes) -->
         <Style Selector="Border.trabajo-card">
-            <Setter Property="Background" Value="#1e1e2e"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Background" Value="#1a1a2e"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#2a2a3e"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Border.trabajo-card:pointerover">
-            <Setter Property="Background" Value="#2a2a3e"/>
+            <Setter Property="Background" Value="#22223a"/>
+            <Setter Property="BorderBrush" Value="#4c3d6e"/>
+        </Style>
+
+        <Style Selector="Border.chip">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         
         <!-- Formulario -->
@@ -61,36 +71,22 @@
                 </TextBlock>
             </StackPanel>
             
-            <!-- Barra de búsqueda, filtro y acciones -->
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,20">
+            <!-- Barra de búsqueda y acciones -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
                 <TextBox Grid.Column="0"
                          Text="{Binding TextoBusqueda}"
-                         Watermark="🔍 Buscar por descripción, zona, cliente o teléfono..."
+                         Watermark="🔍 Buscar por descripción, cliente, DNI, teléfono, zona..."
                          Margin="0,0,10,0"/>
-                <ComboBox Grid.Column="1"
-                          ItemsSource="{Binding Clientes}"
-                          SelectedItem="{Binding ClienteFiltro}"
-                          Width="200"
-                          Margin="0,0,10,0"
-                          PlaceholderText="Filtrar por cliente">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding NombreCompleto}"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <Button Grid.Column="2"
-                        Content="Buscar"
-                        Command="{Binding CargarTrabajosCommand}"
-                        Margin="0,0,10,0"/>
-                <Button Grid.Column="3"
+                <Button Grid.Column="1"
                         Content="➕ Nuevo Trabajo"
                         Classes="btn-primary"
                         Command="{Binding NuevoTrabajoCommand}"/>
             </Grid>
             
             <!-- Lista de trabajos -->
-            <ScrollViewer Grid.Row="2">
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Trabajos}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="models:Trabajo">
@@ -98,103 +94,116 @@
                                     PointerPressed="OnTrabajoClick"
                                     Tag="{Binding}">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                    
-                                    <!-- Icono del tipo -->
-                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                        <TextBlock Text="{Binding IconoTipo}" 
-                                                   FontSize="32" 
-                                                   HorizontalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Tipo}" 
-                                                   FontSize="12" 
-                                                   Opacity="0.6"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,5,0,0"/>
-                                    </StackPanel>
-                                    
-                                    <!-- Info -->
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding Descripcion}"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"/>
-                                            <!-- Indicador de consentimiento -->
-                                            <Border Grid.Column="1"
+
+                                    <!-- Barra de estado (consentimiento) -->
+                                    <Grid Grid.Column="0"
+                                          Width="4"
+                                          Margin="0,2,14,2"
+                                          VerticalAlignment="Stretch"
+                                          MinHeight="48">
+                                        <Border CornerRadius="2"
+                                                IsVisible="{Binding TieneConsentimiento}">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#34d399" Offset="0"/>
+                                                    <GradientStop Color="#059669" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                        <Border CornerRadius="2"
+                                                IsVisible="{Binding !TieneConsentimiento}">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#f87171" Offset="0"/>
+                                                    <GradientStop Color="#dc2626" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Info principal -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                                        <TextBlock Text="{Binding Descripcion}"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#f1f5f9"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <WrapPanel Orientation="Horizontal">
+                                            <Border Classes="chip"
+                                                    Background="#6366f122"
+                                                    BorderBrush="#6366f155"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="#a5b4fc">
+                                                    <Run Text="{Binding IconoTipo}"/>
+                                                    <Run Text=" "/>
+                                                    <Run Text="{Binding Tipo}"/>
+                                                </TextBlock>
+                                            </Border>
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding !TieneConsentimiento}"
-                                                    Background="#ef5350"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="⚠️ Sin consentimiento"
+                                                    Background="#ef444422"
+                                                    BorderBrush="#ef444455"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Sin consentimiento"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#fca5a5"/>
                                             </Border>
-                                            <Border Grid.Column="1"
+                                            <Border Classes="chip"
                                                     IsVisible="{Binding TieneConsentimiento}"
-                                                    Background="#10b981"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="✅ Consentimiento"
+                                                    Background="#10b98122"
+                                                    BorderBrush="#10b98155"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Consentimiento"
                                                            FontSize="10"
-                                                           FontWeight="Bold"
-                                                           Foreground="White"/>
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#6ee7b7"/>
                                             </Border>
-                                        </Grid>
-                                        <StackPanel Orientation="Horizontal" Spacing="15" Opacity="0.7" Margin="0,5,0,0">
-                                            <TextBlock>
-                                                <Run Text="📍 "/>
-                                                <Run Text="{Binding ZonaCuerpo, TargetNullValue='Sin zona'}"/>
-                                            </TextBlock>
-                                            <TextBlock IsVisible="{Binding Estilo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                <Run Text="🎨 "/>
-                                                <Run Text="{Binding Estilo}"/>
-                                            </TextBlock>
-                                            <TextBlock IsVisible="{Binding Tamano, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                <Run Text="📏 "/>
-                                                <Run Text="{Binding Tamano}"/>
-                                            </TextBlock>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="15" Opacity="0.6" Margin="0,5,0,0">
-                                            <TextBlock>
+                                            <Border Classes="chip"
+                                                    IsVisible="{Binding Colores}"
+                                                    Background="#8b5cf622"
+                                                    BorderBrush="#8b5cf655"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Color"
+                                                           FontSize="10"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#c4b5fd"/>
+                                            </Border>
+                                        </WrapPanel>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="14">
+                                            <TextBlock FontSize="12" Foreground="#94a3b8">
                                                 <Run Text="👤 "/>
                                                 <Run Text="{Binding Cliente.NombreCompleto}"/>
                                             </TextBlock>
-                                            <TextBlock>
-                                                <Run Text="📅 "/>
-                                                <Run Text="{Binding FechaCreacion, StringFormat='{}{0:dd/MM/yyyy}'}"/>
+                                            <TextBlock FontSize="12" Foreground="#94a3b8"
+                                                       IsVisible="{Binding Cliente.Telefono, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <Run Text="📞 "/>
+                                                <Run Text="{Binding Cliente.Telefono}"/>
+                                            </TextBlock>
+                                            <TextBlock FontSize="12" Foreground="#94a3b8"
+                                                       IsVisible="{Binding ZonaCuerpo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <Run Text="📍 "/>
+                                                <Run Text="{Binding ZonaCuerpo}"/>
                                             </TextBlock>
                                         </StackPanel>
                                     </StackPanel>
-                                    
-                                    <!-- Acciones -->
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                        <TextBlock IsVisible="{Binding Colores}"
-                                                   Text="🎨 Color"
-                                                   FontSize="11"
-                                                   Opacity="0.7"
-                                                   Margin="0,5,0,0"/>
-                                        <!-- Botón para firmar consentimiento -->
-                                        <Button IsVisible="{Binding !TieneConsentimiento}"
-                                                MinWidth="168"
-                                                MinHeight="40"
-                                                Padding="12,8"
-                                                Margin="0,8,0,0"
-                                                Tag="{Binding}"
-                                                Click="OnFirmarConsentimientoClick"
-                                                Classes="btn-primary"
-                                                HorizontalContentAlignment="Center"
-                                                VerticalContentAlignment="Center"
-                                                ToolTip.Tip="Firmar consentimiento de trabajo">
-                                            <TextBlock Text="📝 Firmar consentimiento"
-                                                       FontSize="11"
-                                                       TextWrapping="Wrap"
-                                                       TextAlignment="Center"
-                                                       MaxWidth="160"/>
-                                        </Button>
+
+                                    <!-- Fecha -->
+                                    <StackPanel Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding FechaCreacion, StringFormat='dd/MM/yyyy'}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#cbd5e1"
+                                                   HorizontalAlignment="Right"/>
                                     </StackPanel>
-                                    
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -363,19 +372,38 @@
                             <!-- Cliente / tipo / descripción (consentimiento). Sin IsEnabled en el panel: evita que el ComboBox vacíe ClienteSeleccionado al deshabilitar. -->
                             <StackPanel>
 
-                            <!-- Cliente (búsqueda + desplegable) -->
+                            <!-- Cliente (búsqueda + desplegable, o fijo si viene de ficha/agenda) -->
                             <TextBlock Text="Cliente *" Opacity="0.7" Margin="0,0,0,5"/>
+                            <Border IsVisible="{Binding ClienteBloqueadoEnFormulario}"
+                                    Background="#111827"
+                                    CornerRadius="8"
+                                    Padding="12,10"
+                                    Margin="0,0,0,8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding ClienteSeleccionado.NombreCompleto}"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding ClienteSeleccionado.Telefono}"
+                                               FontSize="12"
+                                               Opacity="0.7"/>
+                                    <TextBlock Text="Cliente fijado — no se puede cambiar en este flujo"
+                                               FontSize="11"
+                                               Opacity="0.5"
+                                               Foreground="#94a3b8"/>
+                                </StackPanel>
+                            </Border>
+                            <StackPanel IsVisible="{Binding !ClienteBloqueadoEnFormulario}">
                             <TextBox Name="ClienteBusquedaTrabajoTextBox"
                                      Text="{Binding TextoBusquedaClienteFormulario, Mode=TwoWay}"
                                      Watermark="Buscar por nombre o teléfono…"
                                      Classes="form-field"
                                      Margin="0,0,0,8"
-                                     IsEnabled="{Binding TrabajoCamposPrincipalesHabilitados}"
+                                     IsEnabled="{Binding ClienteFormularioEditable}"
                                      TextChanged="OnClienteBusquedaTrabajoTextChanged"/>
                             <ComboBox Name="ClienteTrabajoComboBox"
                                       ItemsSource="{Binding ClientesFiltradosFormulario}"
                                       SelectedItem="{Binding ClienteSeleccionado}"
-                                      IsEnabled="{Binding TrabajoCamposPrincipalesHabilitados}"
+                                      IsEnabled="{Binding ClienteFormularioEditable}"
                                       MinWidth="260"
                                       DropDownOpened="OnClienteTrabajoComboDropDownOpened">
                                 <ComboBox.ItemTemplate>
@@ -391,6 +419,7 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
+                            </StackPanel>
 
                             <!-- Tipo -->
                             <TextBlock Text="Tipo *" Opacity="0.7" Margin="16,16,0,5"/>

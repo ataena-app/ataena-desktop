@@ -380,6 +380,7 @@ public partial class AgendaView : UserControl
                                 {
                                     if (existingPanel.Children[0] is TextBlock horaBlock)
                                     {
+                                        horaBlock.Text = citaInfo.Cita.HoraInicioFormateada;
                                         horaBlock.FontSize = esCitaPequena ? 9 : 10;
                                     }
                                     if (existingPanel.Children[1] is TextBlock nombreBlock)
@@ -1352,5 +1353,23 @@ public partial class AgendaView : UserControl
         menu.Open();
         
         Serilog.Log.Debug("📋 Mostrando menú de {Count} citas superpuestas", citaInfo.CitasSuperpuestas.Count);
+    }
+
+    /// <summary>
+    /// Selecciona un día en la vista mensual.
+    /// </summary>
+    private async void OnDiaMesPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+            return;
+
+        if (sender is not Border { DataContext: AgendaViewModel.DiaMesInfo dia })
+            return;
+
+        if (DataContext is not AgendaViewModel vm)
+            return;
+
+        await vm.SeleccionarDiaMesCommand.ExecuteAsync(dia.Fecha);
+        e.Handled = true;
     }
 }

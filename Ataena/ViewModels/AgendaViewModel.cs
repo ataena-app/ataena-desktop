@@ -175,6 +175,26 @@ public partial class AgendaViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Estado del formulario de cita al navegar temporalmente a crear un trabajo.
+    /// </summary>
+    private sealed class CitaFormularioSnapshot
+    {
+        public bool EsEdicion { get; init; }
+        public int? CitaId { get; init; }
+        public int? ClienteId { get; init; }
+        public int? TrabajoId { get; init; }
+        public DateTimeOffset? FechaCita { get; init; }
+        public string HoraInicioString { get; init; } = "10:00";
+        public int DuracionMinutos { get; init; } = 30;
+        public TipoCita TipoCita { get; init; }
+        public string Descripcion { get; init; } = string.Empty;
+        public EstadoCita EstadoCita { get; init; }
+        public string Notas { get; init; } = string.Empty;
+        public string TituloFormulario { get; init; } = "✨ Nueva Cita";
+        public bool AjustarDuracionPorTipo { get; init; } = true;
+    }
+
     #endregion
 
     #region Campos Privados
@@ -198,6 +218,11 @@ public partial class AgendaViewModel : ViewModelBase
     /// Referencia opcional al ViewModel principal (para navegación).
     /// </summary>
     private MainWindowViewModel? _mainWindowVM;
+
+    /// <summary>
+    /// Formulario de cita guardado al ir a crear un trabajo y volver.
+    /// </summary>
+    private CitaFormularioSnapshot? _citaFormularioRetorno;
 
     #endregion
 
@@ -535,6 +560,34 @@ public partial class AgendaViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private EstadoCita? _filtroEstado;
+
+    partial void OnFiltroEstadoChanged(EstadoCita? value)
+    {
+        _ = CargarCitas();
+    }
+
+    /// <summary>
+    /// Fecha mínima seleccionable (hoy): no se permiten citas en el pasado.
+    /// </summary>
+    public DateTimeOffset FechaMinimaCita => DateTimeOffset.Now.Date;
+
+    /// <summary>
+    /// Mini-calendario mensual expandido en el formulario de cita.
+    /// </summary>
+    [ObservableProperty]
+    private bool _mostrarCalendarioCitaExpandido;
+
+    [RelayCommand]
+    private void AlternarCalendarioCita()
+    {
+        MostrarCalendarioCitaExpandido = !MostrarCalendarioCitaExpandido;
+    }
+
+    partial void OnFechaCitaChanged(DateTimeOffset? value)
+    {
+        if (value.HasValue && value.Value.Date < DateTime.Today)
+            FechaCita = DateTimeOffset.Now.Date;
+    }
 
     /// <summary>
     /// Indica si hay una operación en curso.
@@ -1376,6 +1429,13 @@ public partial class AgendaViewModel : ViewModelBase
     /// <param name="duracionMinutos">Duración en minutos (múltiplo de 30).</param>
     public async Task CrearCitaDesdeCalendario(DateTime fecha, TimeSpan horaInicio, int duracionMinutos)
     {
+        var fechaHora = fecha.Date + horaInicio;
+        if (fechaHora < DateTime.Now)
+        {
+            MensajeError = "No se pueden crear citas en el pasado";
+            return;
+        }
+
         // Recargar lista de clientes para obtener datos frescos (ej. menores actualizados)
         await CargarClientes();
         
@@ -1440,11 +1500,6 @@ public partial class AgendaViewModel : ViewModelBase
             }
 
             var fechaCitaDateTime = FechaCita.Value.Date;
-            if (fechaCitaDateTime < DateTime.Today && !EsEdicion)
-            {
-                MensajeError = "No se pueden crear citas en el pasado";
-                return;
-            }
 
             // Parsear hora de inicio desde string (formato HH:mm en 24 horas)
             Log.Information("🔍 Guardando cita - HoraInicioString recibida: '{HoraInicioString}'", HoraInicioString);
@@ -1530,6 +1585,30 @@ public partial class AgendaViewModel : ViewModelBase
             }
 
             var horaParsed = horaInicioParsed;
+
+            if (EsFechaHoraEnPasado(fechaCitaDateTime, horaParsed))
+            {
+                MensajeError = "No se pueden programar citas en el pasado";
+                return;
+            }
+
+            var citaIdExcluir = EsEdicion && CitaSeleccionada != null ? CitaSeleccionada.Id : (int?)null;
+            var citasSolapadas = await ObtenerCitasSolapadasAsync(
+                fechaCitaDateTime, horaParsed, DuracionMinutos, citaIdExcluir);
+
+            if (citasSolapadas.Count > 0)
+            {
+                var detalle = FormatearDetalleCitasSolapadas(citasSolapadas);
+                var accion = EsEdicion ? "guardarla" : "crearla";
+                var confirmado = await DialogService.ConfirmarAccionAsync(
+                    titulo: "Conflicto de horario",
+                    mensaje: $"Esta cita se solapa con otra(s) ya existente(s):\n\n{detalle}\n\n¿Estás seguro de que quieres {accion} de todos modos?",
+                    botonConfirmar: "Sí, continuar",
+                    esPeligroso: true);
+
+                if (!confirmado)
+                    return;
+            }
 
             Cargando = true;
             MensajeError = string.Empty;
@@ -1717,7 +1796,27 @@ public partial class AgendaViewModel : ViewModelBase
                 Log.Warning("No se puede mover la cita {CitaId} a una fecha/hora pasada: {FechaHora}", 
                     citaId, nuevaFechaHora);
                 MensajeError = "No se puede mover una cita a una fecha/hora pasada";
+                await CargarCitas();
                 return;
+            }
+
+            var citasSolapadas = await ObtenerCitasSolapadasAsync(
+                nuevaFecha.Date, nuevaHora, cita.DuracionMinutos, citaId);
+
+            if (citasSolapadas.Count > 0)
+            {
+                var detalle = FormatearDetalleCitasSolapadas(citasSolapadas);
+                var confirmado = await DialogService.ConfirmarAccionAsync(
+                    titulo: "Conflicto de horario",
+                    mensaje: $"Al mover la cita se solapa con:\n\n{detalle}\n\n¿Estás seguro de que quieres moverla?",
+                    botonConfirmar: "Sí, mover",
+                    esPeligroso: true);
+
+                if (!confirmado)
+                {
+                    await CargarCitas();
+                    return;
+                }
             }
 
             // Actualizar la cita
@@ -1871,7 +1970,7 @@ public partial class AgendaViewModel : ViewModelBase
     /// Comando para crear un nuevo trabajo.
     /// </summary>
     [RelayCommand]
-    private void CrearTrabajoNuevo()
+    private async Task CrearTrabajoNuevo()
     {
         if (ClienteSeleccionado == null)
         {
@@ -1879,25 +1978,114 @@ public partial class AgendaViewModel : ViewModelBase
             return;
         }
         
-        // Si tenemos referencia a TrabajosVM y MainWindowVM, navegar y abrir formulario
         if (_trabajosVM != null && _mainWindowVM != null)
         {
-            // Cerrar el modal de cita
             MostrarFormulario = false;
-            
-            // Navegar a la vista de Trabajos
             _mainWindowVM.IrATrabajosCommand.Execute(null);
+            await _trabajosVM.NuevoTrabajoDesdeAgenda(this, ClienteSeleccionado);
             
-            // Abrir el formulario de nuevo trabajo con el cliente pre-seleccionado
-            _ = _trabajosVM.NuevoTrabajoParaCliente(ClienteSeleccionado);
-            
-            Log.Information("Navegando a Trabajos para crear trabajo para cliente {ClienteId}", ClienteSeleccionado.Id);
+            Log.Information("Navegando a Trabajos para crear trabajo para cliente {ClienteId} (retorno a cita)", ClienteSeleccionado.Id);
         }
         else
         {
             MensajeError = "No se puede crear trabajo desde aquí. Por favor, ve a la sección de Trabajos.";
             Log.Warning("Intento de crear trabajo sin referencias a TrabajosVM o MainWindowVM");
         }
+    }
+
+    /// <summary>
+    /// Guarda el estado del formulario de cita antes de ir a crear un trabajo.
+    /// </summary>
+    public void CapturarEstadoFormularioParaRetorno()
+    {
+        _citaFormularioRetorno = new CitaFormularioSnapshot
+        {
+            EsEdicion = EsEdicion,
+            CitaId = CitaSeleccionada?.Id,
+            ClienteId = ClienteSeleccionado?.Id,
+            TrabajoId = TrabajoSeleccionado?.Id,
+            FechaCita = FechaCita,
+            HoraInicioString = HoraInicioString,
+            DuracionMinutos = DuracionMinutos,
+            TipoCita = TipoCita,
+            Descripcion = Descripcion,
+            EstadoCita = EstadoCita,
+            Notas = Notas,
+            TituloFormulario = TituloFormulario,
+            AjustarDuracionPorTipo = _ajustarDuracionPorTipo
+        };
+    }
+
+    /// <summary>
+    /// Vuelve al modal de cita tras crear un trabajo, vinculando el trabajo nuevo.
+    /// </summary>
+    public async Task RestaurarFormularioCitaTrasCrearTrabajoAsync(Trabajo trabajoNuevo)
+    {
+        await RestaurarFormularioCitaInternoAsync(trabajoNuevo);
+    }
+
+    /// <summary>
+    /// Vuelve al modal de cita si se canceló la creación del trabajo.
+    /// </summary>
+    public void RestaurarFormularioCitaTrasCancelarTrabajo()
+    {
+        _ = RestaurarFormularioCitaInternoAsync(null);
+    }
+
+    private async Task RestaurarFormularioCitaInternoAsync(Trabajo? trabajoNuevo)
+    {
+        var snapshot = _citaFormularioRetorno;
+        _citaFormularioRetorno = null;
+        if (snapshot == null)
+            return;
+
+        await CargarClientes();
+
+        EsEdicion = snapshot.EsEdicion;
+        TituloFormulario = snapshot.TituloFormulario;
+        _ajustarDuracionPorTipo = snapshot.AjustarDuracionPorTipo;
+
+        if (snapshot.EsEdicion && snapshot.CitaId.HasValue)
+            CitaSeleccionada = await _db.Citas
+                .Include(c => c.Cliente)
+                .Include(c => c.Trabajo)
+                .FirstOrDefaultAsync(c => c.Id == snapshot.CitaId.Value);
+
+        if (snapshot.ClienteId.HasValue)
+            ClienteSeleccionado = Clientes.FirstOrDefault(c => c.Id == snapshot.ClienteId.Value);
+
+        if (ClienteSeleccionado != null)
+            await CargarTrabajosDelCliente(ClienteSeleccionado.Id);
+
+        if (trabajoNuevo != null)
+        {
+            var trabajoEnLista = TrabajosDelCliente.FirstOrDefault(t => t.Id == trabajoNuevo.Id);
+            TrabajoSeleccionado = trabajoEnLista ?? trabajoNuevo;
+        }
+        else if (snapshot.TrabajoId.HasValue)
+            TrabajoSeleccionado = TrabajosDelCliente.FirstOrDefault(t => t.Id == snapshot.TrabajoId.Value);
+
+        FechaCita = snapshot.FechaCita;
+        HoraInicioString = snapshot.HoraInicioString;
+        DuracionMinutos = snapshot.DuracionMinutos;
+        CalcularHoraFin();
+        TipoCita = snapshot.TipoCita;
+        Descripcion = snapshot.Descripcion;
+        EstadoCita = snapshot.EstadoCita;
+        Notas = snapshot.Notas;
+        MensajeError = string.Empty;
+        MostrarFormulario = true;
+    }
+
+    /// <summary>
+    /// Selecciona un día en la vista mensual y cambia a vista de día.
+    /// </summary>
+    [RelayCommand]
+    private async Task SeleccionarDiaMes(DateTime fecha)
+    {
+        FechaSeleccionada = fecha.Date;
+        VistaActual = VistaAgenda.Dia;
+        await CargarCitas();
     }
 
     /// <summary>
@@ -1919,6 +2107,43 @@ public partial class AgendaViewModel : ViewModelBase
     #endregion
 
     #region Métodos Privados
+
+    private static bool EsFechaHoraEnPasado(DateTime fecha, TimeSpan horaInicio)
+        => fecha.Date + horaInicio < DateTime.Now;
+
+    private async Task<List<Cita>> ObtenerCitasSolapadasAsync(
+        DateTime fecha,
+        TimeSpan horaInicio,
+        int duracionMinutos,
+        int? excluirCitaId = null)
+    {
+        var finNueva = horaInicio.Add(TimeSpan.FromMinutes(duracionMinutos));
+
+        var citasDelDia = await _db.Citas
+            .Include(c => c.Cliente)
+            .Where(c => c.Fecha.Date == fecha.Date && (excluirCitaId == null || c.Id != excluirCitaId))
+            .ToListAsync();
+
+        return citasDelDia
+            .Where(c =>
+            {
+                var finCita = c.HoraInicio.Add(TimeSpan.FromMinutes(c.DuracionMinutos));
+                return c.HoraInicio < finNueva && horaInicio < finCita;
+            })
+            .OrderBy(c => c.HoraInicio)
+            .ToList();
+    }
+
+    private static string FormatearDetalleCitasSolapadas(IEnumerable<Cita> citas)
+    {
+        var lineas = citas.Select(c =>
+        {
+            var cliente = c.Cliente?.NombreCompleto ?? "Sin cliente";
+            var fin = c.HoraInicio.Add(TimeSpan.FromMinutes(c.DuracionMinutos));
+            return $"• {c.Fecha:dd/MM/yyyy} {c.HoraInicio:hh\\:mm}–{fin:hh\\:mm} — {c.TipoCita} — {cliente}";
+        });
+        return string.Join("\n", lineas);
+    }
 
     /// <summary>
     /// Limpia todos los campos del formulario.
@@ -1943,6 +2168,7 @@ public partial class AgendaViewModel : ViewModelBase
         MensajeError = string.Empty;
         TieneConsentimientoTrabajo = false;
         MensajeConsentimiento = string.Empty;
+        MostrarCalendarioCitaExpandido = false;
     }
 
     /// <summary>

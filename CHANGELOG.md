@@ -5,6 +5,26 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.6.3] - 2026-06-11
+
+### Añadido
+- **Agenda:** mini-calendario al elegir fecha de cita; aviso de solapamiento con detalle de la cita conflictiva antes de crear o mover; bloqueo de citas en el pasado; crear trabajo desde la cita y volver al modal con el trabajo vinculado; filtro por estado; click en día del mes para ir a vista día.
+- **Configuración:** menú lateral por secciones (estudio, correo, impresora, dashboard, preferencias).
+- **Lista de trabajos:** mismo estilo visual que clientes (tarjetas, barra de estado, chips); búsqueda automática insensible a acentos.
+- **Consentimientos:** barra de búsqueda por nombre, apellidos, DNI o teléfono (insensible a acentos); lista rediseñada.
+- **Clientes:** aviso modal centrado en rojo al guardar con campos obligatorios faltantes o incorrectos.
+
+### Cambiado
+- **DNI:** solo texto obligatorio (número de documento); eliminado flujo de foto/escáner/OCR del DNI y sección de normativa en configuración.
+- **Trabajos:** al crear desde la ficha del cliente, el cliente queda pre-rellenado y bloqueado; sin estado «Diseño» en la lista (solo fecha).
+- **Filtro «Sin RGPD»:** incluye correctamente menores (cuenta RGPD y RGPD de menor).
+
+### Arreglado
+- Etiquetas de hora en el calendario semanal al arrastrar citas.
+- Búsqueda de trabajos y consentimientos con normalización de tildes.
+
+---
+
 ## [0.6.2] - 2026-06-11
 
 ### Añadido
@@ -142,6 +162,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+[0.6.3]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.3
 [0.6.2]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.2
 [0.6.1]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.1
 [0.6.0]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.0

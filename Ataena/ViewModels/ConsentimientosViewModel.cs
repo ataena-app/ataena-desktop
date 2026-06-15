@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -23,18 +24,21 @@ public partial class ConsentimientosViewModel : ViewModelBase
 
     private EventHandler<Cliente>? _renovacionConsentimientoFirmaHandler;
     private EventHandler? _renovacionModalCerradoHandler;
+    private CancellationTokenSource? _busquedaCts;
 
     [ObservableProperty]
     private ObservableCollection<Consentimiento> _consentimientos = new();
 
     [ObservableProperty]
-    private Cliente? _clienteFiltro;
+    private string _textoBusqueda = string.Empty;
+
+    partial void OnTextoBusquedaChanged(string value) => ProgramarBusquedaAutomatica();
 
     [ObservableProperty]
     private TipoConsentimiento? _tipoFiltro;
 
     [ObservableProperty]
-    private ObservableCollection<Cliente> _clientes = new();
+    private int _totalConsentimientos;
 
     [ObservableProperty]
     private bool _cargando;
@@ -47,13 +51,29 @@ public partial class ConsentimientosViewModel : ViewModelBase
 
     public ConsentimientosViewModel()
     {
-        _ = CargarFiltrosYDatos();
+        _ = CargarConsentimientos();
     }
 
-    private async Task CargarFiltrosYDatos()
+    private void ProgramarBusquedaAutomatica()
     {
-        await CargarClientes();
-        await CargarConsentimientos();
+        _busquedaCts?.Cancel();
+        _busquedaCts?.Dispose();
+        _busquedaCts = new CancellationTokenSource();
+        var token = _busquedaCts.Token;
+        _ = AplicarBusquedaAutomaticaAsync(token);
+    }
+
+    private async Task AplicarBusquedaAutomaticaAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(250, token);
+            await CargarConsentimientos();
+        }
+        catch (OperationCanceledException)
+        {
+            // Nueva pulsación de tecla
+        }
     }
 
     [RelayCommand]
@@ -70,9 +90,6 @@ public partial class ConsentimientosViewModel : ViewModelBase
                 .Where(c => c.Firmado)
                 .AsQueryable();
 
-            if (ClienteFiltro != null)
-                query = query.Where(c => c.ClienteId == ClienteFiltro.Id);
-
             if (TipoFiltro.HasValue)
                 query = query.Where(c => c.Tipo == TipoFiltro.Value);
 
@@ -81,7 +98,18 @@ public partial class ConsentimientosViewModel : ViewModelBase
                 .ThenByDescending(c => c.Id)
                 .ToListAsync();
 
+            if (!string.IsNullOrWhiteSpace(TextoBusqueda))
+            {
+                var termino = TextoBusquedaHelper.Normalizar(TextoBusqueda);
+                var terminoDigitos = TextoBusquedaHelper.SoloDigitos(TextoBusqueda);
+                lista = lista
+                    .Where(c => c.Cliente != null &&
+                                TextoBusquedaHelper.ClienteCoincide(c.Cliente, termino, terminoDigitos))
+                    .ToList();
+            }
+
             Consentimientos = new ObservableCollection<Consentimiento>(lista);
+            TotalConsentimientos = lista.Count;
         }
         catch (Exception ex)
         {
@@ -94,33 +122,12 @@ public partial class ConsentimientosViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    private async Task CargarClientes()
-    {
-        try
-        {
-            var lista = await _db.Clientes
-                .Where(c => c.Activo)
-                .OrderBy(c => c.Nombre)
-                .ThenBy(c => c.Apellidos)
-                .ToListAsync();
-
-            Clientes = new ObservableCollection<Cliente>(lista);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error al cargar clientes para filtros de consentimientos");
-        }
-    }
-
-    partial void OnClienteFiltroChanged(Cliente? value) => _ = CargarConsentimientos();
-
     partial void OnTipoFiltroChanged(TipoConsentimiento? value) => _ = CargarConsentimientos();
 
     [RelayCommand]
     private Task LimpiarFiltros()
     {
-        ClienteFiltro = null;
+        TextoBusqueda = string.Empty;
         TipoFiltro = null;
         return CargarConsentimientos();
     }

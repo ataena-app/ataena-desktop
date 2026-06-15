@@ -48,7 +48,7 @@ public class Cliente
     public string? Email { get; set; }
 
     /// <summary>
-    /// Documento Nacional de Identidad (DNI/NIE/pasaporte). Campo obligatorio.
+    /// Documento Nacional de Identidad (DNI/NIE/pasaporte). Obligatorio en texto — sin foto.
     /// </summary>
     public string? Dni { get; set; }
 
@@ -231,7 +231,19 @@ public class Cliente
         : string.Empty;
 
     /// <summary>
-    /// Indica si el cliente tiene foto de su DNI.
+    /// Indica si los datos identificativos del cliente están completos (texto, no foto).
+    /// </summary>
+    public bool TieneDatosIdentificacionCompletos =>
+        !string.IsNullOrWhiteSpace(Dni) && FechaNacimiento.HasValue;
+
+    /// <summary>
+    /// Indica si el tutor tiene DNI en texto (menores).
+    /// </summary>
+    public bool TieneDatosIdentificacionTutor =>
+        !string.IsNullOrWhiteSpace(DniTutor);
+
+    /// <summary>
+    /// Indica si el cliente tiene foto de su DNI (legado / perfil Madrid en trabajo).
     /// </summary>
     public bool TieneFotoDni =>
         ConsentimientoPathService.RutaFotoDniExistente(Id, FotoDniPath) != null;
@@ -244,7 +256,6 @@ public class Cliente
 
     /// <summary>
     /// Indica si el cliente tiene consentimientos que necesitan renovación.
-    /// (Firmados como menor y ahora es mayor de edad, o antigüedad > 2 años)
     /// </summary>
     public bool TieneConsentimientosPendientesRenovacion => Consentimientos
         .Any(c => c.Firmado && c.NecesitaRenovacion);
@@ -256,12 +267,6 @@ public class Cliente
         .Count(c => c.Firmado && c.NecesitaRenovacion);
 
     /// <summary>
-    /// Foto de DNI del cliente y, si es menor, del tutor.
-    /// </summary>
-    public bool TieneDocumentacionDniCompleta =>
-        TieneFotoDni && (!EsMenorDeEdad || TieneFotoDniTutor);
-
-    /// <summary>
     /// RGPD firmado, imágenes si aplica, y sin renovaciones pendientes.
     /// </summary>
     public bool TieneConsentimientosFichaCompletos =>
@@ -270,10 +275,17 @@ public class Cliente
         !TieneConsentimientosPendientesRenovacion;
 
     /// <summary>
-    /// Ficha al día: DNI documentado y consentimientos de ficha completos (barra verde).
+    /// Datos identificativos en texto (DNI + fecha; tutor si es menor). Sin foto del documento.
+    /// </summary>
+    public bool TieneDocumentacionIdentificacionCompleta =>
+        TieneDatosIdentificacionCompletos &&
+        (!EsMenorDeEdad || (TieneDatosTutor && TieneDatosIdentificacionTutor));
+
+    /// <summary>
+    /// Ficha al día: identificación en texto + consentimientos completos (barra verde).
     /// </summary>
     public bool FichaListaCompleta =>
-        TieneDocumentacionDniCompleta && TieneConsentimientosFichaCompletos;
+        TieneDocumentacionIdentificacionCompleta && TieneConsentimientosFichaCompletos;
 
     /// <summary>
     /// Falta RGPD u otro requisito crítico (barra roja).

@@ -73,6 +73,9 @@ Desktop.ini
 # Notas internas, backlog local y documentos que no deben versionarse
 .local/
 
+# Documentación de producto/arquitectura (solo local, no versionar)
+documentacion/
+
 appsettings.local.json
 secrets.json
 *.pfx

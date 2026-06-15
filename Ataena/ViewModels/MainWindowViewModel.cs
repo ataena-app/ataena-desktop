@@ -97,6 +97,7 @@ public partial class MainWindowViewModel : ViewModelBase
         AgendaVM.SetMainWindowViewModel(this);
         DashboardVM.SetMainWindowViewModel(this);
         TrabajosVM.SetClientesViewModel(ClientesVM);
+        TrabajosVM.SetMainWindowViewModel(this);
         ClientesVM.SetTrabajosViewModel(TrabajosVM);
         ClientesVM.SetMainWindowViewModel(this);
 

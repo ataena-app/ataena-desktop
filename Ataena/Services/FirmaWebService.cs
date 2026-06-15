@@ -147,19 +147,6 @@ public class FirmaWebService : IDisposable
     }
 
     /// <summary>
-    /// Genera la URL para captura de foto de DNI desde el móvil (página con guía de encuadre).
-    /// </summary>
-    public string GenerarUrlFotoDni(string token)
-    {
-        if (string.IsNullOrEmpty(UrlBase))
-            throw new InvalidOperationException("El servidor no está iniciado. Llama a IniciarServidor() primero.");
-
-        var url = $"{UrlBase}/foto-dni/{token}";
-        Log.Debug("URL de foto DNI generada: {URL}", url);
-        return url;
-    }
-
-    /// <summary>
     /// Configura automáticamente el firewall de Windows para permitir conexiones en el puerto especificado.
     /// </summary>
     /// <param name="puerto">Puerto a abrir en el firewall.</param>
@@ -664,12 +651,6 @@ public class FirmaWebService : IDisposable
                 var token = path.Substring("/firma/".Length);
                 await ServirPaginaFirma(context, token);
             }
-            // GET /foto-dni/{token} — antes que /foto/ (evitar que «/foto-dni» coincida con «/foto/»)
-            else if (request.HttpMethod == "GET" && path.StartsWith("/foto-dni/"))
-            {
-                var token = path.Substring("/foto-dni/".Length);
-                await ServirPaginaFotoDni(context, token);
-            }
             // GET /foto/{token} - Servir página HTML de foto (trabajos)
             else if (request.HttpMethod == "GET" && path.StartsWith("/foto/"))
             {
@@ -690,11 +671,6 @@ public class FirmaWebService : IDisposable
             else if (request.HttpMethod == "GET" && path == "/photo.js")
             {
                 await ServirArchivoEstatico(context, "photo.js", "application/javascript");
-            }
-            // GET /dni-photo.js - Servir JavaScript de foto DNI
-            else if (request.HttpMethod == "GET" && path == "/dni-photo.js")
-            {
-                await ServirArchivoEstatico(context, "dni-photo.js", "application/javascript");
             }
             // POST /firma/{token} - Recibir firma
             else if (request.HttpMethod == "POST" && path.StartsWith("/firma/"))
@@ -820,60 +796,6 @@ public class FirmaWebService : IDisposable
         catch (Exception ex)
         {
             Log.Error(ex, "Error al servir página HTML");
-            response.StatusCode = 500;
-            response.Close();
-        }
-    }
-
-    /// <summary>
-    /// Sirve la página HTML de captura de foto de DNI (móvil).
-    /// </summary>
-    private async Task ServirPaginaFotoDni(HttpListenerContext context, string token)
-    {
-        var response = context.Response;
-        var request = context.Request;
-
-        if (!_tokensActivos.ContainsKey(token))
-        {
-            response.StatusCode = 404;
-            response.Close();
-            return;
-        }
-
-        try
-        {
-            var rutaWwwRoot = ConsentimientoPathService.ObtenerRutaWwwRoot();
-            var rutaHtml = Path.Combine(rutaWwwRoot, "dni-photo.html");
-
-            if (!File.Exists(rutaHtml))
-            {
-                Log.Warning("Archivo HTML de foto DNI no encontrado: {Ruta}", rutaHtml);
-                response.StatusCode = 404;
-                response.Close();
-                return;
-            }
-
-            var html = await File.ReadAllTextAsync(rutaHtml);
-
-            response.Headers.Add("Access-Control-Allow-Origin", "*");
-            response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-            response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
-            response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
-            response.Headers.Add("Pragma", "no-cache");
-            response.Headers.Add("Expires", "0");
-
-            response.ContentType = "text/html; charset=utf-8";
-            response.StatusCode = 200;
-
-            var bytes = Encoding.UTF8.GetBytes(html);
-            await response.OutputStream.WriteAsync(bytes);
-            response.Close();
-
-            Log.Information("Página HTML de foto DNI servida para token: {Token}", token);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error al servir página HTML de foto DNI");
             response.StatusCode = 500;
             response.Close();
         }

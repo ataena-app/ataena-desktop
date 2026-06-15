@@ -79,4 +79,36 @@ public static class TextoBusquedaHelper
 
         return false;
     }
+
+    /// <summary>
+    /// Indica si un trabajo coincide con el término (cliente + descripción/zona/estilo).
+    /// </summary>
+    public static bool TrabajoCoincide(Trabajo trabajo, string terminoNormalizado, string? terminoDigitos = null)
+    {
+        if (string.IsNullOrEmpty(terminoNormalizado) && string.IsNullOrEmpty(terminoDigitos))
+            return true;
+
+        if (ClienteCoincide(trabajo.Cliente, terminoNormalizado, terminoDigitos))
+            return true;
+
+        if (string.IsNullOrEmpty(terminoNormalizado))
+            return false;
+
+        if (Normalizar(trabajo.Descripcion).Contains(terminoNormalizado, StringComparison.Ordinal))
+            return true;
+
+        if (!string.IsNullOrEmpty(trabajo.ZonaCuerpo) &&
+            Normalizar(trabajo.ZonaCuerpo).Contains(terminoNormalizado, StringComparison.Ordinal))
+            return true;
+
+        if (!string.IsNullOrEmpty(trabajo.Estilo) &&
+            Normalizar(trabajo.Estilo).Contains(terminoNormalizado, StringComparison.Ordinal))
+            return true;
+
+        if (!string.IsNullOrEmpty(trabajo.Tamano) &&
+            Normalizar(trabajo.Tamano).Contains(terminoNormalizado, StringComparison.Ordinal))
+            return true;
+
+        return false;
+    }
 }

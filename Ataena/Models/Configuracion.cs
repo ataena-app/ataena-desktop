@@ -55,6 +55,16 @@ public class Configuracion
 
     #endregion
 
+    #region Normativa CCAA (DNI)
+
+    /// <summary>
+    /// Perfil normativo para captura y archivo del DNI.
+    /// Por defecto estándar (CLM): solo datos en texto, sin imagen en ficha.
+    /// </summary>
+    public PerfilNormativoDni PerfilNormativoDni { get; set; } = PerfilNormativoDni.Estandar;
+
+    #endregion
+
     #region Configuración SMTP (Email)
 
     /// <summary>
@@ -92,7 +102,7 @@ public class Configuracion
     #region Escáner e Impresora
 
     /// <summary>
-    /// Habilita la opción de escanear documentos (DNI, etc.) con el escáner predeterminado de Windows.
+    /// Obsoleto: el escaneo de DNI no forma parte del producto. Se conserva en BD por compatibilidad.
     /// </summary>
     public bool UsarEscanner { get; set; } = false;
 

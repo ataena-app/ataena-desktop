@@ -4,6 +4,26 @@
              x:Class="Ataena.Views.ConfiguracionView"
              x:DataType="vm:ConfiguracionViewModel">
 
+  <UserControl.Styles>
+    <Style Selector="Button.nav-config">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Padding" Value="14,10"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Foreground" Value="#cbd5e1"/>
+    </Style>
+    <Style Selector="Button.nav-config:pointerover">
+      <Setter Property="Background" Value="#1e293b"/>
+    </Style>
+    <Style Selector="Button.nav-config.active">
+      <Setter Property="Background" Value="#312e81"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </UserControl.Styles>
+
   <Grid RowDefinitions="Auto,*" Margin="30">
 
     <!-- Cabecera -->
@@ -11,285 +31,224 @@
       <TextBlock Text="⚙️ Configuración"
                  FontSize="28"
                  FontWeight="Bold"/>
-      <TextBlock Text="Datos del estudio y configuración de correo (SMTP)"
+      <TextBlock Text="Datos del estudio, correo, impresora y preferencias de la aplicación"
                  Opacity="0.6"
                  Margin="0,4,0,0"/>
     </StackPanel>
 
-    <!-- Contenido -->
-    <ScrollViewer Grid.Row="1"
-                  VerticalScrollBarVisibility="Auto">
-      <StackPanel Spacing="24">
+    <!-- Menú lateral + contenido -->
+    <Grid Grid.Row="1" ColumnDefinitions="220,*" ColumnSpacing="24">
 
-        <!-- Datos del estudio -->
-        <Border Background="#111827"
-                CornerRadius="12"
-                Padding="20">
-          <StackPanel Spacing="12">
-            <TextBlock Text="🏢 Datos del estudio"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Margin="0,0,0,8"/>
-
-            <StackPanel>
-              <TextBlock Text="Nombre del estudio *" Opacity="0.7" Margin="0,0,0,5"/>
-              <TextBox Text="{Binding NombreEstudio}" Width="300"/>
-              <TextBlock Text="Nombre comercial (ej: Erzulie Tattoo)" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
-            </StackPanel>
-
-            <StackPanel>
-              <TextBlock Text="Nombre de la empresa / Razón social" Opacity="0.7" Margin="0,8,0,5"/>
-              <TextBox Text="{Binding NombreEmpresa}" Width="400"/>
-              <TextBlock Text="Para documentos legales (ej: Alfredo Y Rebeca C.B)" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
-            </StackPanel>
-
-            <StackPanel>
-              <TextBlock Text="Dirección" Opacity="0.7" Margin="0,8,0,5"/>
-              <TextBox Text="{Binding Direccion}" Width="400"/>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Spacing="20">
-              <StackPanel Width="200">
-                <TextBlock Text="Teléfono" Opacity="0.7" Margin="0,8,0,5"/>
-                <TextBox Text="{Binding Telefono}"/>
-              </StackPanel>
-              <StackPanel Width="260">
-                <TextBlock Text="Email de contacto" Opacity="0.7" Margin="0,8,0,5"/>
-                <TextBox Text="{Binding Email}"/>
-              </StackPanel>
-            </StackPanel>
-
-            <!-- Logo del estudio -->
-            <Border Background="#1e293b" CornerRadius="8" Padding="16" Margin="0,12,0,0">
-              <Grid ColumnDefinitions="Auto,*">
-                <!-- Preview del logo -->
-                <Border Grid.Column="0"
-                        Width="120"
-                        Height="120"
-                        CornerRadius="8"
-                        Background="#0f172a"
-                        BorderBrush="#374155"
-                        BorderThickness="1"
-                        Margin="0,0,20,0">
-                  <Grid>
-                    <!-- Placeholder -->
-                    <StackPanel VerticalAlignment="Center"
-                                HorizontalAlignment="Center"
-                                IsVisible="{Binding !TieneLogo}">
-                      <TextBlock Text="🖼️" FontSize="32" HorizontalAlignment="Center" Opacity="0.4"/>
-                      <TextBlock Text="Sin logo" FontSize="11" Opacity="0.5" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                    <!-- Logo actual -->
-                    <Image Source="{Binding LogoPreview}"
-                           Stretch="Uniform"
-                           Margin="8"
-                           IsVisible="{Binding TieneLogo}"/>
-                  </Grid>
-                </Border>
-
-                <!-- Controles -->
-                <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
-                  <TextBlock Text="Logo del estudio" FontWeight="SemiBold" FontSize="14"/>
-                  <TextBlock Text="Se mostrará en la pantalla de carga y en los documentos PDF"
-                             FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
-                  <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                    <Button Content="📁 Seleccionar imagen"
-                            Command="{Binding SeleccionarLogoCommand}"
-                            Classes="btn-secondary"
-                            Height="34"
-                            Padding="12,0"/>
-                    <Button Content="🗑️ Quitar"
-                            Command="{Binding QuitarLogoCommand}"
-                            Classes="btn-secondary"
-                            Height="34"
-                            Padding="12,0"
-                            IsVisible="{Binding TieneLogo}"/>
-                  </StackPanel>
-                  <TextBlock Text="{Binding LogoPath}"
-                             FontSize="10"
-                             Opacity="0.4"
-                             TextTrimming="CharacterEllipsis"
-                             MaxWidth="300"
-                             IsVisible="{Binding TieneLogo}"/>
-                </StackPanel>
-              </Grid>
-            </Border>
-          </StackPanel>
-        </Border>
-
-        <!-- SMTP -->
-        <Border Background="#111827"
-                CornerRadius="12"
-                Padding="20">
-          <StackPanel Spacing="12">
-            <TextBlock Text="📧 Configuración SMTP"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Margin="0,0,0,8"/>
-
-            <StackPanel Orientation="Horizontal" Spacing="20">
-              <StackPanel Width="260">
-                <TextBlock Text="Servidor SMTP" Opacity="0.7" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding SmtpServidor}"/>
-              </StackPanel>
-              <StackPanel Width="120">
-                <TextBlock Text="Puerto" Opacity="0.7" Margin="0,0,0,5"/>
-                <NumericUpDown Value="{Binding SmtpPuerto}"
-                               Minimum="1"
-                               Maximum="65535"
-                               Height="30"/>
-              </StackPanel>
-              <StackPanel VerticalAlignment="Bottom">
-                <CheckBox Content="Usar SSL/TLS"
-                          IsChecked="{Binding SmtpUsarSsl}"/>
-              </StackPanel>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Spacing="20">
-              <StackPanel Width="260">
-                <TextBlock Text="Usuario" Opacity="0.7" Margin="0,8,0,5"/>
-                <TextBox Text="{Binding SmtpUsuario}"/>
-              </StackPanel>
-              <StackPanel Width="260">
-                <TextBlock Text="Contraseña" Opacity="0.7" Margin="0,8,0,5"/>
-                <TextBox Text="{Binding SmtpPassword}"
-                         PasswordChar="●"/>
-              </StackPanel>
-            </StackPanel>
-
-            <TextBlock Text="Nota: la contraseña se almacena en texto plano por ahora (entorno de desarrollo)."
-                       FontSize="11"
-                       Opacity="0.5"
-                       Margin="0,8,0,0"/>
-            
-            <Button Content="📤 Probar conexión SMTP"
-                    Command="{Binding ProbarSmtpCommand}"
-                    Classes="btn-secondary"
-                    Height="36"
-                    Padding="16,0"
-                    Margin="0,12,0,0"
-                    HorizontalAlignment="Left"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Escáner e Impresora -->
-        <Border Background="#111827"
-                CornerRadius="12"
-                Padding="20">
-          <StackPanel Spacing="12">
-            <TextBlock Text="🖨️ Escáner e Impresora"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Margin="0,0,0,8"/>
-            <TextBlock Text="Configura el escáner e impresora predeterminados en Windows. Las opciones aparecerán en foto DNI y consentimientos."
-                       FontSize="12"
-                       Opacity="0.7"
-                       TextWrapping="Wrap"
-                       Margin="0,0,0,12"/>
-            <CheckBox Content="Habilitar opción de escanear (DNI, documentos)"
-                      IsChecked="{Binding UsarEscanner}"/>
-            <TextBlock Text="Permite escanear con el escáner predeterminado de Windows"
-                       FontSize="11"
-                       Opacity="0.5"
-                       Margin="24,0,0,0"/>
-            <CheckBox Content="Habilitar opción de imprimir (consentimientos)"
-                      IsChecked="{Binding UsarImpresora}"
-                      Margin="0,12,0,0"/>
-            <TextBlock Text="Permite imprimir PDFs con la impresora predeterminada"
-                       FontSize="11"
-                       Opacity="0.5"
-                       Margin="24,0,0,0"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Dashboard -->
-        <Border Background="#111827"
-                CornerRadius="12"
-                Padding="20">
-          <StackPanel Spacing="12">
-            <TextBlock Text="📊 Personalización del Dashboard"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Margin="0,0,0,4"/>
-            <TextBlock Text="Elige qué secciones se muestran en la pantalla de inicio."
-                       FontSize="12"
-                       Opacity="0.6"
-                       Margin="0,0,0,8"/>
-
-            <CheckBox Content="Mostrar acciones rápidas (Nuevo cliente, Nueva cita, Nuevo trabajo)"
-                      IsChecked="{Binding DashboardMostrarAccionesRapidas}"/>
-
-            <CheckBox Content="Mostrar estadísticas (clientes activos, citas hoy, por confirmar)"
-                      IsChecked="{Binding DashboardMostrarEstadisticas}"
-                      Margin="0,8,0,0"/>
-
-            <CheckBox Content="Mostrar tarjeta de ingresos económicos de la semana"
-                      IsChecked="{Binding DashboardMostrarEconomia}"
-                      IsEnabled="{Binding DashboardMostrarEstadisticas}"
-                      Margin="24,4,0,0"/>
-            <TextBlock Text="Solo disponible si las estadísticas están activadas"
-                       FontSize="11"
-                       Opacity="0.5"
-                       Margin="44,0,0,0"/>
-
-            <CheckBox Content="Mostrar panel de alertas y pendientes"
-                      IsChecked="{Binding DashboardMostrarAlertas}"
-                      Margin="0,8,0,0"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Preferencias -->
-        <Border Background="#111827"
-                CornerRadius="12"
-                Padding="20">
-          <StackPanel Spacing="12">
-            <TextBlock Text="🎨 Preferencias de la aplicación"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Margin="0,0,0,8"/>
-
-            <StackPanel Orientation="Horizontal" Spacing="20">
-              <CheckBox Content="Usar tema oscuro"
-                        IsChecked="{Binding TemaOscuro}"/>
-              <StackPanel>
-                <TextBlock Text="Idioma (código)" Opacity="0.7" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding IdiomaApp}" Width="80"/>
-              </StackPanel>
-            </StackPanel>
-          </StackPanel>
-        </Border>
-
-        <!-- Mensajes y guardar -->
-        <StackPanel Spacing="8">
-          <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                  Background="#3d2a2a"
-                  CornerRadius="6"
-                  Padding="10">
-            <TextBlock Text="{Binding MensajeError}" Foreground="#ef5350"/>
-          </Border>
-          <Border IsVisible="{Binding MensajeOk, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                  Background="#1b4332"
-                  CornerRadius="6"
-                  Padding="10">
-            <TextBlock Text="{Binding MensajeOk}" Foreground="#a7f3d0"/>
-          </Border>
-
-          <Button Content="💾 Guardar configuración"
-                  Classes="btn-primary"
-                  Command="{Binding GuardarConfiguracionCommand}"
-                  HorizontalAlignment="Right"
-                  MinWidth="220"
-                  Padding="24,0"
-                  Height="40"
-                  HorizontalContentAlignment="Center"
-                  VerticalContentAlignment="Center"/>
+      <!-- Navegación -->
+      <Border Grid.Column="0"
+              Background="#111827"
+              CornerRadius="12"
+              Padding="10"
+              VerticalAlignment="Top">
+        <StackPanel Spacing="4">
+          <Button Content="🏢 Datos del estudio"
+                  Classes="nav-config"
+                  Classes.active="{Binding MostrarSeccionEstudio}"
+                  Command="{Binding IrASeccionConfiguracionCommand}"
+                  CommandParameter="Estudio"/>
+          <Button Content="📧 Correo (SMTP)"
+                  Classes="nav-config"
+                  Classes.active="{Binding MostrarSeccionCorreo}"
+                  Command="{Binding IrASeccionConfiguracionCommand}"
+                  CommandParameter="Correo"/>
+          <Button Content="🖨️ Impresora"
+                  Classes="nav-config"
+                  Classes.active="{Binding MostrarSeccionImpresora}"
+                  Command="{Binding IrASeccionConfiguracionCommand}"
+                  CommandParameter="Impresora"/>
+          <Button Content="📊 Dashboard"
+                  Classes="nav-config"
+                  Classes.active="{Binding MostrarSeccionDashboard}"
+                  Command="{Binding IrASeccionConfiguracionCommand}"
+                  CommandParameter="Dashboard"/>
+          <Button Content="🎨 Preferencias"
+                  Classes="nav-config"
+                  Classes.active="{Binding MostrarSeccionPreferencias}"
+                  Command="{Binding IrASeccionConfiguracionCommand}"
+                  CommandParameter="Preferencias"/>
         </StackPanel>
+      </Border>
 
-      </StackPanel>
-    </ScrollViewer>
+      <!-- Panel de sección -->
+      <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
 
+          <!-- Estudio -->
+          <Border Background="#111827" CornerRadius="12" Padding="20"
+                  IsVisible="{Binding MostrarSeccionEstudio}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="🏢 Datos del estudio" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+              <TextBlock Text="Información que aparece en consentimientos, PDFs y pantalla de carga."
+                         FontSize="12" Opacity="0.6" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+              <StackPanel>
+                <TextBlock Text="Nombre del estudio *" Opacity="0.7" Margin="0,0,0,5"/>
+                <TextBox Text="{Binding NombreEstudio}" MaxWidth="400"/>
+                <TextBlock Text="Nombre comercial (ej: Erzulie Tattoo)" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
+              </StackPanel>
+
+              <StackPanel>
+                <TextBlock Text="Razón social / Empresa" Opacity="0.7" Margin="0,8,0,5"/>
+                <TextBox Text="{Binding NombreEmpresa}" MaxWidth="480"/>
+              </StackPanel>
+
+              <StackPanel>
+                <TextBlock Text="Dirección" Opacity="0.7" Margin="0,8,0,5"/>
+                <TextBox Text="{Binding Direccion}" MaxWidth="480"/>
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" Spacing="20">
+                <StackPanel Width="200">
+                  <TextBlock Text="Teléfono" Opacity="0.7" Margin="0,8,0,5"/>
+                  <TextBox Text="{Binding Telefono}"/>
+                </StackPanel>
+                <StackPanel Width="280">
+                  <TextBlock Text="Email de contacto" Opacity="0.7" Margin="0,8,0,5"/>
+                  <TextBox Text="{Binding Email}"/>
+                </StackPanel>
+              </StackPanel>
+
+              <Border Background="#1e293b" CornerRadius="8" Padding="16" Margin="0,12,0,0">
+                <Grid ColumnDefinitions="Auto,*">
+                  <Border Grid.Column="0" Width="120" Height="120" CornerRadius="8"
+                          Background="#0f172a" BorderBrush="#374155" BorderThickness="1" Margin="0,0,20,0">
+                    <Grid>
+                      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                  IsVisible="{Binding !TieneLogo}">
+                        <TextBlock Text="🖼️" FontSize="32" HorizontalAlignment="Center" Opacity="0.4"/>
+                        <TextBlock Text="Sin logo" FontSize="11" Opacity="0.5" HorizontalAlignment="Center"/>
+                      </StackPanel>
+                      <Image Source="{Binding LogoPreview}" Stretch="Uniform" Margin="8"
+                             IsVisible="{Binding TieneLogo}"/>
+                    </Grid>
+                  </Border>
+                  <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Logo del estudio" FontWeight="SemiBold" FontSize="14"/>
+                    <TextBlock Text="Pantalla de carga y documentos PDF"
+                               FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                      <Button Content="📁 Seleccionar imagen"
+                              Command="{Binding SeleccionarLogoCommand}"
+                              Classes="btn-secondary" Height="34" Padding="12,0"/>
+                      <Button Content="🗑️ Quitar"
+                              Command="{Binding QuitarLogoCommand}"
+                              Classes="btn-secondary" Height="34" Padding="12,0"
+                              IsVisible="{Binding TieneLogo}"/>
+                    </StackPanel>
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <!-- SMTP -->
+          <Border Background="#111827" CornerRadius="12" Padding="20"
+                  IsVisible="{Binding MostrarSeccionCorreo}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="📧 Configuración SMTP" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+              <TextBlock Text="Para enviar recordatorios y consentimientos por email."
+                         FontSize="12" Opacity="0.6" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+              <StackPanel Orientation="Horizontal" Spacing="20">
+                <StackPanel Width="260">
+                  <TextBlock Text="Servidor SMTP" Opacity="0.7" Margin="0,0,0,5"/>
+                  <TextBox Text="{Binding SmtpServidor}"/>
+                </StackPanel>
+                <StackPanel Width="120">
+                  <TextBlock Text="Puerto" Opacity="0.7" Margin="0,0,0,5"/>
+                  <NumericUpDown Value="{Binding SmtpPuerto}" Minimum="1" Maximum="65535" Height="30"/>
+                </StackPanel>
+                <StackPanel VerticalAlignment="Bottom">
+                  <CheckBox Content="Usar SSL/TLS" IsChecked="{Binding SmtpUsarSsl}"/>
+                </StackPanel>
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" Spacing="20">
+                <StackPanel Width="260">
+                  <TextBlock Text="Usuario" Opacity="0.7" Margin="0,8,0,5"/>
+                  <TextBox Text="{Binding SmtpUsuario}"/>
+                </StackPanel>
+                <StackPanel Width="260">
+                  <TextBlock Text="Contraseña" Opacity="0.7" Margin="0,8,0,5"/>
+                  <TextBox Text="{Binding SmtpPassword}" PasswordChar="●"/>
+                </StackPanel>
+              </StackPanel>
+
+              <Button Content="📤 Probar conexión SMTP"
+                      Command="{Binding ProbarSmtpCommand}"
+                      Classes="btn-secondary" Height="36" Padding="16,0"
+                      Margin="0,12,0,0" HorizontalAlignment="Left"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Impresora -->
+          <Border Background="#111827" CornerRadius="12" Padding="20"
+                  IsVisible="{Binding MostrarSeccionImpresora}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="🖨️ Impresora" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+              <CheckBox Content="Habilitar opción de imprimir consentimientos (PDF)"
+                        IsChecked="{Binding UsarImpresora}"/>
+              <TextBlock Text="Usa la impresora predeterminada de Windows."
+                         FontSize="11" Opacity="0.5" Margin="24,0,0,0"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Dashboard -->
+          <Border Background="#111827" CornerRadius="12" Padding="20"
+                  IsVisible="{Binding MostrarSeccionDashboard}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="📊 Personalización del Dashboard" FontSize="18" FontWeight="Bold"/>
+              <CheckBox Content="Acciones rápidas (Nuevo cliente, cita, trabajo)"
+                        IsChecked="{Binding DashboardMostrarAccionesRapidas}"/>
+              <CheckBox Content="Estadísticas (clientes, citas, pendientes)"
+                        IsChecked="{Binding DashboardMostrarEstadisticas}" Margin="0,8,0,0"/>
+              <CheckBox Content="Tarjeta de ingresos de la semana"
+                        IsChecked="{Binding DashboardMostrarEconomia}"
+                        IsEnabled="{Binding DashboardMostrarEstadisticas}" Margin="24,4,0,0"/>
+              <CheckBox Content="Panel de alertas y pendientes"
+                        IsChecked="{Binding DashboardMostrarAlertas}" Margin="0,8,0,0"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Preferencias -->
+          <Border Background="#111827" CornerRadius="12" Padding="20"
+                  IsVisible="{Binding MostrarSeccionPreferencias}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="🎨 Preferencias" FontSize="18" FontWeight="Bold"/>
+              <StackPanel Orientation="Horizontal" Spacing="20">
+                <CheckBox Content="Tema oscuro" IsChecked="{Binding TemaOscuro}"/>
+                <StackPanel>
+                  <TextBlock Text="Idioma" Opacity="0.7" Margin="0,0,0,5"/>
+                  <TextBox Text="{Binding IdiomaApp}" Width="80"/>
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Mensajes y guardar -->
+          <StackPanel Spacing="8">
+            <Border IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#3d2a2a" CornerRadius="6" Padding="10">
+              <TextBlock Text="{Binding MensajeError}" Foreground="#ef5350"/>
+            </Border>
+            <Border IsVisible="{Binding MensajeOk, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#1b4332" CornerRadius="6" Padding="10">
+              <TextBlock Text="{Binding MensajeOk}" Foreground="#a7f3d0"/>
+            </Border>
+            <Button Content="💾 Guardar configuración"
+                    Classes="btn-primary"
+                    Command="{Binding GuardarConfiguracionCommand}"
+                    HorizontalAlignment="Right"
+                    MinWidth="220" Padding="24,0" Height="40"/>
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
   </Grid>
-
 </UserControl>
-
-

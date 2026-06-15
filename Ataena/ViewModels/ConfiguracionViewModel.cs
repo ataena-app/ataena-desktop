@@ -51,9 +51,6 @@ public partial class ConfiguracionViewModel : ViewModelBase
     private bool _smtpUsarSsl = true;
 
     [ObservableProperty]
-    private bool _usarEscanner;
-
-    [ObservableProperty]
     private bool _usarImpresora;
 
     [ObservableProperty]
@@ -83,6 +80,33 @@ public partial class ConfiguracionViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _mensajeOk = string.Empty;
+
+    /// <summary>
+    /// Sección activa del menú de configuración.
+    /// </summary>
+    [ObservableProperty]
+    private string _seccionActiva = "Estudio";
+
+    public bool MostrarSeccionEstudio => SeccionActiva == "Estudio";
+    public bool MostrarSeccionCorreo => SeccionActiva == "Correo";
+    public bool MostrarSeccionImpresora => SeccionActiva == "Impresora";
+    public bool MostrarSeccionDashboard => SeccionActiva == "Dashboard";
+    public bool MostrarSeccionPreferencias => SeccionActiva == "Preferencias";
+
+    partial void OnSeccionActivaChanged(string value)
+    {
+        OnPropertyChanged(nameof(MostrarSeccionEstudio));
+        OnPropertyChanged(nameof(MostrarSeccionCorreo));
+        OnPropertyChanged(nameof(MostrarSeccionImpresora));
+        OnPropertyChanged(nameof(MostrarSeccionDashboard));
+        OnPropertyChanged(nameof(MostrarSeccionPreferencias));
+    }
+
+    [RelayCommand]
+    private void IrASeccionConfiguracion(string seccion)
+    {
+        SeccionActiva = seccion;
+    }
 
     [ObservableProperty]
     private string? _logoPath;
@@ -124,7 +148,6 @@ public partial class ConfiguracionViewModel : ViewModelBase
             SmtpUsuario = cfg.SmtpUsuario;
             SmtpPassword = cfg.SmtpPassword;
             SmtpUsarSsl = cfg.SmtpUsarSsl;
-            UsarEscanner = cfg.UsarEscanner;
             UsarImpresora = cfg.UsarImpresora;
             TemaOscuro = cfg.TemaOscuro;
             IdiomaApp = cfg.IdiomaApp;
@@ -173,7 +196,6 @@ public partial class ConfiguracionViewModel : ViewModelBase
             cfg.SmtpUsuario = string.IsNullOrWhiteSpace(SmtpUsuario) ? null : SmtpUsuario.Trim();
             cfg.SmtpPassword = string.IsNullOrWhiteSpace(SmtpPassword) ? null : SmtpPassword;
             cfg.SmtpUsarSsl = SmtpUsarSsl;
-            cfg.UsarEscanner = UsarEscanner;
             cfg.UsarImpresora = UsarImpresora;
             cfg.TemaOscuro = TemaOscuro;
             cfg.IdiomaApp = string.IsNullOrWhiteSpace(IdiomaApp) ? "es" : IdiomaApp.Trim();
