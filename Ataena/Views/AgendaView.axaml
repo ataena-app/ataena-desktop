@@ -42,6 +42,102 @@
         </Style>
         
         <!-- Los estilos de botones están definidos globalmente en App.axaml -->
+
+        <!-- Calendario popup — selector de fecha en formulario de cita -->
+        <Style Selector="Calendar.calendar-cita">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <Style Selector="Calendar.calendar-cita CalendarItem /template/ Border#PART_Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Calendar.calendar-cita CalendarItem /template/ Button#PART_HeaderButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#f3f4f6"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarItem /template/ Button#PART_HeaderButton:pointerover">
+            <Setter Property="Background" Value="#1f2937"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+
+        <Style Selector="Calendar.calendar-cita CalendarItem /template/ Button#PART_PreviousButton,
+                         Calendar.calendar-cita CalendarItem /template/ Button#PART_NextButton">
+            <Setter Property="Background" Value="#1f2937"/>
+            <Setter Property="Foreground" Value="#e5e7eb"/>
+            <Setter Property="BorderBrush" Value="#374151"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarItem /template/ Button#PART_PreviousButton:pointerover,
+                         Calendar.calendar-cita CalendarItem /template/ Button#PART_NextButton:pointerover">
+            <Setter Property="Background" Value="#374151"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Calendar.calendar-cita CalendarDayButton /template/ Border#Root">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="2"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton /template/ ContentControl#Content">
+            <Setter Property="Foreground" Value="#e2e8f0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:pointerover /template/ Border#Root">
+            <Setter Property="Background" Value="#334155"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:pointerover /template/ ContentControl#Content">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:selected /template/ Border#Root">
+            <Setter Property="Background" Value="{DynamicResource AppAccentGradientBrush}"/>
+            <Setter Property="BoxShadow" Value="0 2 8 0 #60a855f7"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:selected /template/ ContentControl#Content">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:today /template/ Border#Root">
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentSoftBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Background" Value="#1e293b"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:today:selected /template/ Border#Root">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton:inactive /template/ ContentControl#Content">
+            <Setter Property="Foreground" Value="#64748b"/>
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton.other-month /template/ ContentControl#Content">
+            <Setter Property="Opacity" Value="0.35"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton.weekend /template/ Border#Root">
+            <Setter Property="Background" Value="#1a2332"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton.weekend:pointerover /template/ Border#Root">
+            <Setter Property="Background" Value="#3d4f66"/>
+        </Style>
+        <Style Selector="Calendar.calendar-cita CalendarDayButton.weekend:selected /template/ Border#Root">
+            <Setter Property="Background" Value="{DynamicResource AppAccentGradientBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
@@ -808,7 +904,8 @@
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="#d0d0d0"/>
-                                    <Button Classes="btn-secondary"
+                                    <Button x:Name="FechaCitaButton"
+                                            Classes="btn-secondary"
                                             Command="{Binding AlternarCalendarioCitaCommand}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Left"
@@ -816,16 +913,33 @@
                                             Padding="12,0">
                                         <TextBlock Text="{Binding FechaCita, StringFormat='{}{0:dddd, dd MMMM yyyy}', TargetNullValue='Seleccionar fecha…'}"/>
                                     </Button>
-                                    <Border IsVisible="{Binding MostrarCalendarioCitaExpandido}"
-                                            Background="#1e293b"
-                                            CornerRadius="10"
-                                            Padding="8"
-                                            HorizontalAlignment="Stretch">
-                                        <Calendar SelectedDate="{Binding FechaCita}"
-                                                  DisplayDateStart="{Binding FechaMinimaCita}"
-                                                  IsTodayHighlighted="True"
-                                                  FirstDayOfWeek="Monday"/>
-                                    </Border>
+                                    <Popup Name="FechaCitaPopup"
+                                           PlacementTarget="{Binding #FechaCitaButton}"
+                                           Placement="Bottom"
+                                           VerticalOffset="6"
+                                           IsLightDismissEnabled="True"
+                                           IsOpen="{Binding MostrarCalendarioCitaExpandido, Mode=TwoWay}">
+                                        <Border CornerRadius="14"
+                                                Padding="1"
+                                                Background="{DynamicResource AppAccentGradientBrush}"
+                                                BoxShadow="0 12 36 0 #50a855f7, 0 8 24 0 #60000000">
+                                            <Border Background="#0f172a"
+                                                    CornerRadius="13"
+                                                    Padding="22,18">
+                                                <Calendar Name="FechaCitaCalendar"
+                                                          Classes="calendar-cita"
+                                                          SelectedDate="{Binding FechaCita}"
+                                                          DisplayDateStart="{Binding FechaMinimaCita}"
+                                                          IsTodayHighlighted="True"
+                                                          FirstDayOfWeek="Monday"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          Margin="6"
+                                                          Loaded="OnFechaCitaCalendarLoaded"
+                                                          SelectedDatesChanged="OnFechaCitaCalendarSelectedDatesChanged"/>
+                                            </Border>
+                                        </Border>
+                                    </Popup>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Spacing="8">
                                     <TextBlock Text="Hora inicio * (HH:mm)" 

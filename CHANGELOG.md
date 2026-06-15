@@ -5,6 +5,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.6.4] - 2026-06-11
+
+### Cambiado
+- **Agenda — selector de fecha en citas:** calendario en popup flotante (ya no se recorta dentro del modal), con márgenes, cierre al elegir día y estilo visual alineado con la app (degradado morado/naranja, días redondeados, fines de semana resaltados).
+
+---
+
 ## [0.6.3] - 2026-06-11
 
 ### Añadido
@@ -162,6 +169,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+[0.6.4]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.4
 [0.6.3]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.3
 [0.6.2]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.2
 [0.6.1]: https://github.com/Jvalfdev/desktop-myos-app/releases/tag/v0.6.1

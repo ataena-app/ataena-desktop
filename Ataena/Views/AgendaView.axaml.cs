@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Ataena.Models;
@@ -37,6 +38,84 @@ public partial class AgendaView : UserControl
         if (DataContext is AgendaViewModel vm)
         {
             await vm.CargarCitasCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Cierra el popup del calendario al elegir un día.
+    /// </summary>
+    private void OnFechaCitaCalendarSelectedDatesChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is AgendaViewModel vm && e.AddedItems.Count > 0)
+            vm.MostrarCalendarioCitaExpandido = false;
+
+        if (sender is Calendar calendar)
+            AplicarEstilosCalendarioCita(calendar);
+    }
+
+    /// <summary>
+    /// Aplica estilos visuales (fines de semana) al calendario del formulario de cita.
+    /// </summary>
+    private void OnFechaCitaCalendarLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Calendar calendar)
+            return;
+
+        calendar.PropertyChanged += (_, args) =>
+        {
+            if (args.Property.Name == nameof(Calendar.DisplayDate))
+                AplicarEstilosCalendarioCita(calendar);
+        };
+
+        AplicarEstilosCalendarioCita(calendar);
+    }
+
+    private static void AplicarEstilosCalendarioCita(Calendar calendar)
+    {
+        try
+        {
+            var dayButtons = new List<CalendarDayButton>();
+            BuscarCalendarDayButtons(calendar, dayButtons);
+
+            foreach (var button in dayButtons)
+            {
+                button.Classes.Remove("weekend");
+                button.Classes.Remove("other-month");
+
+                if (button.DataContext is DateTime date)
+                {
+                    if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+                        button.Classes.Add("weekend");
+
+                    if (calendar.DisplayDate.Month != date.Month)
+                        button.Classes.Add("other-month");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "No se pudieron aplicar estilos al calendario de cita");
+        }
+    }
+
+    private static void BuscarCalendarDayButtons(Control? parent, List<CalendarDayButton> dayButtons)
+    {
+        if (parent == null)
+            return;
+
+        if (parent is CalendarDayButton dayButton)
+        {
+            dayButtons.Add(dayButton);
+            return;
+        }
+
+        if (parent is Panel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                if (child is Control childControl)
+                    BuscarCalendarDayButtons(childControl, dayButtons);
+            }
         }
     }
 

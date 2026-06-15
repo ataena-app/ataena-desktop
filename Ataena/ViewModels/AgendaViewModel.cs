@@ -587,6 +587,9 @@ public partial class AgendaViewModel : ViewModelBase
     {
         if (value.HasValue && value.Value.Date < DateTime.Today)
             FechaCita = DateTimeOffset.Now.Date;
+
+        if (MostrarCalendarioCitaExpandido)
+            MostrarCalendarioCitaExpandido = false;
     }
 
     /// <summary>
