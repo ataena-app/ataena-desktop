@@ -5,6 +5,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.6.5] - 2026-06-20
+
+### Técnico
+- **Migración a sistema cloud:** actualización interna del sistema de distribución y actualizaciones automáticas en preparación para Ataena Cloud.
+
+---
+
 ## [0.6.4] - 2026-06-11
 
 ### Cambiado

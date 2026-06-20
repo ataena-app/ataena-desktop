@@ -28,8 +28,8 @@ namespace Ataena.Services;
 public static class ActualizacionService
 {
     // Repositorio desde el que se publican las releases (coincide con el que aparece en Ataena.iss).
-    private const string GitHubOwner = "Jvalfdev";
-    private const string GitHubRepo = "desktop-myos-app";
+    private const string GitHubOwner = "ataena-app";
+    private const string GitHubRepo = "ataena-desktop";
     private const string UserAgent = "Ataena-CRM-Updater";
 
     private static readonly HttpClient _http = new()
