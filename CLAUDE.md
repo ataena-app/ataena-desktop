@@ -54,6 +54,36 @@ Ataena/
 - Los servicios deben poder trabajar detrás de `IDataStore` cuando llegue el momento
 - Las rutas de fichero deben poder convertirse a `StorageKey` opaco
 
+## Modelo de datos
+Tablas SQLite principales y sus relaciones:
+
+| Tabla | Relaciones clave |
+|-------|-----------------|
+| `Clientes` | 1:N → Citas, Trabajos, Consentimientos |
+| `Citas` | FK `ClienteId`, FK opcional `TrabajoId` |
+| `Trabajos` | FK `ClienteId`; 1:1 opcional con Consentimiento |
+| `Consentimientos` | FK `ClienteId`, FK opcional `TrabajoId`; campo `RutaDocumento` (ruta PDF local) |
+| `Configuracion` | Singleton (Id=1): nombre estudio, SMTP, preferencias |
+| `DiasFestivos` | Independiente |
+
+## Flujos críticos — no romper nunca
+- **Backup ZIP** (`BackupService`): contiene `data.db` + `ficheros/` + `metadata.json`. Es el mecanismo de migración a Cloud. Cualquier cambio de esquema debe mantener compatibilidad con el ZIP.
+- **Firma QR en LAN** (`FirmaWebService`): servidor HTTP local que sirve la página de firma al cliente en el móvil. No depende de internet.
+- **Actualizaciones automáticas** (`ActualizacionService`): consulta GitHub Releases en `ataena-app/ataena-desktop`. No cambiar owner ni repo sin actualizar estas constantes.
+
+## RGPD — obligaciones en el desktop
+- Los consentimientos PDF firmados son documentos legales — nunca borrar sin confirmación explícita del usuario
+- El backup ZIP es el mecanismo de portabilidad (art. 20 RGPD) — siempre debe funcionar
+- Los datos del estudio en `Configuracion` (CIF, dirección) aparecen en los PDFs — validar que estén completos antes de generar cualquier documento
+- Las plantillas de consentimiento en `Plantillas/` son por CCAA; no mezclar plantillas entre comunidades
+
+## Versioning
+La versión se define en **dos sitios** — ambos deben estar sincronizados:
+- `Ataena/Ataena.csproj` → `<Version>` y `<InformationalVersion>`
+- `Ataena/Installer/Ataena.iss` → `#define MyAppVersion`
+
+Cuando se sube una release: compilar en Release → generar instalador → crear GitHub Release con tag `v{version}` y subir el `.exe`.
+
 ## Cómo compilar y ejecutar
 ```bash
 dotnet build
@@ -62,3 +92,9 @@ dotnet run --project Ataena
 
 ## Cómo generar instalador
 Compilar en Release → abrir `Ataena/Installer/Ataena.iss` con Inno Setup → Build.
+
+## Lo que NO existe aún (no implementar sin acuerdo previo)
+- `IDataStore` / `CloudApiStore` — está planificado, no implementado
+- Login o cuenta de usuario
+- Sync con ningún servicio externo
+- Cualquier llamada a internet salvo `ActualizacionService`
